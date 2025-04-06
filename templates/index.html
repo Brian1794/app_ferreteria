@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block title %}Ferretería "La U" - Tu Solución en Herramientas y Materiales{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{{ url_for('static', filename='img/ferreteria-hero.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        color: white !important;
+        padding: 8rem 1rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+    }
+    
+    .hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: white !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .hero p {
+        font-size: 1.35rem;
+        max-width: 800px;
+        margin: 0 auto 2.5rem;
+        color: rgba(255, 255, 255, 0.9) !important;
+        line-height: 1.6;
+    }
+    
+    /* Asegurar que los textos en las tarjetas sean legibles */
+    .feature-card, .service-card, .contact-card {
+        color: var(--text-color);
+    }
+    
+    .feature-card h3, .service-card h3, .contact-card h3 {
+        color: var(--secondary-color);
+    }
+    
+    [data-theme="dark"] .feature-card h3, 
+    [data-theme="dark"] .service-card h3, 
+    [data-theme="dark"] .contact-card h3 {
+        color: #60a5fa;
+    }
+
+    /* Estilos específicos para el tema daltónico */
+    [data-theme="daltonismo"] .feature-card,
+    [data-theme="daltonismo"] .service-card,
+    [data-theme="daltonismo"] .contact-card {
+        border: 2px solid #000;
+    }
+    
+    [data-theme="daltonismo"] .feature-card h3,
+    [data-theme="daltonismo"] .service-card h3,
+    [data-theme="daltonismo"] .contact-card h3 {
+        color: #0074D9;
+        font-weight: 800;
+    }
+    
+    [data-theme="daltonismo"] .feature-icon,
+    [data-theme="daltonismo"] .contact-icon {
+        color: #0074D9;
+        background: rgba(0, 116, 217, 0.1);
+        padding: 1rem;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+    }
+    
+    [data-theme="daltonismo"] .cta-buttons .btn {
+        border: 2px solid #000;
+        font-weight: 700;
+    }
+    
+    [data-theme="daltonismo"] .services::before {
+        height: 8px;
+    }
+    
+    /* Resto de estilos */
+    .cta-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 5rem;
+        padding: 0 1rem;
+    }
+    
+    .feature-card {
+        text-align: center;
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        border-top: 4px solid var(--primary-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 0;
+        background-color: var(--primary-color);
+        opacity: 0.05;
+        transition: height 0.3s;
+        z-index: 0;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(var(--primary-rgb), 0.15);
+    }
+    
+    .feature-card:hover::before {
+        height: 100%;
+    }
+    
+    .feature-icon {
+        font-size: 3.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feature-card h3 {
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+        font-weight: 700;
+        font-size: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feature-card p {
+        color: var(--text-color);
+        line-height: 1.6;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .services {
+        background-color: var(--bg-color);
+        padding: 5rem 0;
+        margin-bottom: 5rem;
+        position: relative;
+    }
+    
+    .services::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    }
+    
+    .services-title {
+        text-align: center;
+        margin-bottom: 3.5rem;
+    }
+    
+    .services-title h2 {
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .services-title p {
+        color: var(--text-color);
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .service-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+    
+    .service-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .service-image {
+        height: 220px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .service-image::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 40%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    }
+    
+    .service-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(var(--primary-rgb), 0.15);
+    }
+    
+    .service-card:hover .service-image img {
+        transform: scale(1.1);
+    }
+    
+    .service-content {
+        padding: 2rem;
+        position: relative;
+    }
+    
+    .service-content h3 {
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+    
+    .service-content p {
+        color: var(--text-color);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    
+    .contact-section {
+        text-align: center;
+        margin-bottom: 5rem;
+        padding: 0 1.5rem;
+    }
+    
+    .contact-section h2 {
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .contact-section p {
+        color: var(--text-color);
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto 3rem;
+    }
+    
+    .contact-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .contact-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s;
+        border-bottom: 4px solid var(--primary-color);
+    }
+    
+    .contact-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(var(--primary-rgb), 0.15);
+    }
+    
+    .contact-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s;
+    }
+    
+    .contact-card:hover .contact-icon {
+        transform: scale(1.2);
+    }
+    
+    .contact-card h3 {
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+        font-weight: 700;
+        font-size: 1.3rem;
+    }
+    
+    .contact-card p {
+        color: var(--text-color);
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .contact-card .btn {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.3s;
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    
+    .contact-card .btn:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(var(--primary-rgb), 0.3);
+    }
+    
+    .cta-buttons .btn {
+        padding: 0.8rem 1.8rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+        font-size: 0.95rem;
+    }
+    
+    .cta-buttons .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .cta-buttons .btn-accent {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .cta-buttons .btn-secondary {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+    
+    .cta-buttons .btn {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid white;
+    }
+    
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.2rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+        }
+        
+        .services-title h2,
+        .contact-section h2 {
+            font-size: 2rem;
+        }
+        
+        .feature-card,
+        .service-card,
+        .contact-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <h1>Ferretería "La U"</h1>
+    <p>Todo lo que necesitas para construir, reparar y mejorar tu hogar o negocio. Contamos con un amplio catálogo de productos, atención personalizada y precios competitivos.</p>
+    <div class="cta-buttons">
+        <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-accent">Ver Productos</a>
+        <a href="#servicios" class="btn">Nuestros Servicios</a>
+        <a href="#contacto" class="btn btn-secondary">Contáctanos</a>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="feature-card">
+        <div class="feature-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <h3>Amplio Catálogo</h3>
+        <p>Contamos con más de 5,000 productos de las mejores marcas para profesionales y aficionados.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">
+            <i class="fas fa-truck"></i>
+        </div>
+        <h3>Envío Rápido</h3>
+        <p>Entregamos tus productos en menos de 24 horas, directamente a tu hogar u obra.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">
+            <i class="fas fa-headset"></i>
+        </div>
+        <h3>Asesoría Profesional</h3>
+        <p>Nuestro equipo de expertos te ayuda a elegir los mejores productos para tu proyecto.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">
+            <i class="fab fa-whatsapp"></i>
+        </div>
+        <h3>Atención por WhatsApp</h3>
+        <p>Pide cotizaciones, consulta stock y realiza pedidos por WhatsApp para mayor comodidad.</p>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section id="servicios" class="services">
+    <div class="services-title">
+        <h2>Nuestros Servicios</h2>
+        <p>Ofrecemos soluciones completas para tus necesidades</p>
+    </div>
+    
+    <div class="service-cards">
+        <div class="service-card">
+            <div class="service-image">
+                <img src="{{ url_for('static', filename='img/servicio-ventas.jpg') }}" alt="Venta de Productos">
+            </div>
+            <div class="service-content">
+                <h3>Venta de Productos</h3>
+                <p>Ofrecemos una amplia variedad de productos para construcción, reparación y mantenimiento.</p>
+            </div>
+        </div>
+        
+        <div class="service-card">
+            <div class="service-image">
+                <img src="{{ url_for('static', filename='img/servicio-reparaciones.jpg') }}" alt="Reparación de Electrodomésticos">
+            </div>
+            <div class="service-content">
+                <h3>Reparación de Electrodomésticos</h3>
+                <p>Servicio técnico especializado en reparación de electrodomésticos con garantía.</p>
+            </div>
+        </div>
+        
+        <div class="service-card">
+            <div class="service-image">
+                <img src="{{ url_for('static', filename='img/servicio-asesorias.jpg') }}" alt="Asesoría en Proyectos">
+            </div>
+            <div class="service-content">
+                <h3>Asesoría en Proyectos</h3>
+                <p>Te ayudamos a planificar tu proyecto y seleccionar los materiales adecuados.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contacto" class="contact-section">
+    <h2>Contáctanos</h2>
+    <p>Estamos disponibles para atender todas tus consultas y necesidades</p>
+    
+    <div class="contact-info">
+        <div class="contact-card">
+            <div class="contact-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h3>Dirección</h3>
+            <p>Av. Principal #123, Ciudad</p>
+        </div>
+        
+        <div class="contact-card">
+            <div class="contact-icon">
+                <i class="fas fa-phone"></i>
+            </div>
+            <h3>Teléfono</h3>
+            <p>+123 456 7890</p>
+        </div>
+        
+        <div class="contact-card">
+            <div class="contact-icon">
+                <i class="fab fa-whatsapp"></i>
+            </div>
+            <h3>WhatsApp</h3>
+            <p>+123 456 7890</p>
+            <a href="https://wa.me/1234567890" class="btn" target="_blank">Enviar mensaje</a>
+        </div>
+        
+        <div class="contact-card">
+            <div class="contact-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h3>Email</h3>
+            <p>info@ferreteriael constructor.com</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Smooth scrolling para los enlaces internos
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}

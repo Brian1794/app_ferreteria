@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Ferretería El Constructor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Mi Perfil</h2>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for category, message in messages %}
+                                    <div class="flash-message {{ category }}">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.perfil') }}">
+                        <div class="form-group mb-3">
+                            <label for="nombre">Nombre completo</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ current_user.nombre }}" required>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="email">Correo electrónico</label>
+                            <input type="email" class="form-control" id="email" value="{{ current_user.email }}" readonly>
+                            <small class="form-text text-muted">El correo electrónico no se puede modificar</small>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="rol">Rol</label>
+                            <input type="text" class="form-control" id="rol" value="{{ current_user.rol|default('Usuario') }}" readonly>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label>Fecha de registro</label>
+                                <p class="form-control-static">{{ user_data.fecha_registro|default('No disponible') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Último acceso</label>
+                                <p class="form-control-static">{{ current_user.ultimo_login|default('No disponible') }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('auth.cambiar_password') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-key"></i> Cambiar contraseña
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

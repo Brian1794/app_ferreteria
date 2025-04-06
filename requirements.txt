@@ -1,0 +1,9 @@
+flask==2.3.3
+flask-mysqldb==1.0.1
+flask-login==0.6.2
+flask-bcrypt==1.0.1
+python-dotenv==1.0.0
+requests==2.31.0
+werkzeug==2.3.7
+pymysql==1.1.0
+gunicorn==21.2.0 

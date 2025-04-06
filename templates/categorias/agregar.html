@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Agregar Categoría - Ferretería El Constructor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Agregar Nueva Categoría</h2>
+                    <a href="{{ url_for('categorias.listar') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Volver a la lista
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for category, message in messages %}
+                                    <div class="flash-message {{ category }}">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('categorias.agregar') }}">
+                        <div class="form-group mb-3">
+                            <label for="nombre">Nombre de la categoría</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            <small class="form-text text-muted">Ej: Herramientas Eléctricas, Plomería, Pinturas, etc.</small>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="descripcion">Descripción (opcional)</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                            <small class="form-text text-muted">Breve descripción de los productos que incluye esta categoría</small>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="activa" name="activa" checked>
+                            <label class="form-check-label" for="activa">
+                                Categoría activa
+                            </label>
+                            <small class="form-text text-muted d-block">Las categorías inactivas no se mostrarán en las listas de productos</small>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('categorias.listar') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar categoría
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

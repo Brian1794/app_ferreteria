@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Producto - Ferretería{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Editar Producto</h1>
+        <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('productos.editar', id=producto[0]) }}" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="nombre">Nombre del Producto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto[1] }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="codigo_barras">Código de Barras</label>
+                            <input type="text" class="form-control" id="codigo_barras" name="codigo_barras" value="{{ producto[3] }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="descripcion">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ producto[2] }}</textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="precio_compra">Precio de Compra <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio_compra" name="precio_compra" step="0.01" min="0" value="{{ producto[4] }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="precio_venta">Precio de Venta <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio_venta" name="precio_venta" step="0.01" min="0" value="{{ producto[5] }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="categoria_id">Categoría</label>
+                            <select class="form-control" id="categoria_id" name="categoria_id">
+                                <option value="">-- Seleccionar Categoría --</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria[0] }}" {% if categoria[0] == producto[8] %}selected{% endif %}>{{ categoria[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="stock">Stock</label>
+                            <input type="number" class="form-control" id="stock" name="stock" value="{{ producto[6] }}" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="stock_minimo">Stock Mínimo</label>
+                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="{{ producto[7] }}" min="0" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="imagen">Imagen del Producto</label>
+                    {% if producto[9] %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/productos/' + producto[9]) }}" alt="{{ producto[1] }}" style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
+                            <p class="text-muted small">Imagen actual: {{ producto[9] }}</p>
+                        </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
+                    <small class="text-muted">Seleccione una nueva imagen para reemplazar la actual (opcional)</small>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Calcular precio de venta sugerido (25% sobre el precio de compra)
+    document.getElementById('precio_compra').addEventListener('input', function() {
+        const precioCompra = parseFloat(this.value) || 0;
+        const precioVentaSugerido = precioCompra * 1.25;
+        document.getElementById('precio_venta').value = precioVentaSugerido.toFixed(2);
+    });
+</script>
+{% endblock %} 

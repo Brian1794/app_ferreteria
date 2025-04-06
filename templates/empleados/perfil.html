@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .perfil-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .perfil-header {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .perfil-foto {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: var(--bg-light);
+        border: 4px solid var(--primary-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 3rem;
+        color: var(--primary-color);
+        overflow: hidden;
+    }
+    
+    .perfil-foto img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .perfil-info {
+        flex: 1;
+    }
+    
+    .perfil-nombre {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+    }
+    
+    .perfil-cargo {
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+    
+    .perfil-detalle {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        row-gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .perfil-label {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    
+    .perfil-value {
+        color: var(--text-color);
+    }
+    
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-title {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+    
+    .stat-description {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    .acciones-container {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .accion-btn {
+        padding: 0.8rem 1.5rem;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background-color 0.3s;
+    }
+    
+    .accion-btn:hover {
+        background-color: var(--primary-dark);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .accion-btn-outline {
+        background-color: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .accion-btn-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .perfil-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .perfil-detalle {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+        
+        .perfil-label {
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        
+        .acciones-container {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="perfil-container">
+    <div class="perfil-header">
+        <div class="perfil-foto">
+            {% if empleado.foto_perfil %}
+                <img src="{{ url_for('static', filename='uploads/empleados/' + empleado.foto_perfil) }}" alt="{{ empleado.nombre }}">
+            {% else %}
+                <i class="fas fa-user"></i>
+            {% endif %}
+        </div>
+        
+        <div class="perfil-info">
+            <h1 class="perfil-nombre">{{ empleado.nombre }}</h1>
+            <div class="perfil-cargo">{{ empleado.nombre_cargo }}</div>
+            
+            <div class="perfil-detalle">
+                <div class="perfil-label">Email:</div>
+                <div class="perfil-value">{{ empleado.email }}</div>
+                
+                <div class="perfil-label">Fecha de registro:</div>
+                <div class="perfil-value">{{ empleado.fecha_registro.strftime('%d/%m/%Y') if empleado.fecha_registro else 'N/A' }}</div>
+                
+                <div class="perfil-label">Último acceso:</div>
+                <div class="perfil-value">{{ empleado.ultimo_login.strftime('%d/%m/%Y %H:%M') if empleado.ultimo_login else 'N/A' }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2>Estadísticas</h2>
+    
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-title">Ventas Realizadas</div>
+            <div class="stat-value">{{ stats_ventas.total_ventas }}</div>
+            <div class="stat-description">Total: ${{ "{:,.2f}".format(stats_ventas.monto_total|float) }}</div>
+        </div>
+        
+        {% if empleado.nombre_cargo == 'Técnico' %}
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="stat-title">Reparaciones</div>
+            <div class="stat-value">{{ stats_reparaciones.total_reparaciones }}</div>
+            <div class="stat-description">{{ stats_reparaciones.reparaciones_activas }} reparaciones activas</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="acciones-container">
+        <a href="{{ url_for('auth.cambiar_password') }}" class="accion-btn">
+            <i class="fas fa-key"></i> Cambiar Contraseña
+        </a>
+        
+        <a href="#" id="editarFotoPerfilBtn" class="accion-btn accion-btn-outline">
+            <i class="fas fa-camera"></i> Cambiar Foto de Perfil
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botón para editar foto de perfil
+        const editarFotoBtn = document.getElementById('editarFotoPerfilBtn');
+        const modalCambiarFoto = new bootstrap.Modal(document.getElementById('modalCambiarFoto'));
+        
+        if (editarFotoBtn) {
+            editarFotoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modalCambiarFoto.show();
+            });
+        }
+    });
+</script>
+{% endblock %} 

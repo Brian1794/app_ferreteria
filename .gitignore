@@ -1,0 +1,32 @@
+# Entorno virtual
+venv/
+env/
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de distribución
+dist/
+build/
+*.egg-info/
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.swp
+*.swo
+.DS_Store
+
+# Archivos de base de datos
+*.db
+*.sqlite3
+
+# Entorno de desarrollo
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace 

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión de Empleado - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 3rem auto;
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        box-shadow: var(--box-shadow);
+    }
+
+    .auth-title {
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.8rem;
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    input {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--input-border);
+        border-radius: 5px;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 2px rgba(69, 123, 157, 0.2);
+        outline: none;
+    }
+
+    button[type="submit"] {
+        width: 100%;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+        margin-top: 1rem;
+        text-transform: uppercase;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button[type="submit"]:hover {
+        background-color: var(--secondary-dark);
+        transform: translateY(-2px);
+    }
+
+    button[type="submit"]:active {
+        animation: pulse 0.3s;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+        100% { transform: scale(1); }
+    }
+
+    .auth-links {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .auth-links a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .auth-links a:hover {
+        color: var(--link-hover);
+        text-decoration: underline;
+    }
+
+    /* Checkbox personalizado */
+    .form-check {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        width: auto;
+        margin-right: 0.5rem;
+    }
+
+    .form-check-label {
+        display: inline;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    /* Estilos para tema oscuro */
+    [data-theme="dark"] .auth-container {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    }
+
+    [data-theme="dark"] input {
+        background-color: var(--input-bg);
+        border-color: var(--input-border);
+    }
+
+    [data-theme="dark"] input:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 2px rgba(96, 150, 186, 0.4);
+    }
+
+    /* Ajustes responsive */
+    @media (max-width: 576px) {
+        .auth-container {
+            margin: 1.5rem auto;
+            padding: 1.5rem;
+        }
+        
+        .auth-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1 class="auth-title">Acceso de Empleado</h1>
+    
+    {% include 'includes/messages.html' %}
+    
+    <form method="POST" action="{{ url_for('auth.empleado_login') }}">
+        <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" name="email" placeholder="Ingrese su correo electrónico" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+        </div>
+        
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember">
+            <label class="form-check-label" for="remember">Recordarme</label>
+        </div>
+        
+        <button type="submit">INICIAR SESIÓN</button>
+    </form>
+    
+    <div class="auth-links">
+        <p>¿Eres cliente? <a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a></p>
+        <p><a href="{{ url_for('auth.recuperar_password') }}">¿Olvidaste tu contraseña?</a></p>
+    </div>
+</div>
+{% endblock %} 

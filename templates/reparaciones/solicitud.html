@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitud de Reparación{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reparacion-form-container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 20px;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-title {
+        color: var(--primary-color);
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+    
+    .form-subtitle {
+        color: var(--text-color);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .form-section {
+        background-color: var(--bg-secondary);
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .form-section-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--heading-color);
+        font-size: 1.2rem;
+    }
+    
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .required-field::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 4px;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .reparacion-form-container {
+            padding: 15px;
+            margin: 15px auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="reparacion-form-container">
+        <h1 class="form-title">Solicitud de Reparación</h1>
+        <p class="form-subtitle">Complete el formulario para solicitar la reparación de su electrodoméstico</p>
+        
+        {% include 'includes/messages.html' %}
+        
+        <form method="POST" action="{{ url_for('reparaciones.solicitud') }}">
+            <!-- Datos del Cliente -->
+            <div class="form-section">
+                <h3 class="form-section-title">Datos de Contacto</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nombre" class="form-label required-field">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required 
+                               placeholder="Ingrese su nombre completo">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label required-field">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                               placeholder="ejemplo@correo.com">
+                        <div class="help-text">Le enviaremos actualizaciones del estado de su reparación</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="telefono" class="form-label required-field">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" required
+                               placeholder="Ej: 099123456">
+                        <div class="help-text">Nos comunicaremos para coordinar la reparación</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="direccion" class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion"
+                               placeholder="Ingrese su dirección completa">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datos del Electrodoméstico -->
+            <div class="form-section">
+                <h3 class="form-section-title">Datos del Electrodoméstico</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="electrodomestico" class="form-label required-field">Tipo de Electrodoméstico</label>
+                        <select class="form-select" id="electrodomestico" name="electrodomestico" required>
+                            <option value="" selected disabled>Seleccione una opción</option>
+                            <option value="Refrigeradora">Refrigeradora</option>
+                            <option value="Lavadora">Lavadora</option>
+                            <option value="Secadora">Secadora</option>
+                            <option value="Cocina">Cocina</option>
+                            <option value="Horno">Horno</option>
+                            <option value="Microondas">Microondas</option>
+                            <option value="Aire acondicionado">Aire acondicionado</option>
+                            <option value="Televisor">Televisor</option>
+                            <option value="Equipo de sonido">Equipo de sonido</option>
+                            <option value="Licuadora">Licuadora</option>
+                            <option value="Batidora">Batidora</option>
+                            <option value="Otro">Otro (especificar en descripción)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="marca" class="form-label">Marca</label>
+                        <input type="text" class="form-control" id="marca" name="marca"
+                               placeholder="Ej: Samsung, LG, Mabe, etc.">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="modelo" class="form-label">Modelo</label>
+                        <input type="text" class="form-control" id="modelo" name="modelo"
+                               placeholder="Ingrese el modelo del electrodoméstico">
+                        <div class="help-text">Si conoce el número de modelo o serie, ingréselo aquí</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Descripción del Problema -->
+            <div class="form-section">
+                <h3 class="form-section-title">Descripción del Problema</h3>
+                <div class="mb-3">
+                    <label for="problema" class="form-label required-field">Detalle del problema</label>
+                    <textarea class="form-control" id="problema" name="problema" rows="4" required
+                              placeholder="Describa con detalle el problema que presenta el electrodoméstico"></textarea>
+                    <div class="help-text">Incluya toda la información relevante que pueda ayudarnos a diagnosticar el problema, como sonidos extraños, errores mostrados, tiempo que lleva el problema, etc.</div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Enviar Solicitud</button>
+                </div>
+                <div class="col-12 text-center mt-3">
+                    <a href="{{ url_for('reparaciones.index') }}" class="btn btn-outline-secondary">Volver</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validación del formulario
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Validar campos requeridos
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            // Validar email
+            const emailField = document.getElementById('email');
+            if (emailField.value && !isValidEmail(emailField.value)) {
+                isValid = false;
+                emailField.classList.add('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Por favor complete todos los campos requeridos correctamente.');
+            }
+        });
+        
+        // Función para validar email
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    });
+</script>
+{% endblock %} 

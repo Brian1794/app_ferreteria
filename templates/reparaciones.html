@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Reparaciones en Curso</h1>
+<form action="/agregar_reparacion" method="POST">
+    <input type="number" name="cliente_id" placeholder="ID Cliente" required>
+    <input type="text" name="descripcion" placeholder="Descripción del daño" required>
+    <button type="submit">Registrar Reparación</button>
+</form>
+
+<ul>
+    {% for reparacion in reparaciones %}
+    <li>
+        {{ reparacion[1] }} - Estado: {{ reparacion[2] }}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

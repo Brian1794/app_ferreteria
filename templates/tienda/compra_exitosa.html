@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Compra - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detalle-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .detalle-titulo {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-color);
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .detalle-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .detalle-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .detalle-header-info h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+    }
+    
+    .detalle-header-info p {
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+    }
+    
+    .estado-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .estado-pagada {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .estado-pendiente {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .estado-cancelada {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .tabla-historial {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+    }
+    
+    .tabla-historial th, 
+    .tabla-historial td {
+        padding: 0.75rem;
+        text-align: left;
+    }
+    
+    .tabla-historial th {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--text-color);
+        font-weight: 600;
+    }
+    
+    .tabla-historial tr {
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .tabla-historial tr:last-child {
+        border-bottom: none;
+    }
+    
+    .tabla-historial tr:nth-child(even) {
+        background-color: var(--hover-bg);
+    }
+    
+    .detalle-resumen {
+        display: flex;
+        justify-content: flex-end;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    
+    .detalle-total {
+        margin-left: 1rem;
+    }
+    
+    .detalle-mensaje {
+        text-align: center;
+        padding: 2rem;
+        background-color: var(--bg-light);
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .detalle-mensaje i {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .detalle-mensaje h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detalle-mensaje p {
+        color: var(--text-muted);
+    }
+    
+    .accion-btn {
+        padding: 0.4rem 0.8rem;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: background-color 0.3s;
+    }
+    
+    .accion-btn:hover {
+        background-color: var(--primary-dark);
+        text-decoration: none;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .detalle-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .detalle-header-info {
+            margin-bottom: 1rem;
+        }
+        
+        .tabla-historial {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .detalle-resumen {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+    <h1 class="detalle-titulo">
+        <i class="fas fa-check-circle mr-2"></i> Detalle de Compra
+    </h1>
+    
+    <div class="detalle-card">
+        <div class="detalle-header">
+            <div class="detalle-header-info">
+                <h2>Factura #{{ venta.id }}</h2>
+                <p>Fecha: {{ venta.fecha.strftime('%d/%m/%Y %H:%M') if venta.fecha else 'No disponible' }}</p>
+                {% if venta.observaciones %}
+                <p>Observaciones: {{ venta.observaciones }}</p>
+                {% endif %}
+            </div>
+            <span class="estado-badge estado-{{ venta.estado|lower }}">
+                {{ venta.estado }}
+            </span>
+        </div>
+        
+        {% if detalles %}
+            <table class="tabla-historial">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td>{{ detalle.nombre }}</td>
+                        <td>{{ detalle.cantidad }}</td>
+                        <td>${{ "{:,.2f}".format(detalle.precio_unitario|float) }}</td>
+                        <td>${{ "{:,.2f}".format(detalle.subtotal|float) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="detalle-mensaje">
+                <i class="fas fa-info-circle"></i>
+                <h3>Los detalles de esta compra no están disponibles</h3>
+                <p>Esto puede deberse a que la información detallada de productos no fue registrada para esta compra.</p>
+            </div>
+        {% endif %}
+        
+        <div class="detalle-resumen">
+            <div>Total:</div>
+            <div class="detalle-total">${{ "{:,.2f}".format(venta.total|float) }}</div>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('tienda.mis_compras') }}" class="accion-btn">
+        <i class="fas fa-arrow-left"></i> Volver a mis compras
+    </a>
+</div>
+{% endblock %} 

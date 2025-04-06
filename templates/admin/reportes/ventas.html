@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Ventas - Ferretería La U{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    
+    .filter-section {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .data-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--box-shadow);
+        height: 100%;
+    }
+    
+    .data-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: var(--heading-color);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Reporte de Ventas</h1>
+        <a href="{{ url_for('admin.reportes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a Reportes
+        </a>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="filter-section">
+        <form action="{{ url_for('admin.reportes_ventas') }}" method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="periodo" class="form-label">Período</label>
+                <select class="form-select" id="periodo" name="periodo">
+                    <option value="dia" {% if periodo == 'dia' %}selected{% endif %}>Diario (últimos 30 días)</option>
+                    <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Mensual (último año)</option>
+                    <option value="año" {% if periodo == 'año' %}selected{% endif %}>Anual</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="categoria" class="form-label">Categoría</label>
+                <select class="form-select" id="categoria" name="categoria">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if request.args.get('categoria') == categoria.id|string %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="vendedor" class="form-label">Vendedor</label>
+                <select class="form-select" id="vendedor" name="vendedor">
+                    <option value="">Todos los vendedores</option>
+                    {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.id }}" {% if request.args.get('vendedor') == vendedor.id|string %}selected{% endif %}>
+                            {{ vendedor.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Aplicar Filtros
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Resumen de datos -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="data-card">
+                <h3>Total Ventas</h3>
+                <div class="stat-value">{{ stats.total_ventas }}</div>
+                <div class="stat-label">Transacciones</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <h3>Ingresos</h3>
+                <div class="stat-value">${{ "%.2f"|format(stats.ingresos_totales) }}</div>
+                <div class="stat-label">Valor total</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <h3>Promedio</h3>
+                <div class="stat-value">${{ "%.2f"|format(stats.promedio_venta) }}</div>
+                <div class="stat-label">Valor por venta</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <h3>Clientes</h3>
+                <div class="stat-value">{{ stats.total_clientes }}</div>
+                <div class="stat-label">Compradores únicos</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Evolución de Ventas</h2>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="ventasChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tablas de datos -->
+    <div class="row">
+        <!-- Productos más vendidos -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Productos Más Vendidos</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Ingresos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos_top %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ producto.nombre }}</td>
+                                    <td>{{ producto.cantidad }}</td>
+                                    <td>${{ "%.2f"|format(producto.total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mejores clientes -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Mejores Clientes</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Cliente</th>
+                                    <th>Compras</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cliente in clientes_top %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ cliente.nombre }}</td>
+                                    <td>{{ cliente.compras }}</td>
+                                    <td>${{ "%.2f"|format(cliente.total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Envolvemos todo en una función anónima para evitar colisiones
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener el contexto del lienzo
+        var ctx = document.getElementById('ventasChart').getContext('2d');
+        
+        // Crear el gráfico con los datos proporcionados por Flask
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ chart_data.labels|tojson }}'),
+                datasets: [{
+                    label: 'Ventas',
+                    data: JSON.parse('{{ chart_data.values|tojson }}'),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += '$' + context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+})();
+</script>
+{% endblock %} 

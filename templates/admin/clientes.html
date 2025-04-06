@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Clientes - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .clients-container {
+        max-width: 1200px;
+        margin: 30px auto;
+    }
+    
+    .clients-header {
+        margin-bottom: 25px;
+    }
+    
+    .clients-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--heading-color);
+        margin-bottom: 10px;
+    }
+    
+    .clients-subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+    
+    .stats-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: var(--box-shadow);
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 20px;
+    }
+    
+    .icon-total {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+    }
+    
+    .icon-hoy {
+        background-color: rgba(var(--success-rgb), 0.1);
+        color: rgba(var(--success-rgb), 1);
+    }
+    
+    .icon-mes {
+        background-color: rgba(var(--info-rgb), 0.1);
+        color: rgba(var(--info-rgb), 1);
+    }
+    
+    .stat-content h3 {
+        font-size: 1rem;
+        margin-bottom: 5px;
+        color: var(--heading-color);
+    }
+    
+    .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--heading-color);
+    }
+    
+    .controls-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .search-form {
+        flex: 1;
+        min-width: 300px;
+        max-width: 500px;
+    }
+    
+    .search-input-group {
+        display: flex;
+    }
+    
+    .sort-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .sort-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .table-container {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .clients-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .clients-table th {
+        background-color: var(--bg-secondary);
+        color: var(--heading-color);
+        font-weight: 600;
+        text-align: left;
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .clients-table td {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .clients-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .clients-table tr:hover {
+        background-color: var(--hover-bg);
+    }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+    }
+    
+    .sortable {
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .sortable:hover {
+        background-color: var(--hover-bg);
+    }
+    
+    .sortable::after {
+        content: "↕";
+        position: absolute;
+        right: 10px;
+        opacity: 0.5;
+    }
+    
+    .sortable.asc::after {
+        content: "↑";
+        opacity: 1;
+    }
+    
+    .sortable.desc::after {
+        content: "↓";
+        opacity: 1;
+    }
+    
+    .actions-cell {
+        text-align: right;
+    }
+    
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 5px 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 4px;
+    }
+    
+    .action-btn:hover {
+        background-color: var(--bg-secondary);
+        color: var(--heading-color);
+    }
+    
+    .view-btn:hover {
+        color: var(--primary-color);
+    }
+    
+    .edit-btn:hover {
+        color: var(--info-color);
+    }
+    
+    .delete-btn:hover {
+        color: var(--danger-color);
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        color: var(--heading-color);
+        margin-bottom: 10px;
+    }
+    
+    .empty-state-text {
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container clients-container">
+    <div class="clients-header">
+        <h1 class="clients-title">Gestión de Clientes</h1>
+        <p class="clients-subtitle">Administra la información de tus clientes y su historial de compras</p>
+    </div>
+    
+    <!-- Estadísticas rápidas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon icon-total">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total de Clientes</h3>
+                <div class="stat-value">{{ stats.total|default(0) }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon icon-hoy">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Registrados Hoy</h3>
+                <div class="stat-value">{{ stats.hoy|default(0) }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon icon-mes">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Registrados este Mes</h3>
+                <div class="stat-value">{{ stats.mes|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros y acciones -->
+    <div class="controls-section">
+        <form class="search-form" method="GET" action="{{ url_for('admin.clientes') }}">
+            <div class="search-input-group">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, email o teléfono..." value="{{ search }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+        
+        <div class="sort-controls">
+            <span class="sort-label">Ordenar por:</span>
+            <select class="form-select form-select-sm" id="orderBySelect">
+                <option value="nombre" {% if orderby == 'nombre' %}selected{% endif %}>Nombre</option>
+                <option value="email" {% if orderby == 'email' %}selected{% endif %}>Email</option>
+                <option value="fecha_registro" {% if orderby == 'fecha_registro' %}selected{% endif %}>Fecha de registro</option>
+                <option value="ultimo_login" {% if orderby == 'ultimo_login' %}selected{% endif %}>Último acceso</option>
+            </select>
+            <select class="form-select form-select-sm" id="orderSelect">
+                <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascendente</option>
+                <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descendente</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Lista de clientes -->
+    <div class="table-container">
+        {% if clientes %}
+            <table class="clients-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Fecha de Registro</th>
+                        <th>Último Acceso</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if cliente.foto_perfil %}
+                                        <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="{{ cliente.nombre }}" class="avatar me-2">
+                                    {% else %}
+                                        <div class="avatar me-2">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ cliente.nombre }}</div>
+                                        {% if cliente.ciudad %}
+                                            <small class="text-muted">{{ cliente.ciudad }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ cliente.email }}</td>
+                            <td>{{ cliente.telefono|default('--') }}</td>
+                            <td>
+                                {% if cliente.fecha_registro %}
+                                    {{ cliente.fecha_registro.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cliente.ultimo_login %}
+                                    {{ cliente.ultimo_login.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td class="actions-cell">
+                                <a href="{{ url_for('admin.ver_cliente', cliente_id=cliente.id_cliente) }}" class="action-btn view-btn" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="action-btn edit-btn" title="Editar cliente">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="action-btn delete-btn" title="Eliminar cliente" data-bs-toggle="modal" data-bs-target="#deleteClientModal" data-cliente-id="{{ cliente.id_cliente }}" data-cliente-nombre="{{ cliente.nombre }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h2 class="empty-state-title">No se encontraron clientes</h2>
+                {% if search %}
+                    <p class="empty-state-text">No hay resultados para tu búsqueda. Intenta con otros términos o revisa los filtros aplicados.</p>
+                    <a href="{{ url_for('admin.clientes') }}" class="btn btn-primary">Mostrar todos los clientes</a>
+                {% else %}
+                    <p class="empty-state-text">Aún no hay clientes registrados en el sistema.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteClientModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar al cliente <strong id="clienteNombre"></strong>?</p>
+                <p class="text-danger">Esta acción no se puede deshacer y eliminará todos los datos asociados al cliente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteClientForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Actualizar orden de la tabla
+        const orderBySelect = document.getElementById('orderBySelect');
+        const orderSelect = document.getElementById('orderSelect');
+        
+        if (orderBySelect && orderSelect) {
+            orderBySelect.addEventListener('change', updateSort);
+            orderSelect.addEventListener('change', updateSort);
+        }
+        
+        function updateSort() {
+            const orderBy = orderBySelect.value;
+            const order = orderSelect.value;
+            
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('orderby', orderBy);
+            currentUrl.searchParams.set('order', order);
+            
+            window.location.href = currentUrl.toString();
+        }
+        
+        // Modal de eliminación
+        const deleteClientModal = document.getElementById('deleteClientModal');
+        if (deleteClientModal) {
+            deleteClientModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const clienteId = button.getAttribute('data-cliente-id');
+                const clienteNombre = button.getAttribute('data-cliente-nombre');
+                
+                document.getElementById('clienteNombre').textContent = clienteNombre;
+                document.getElementById('deleteClientForm').action = `/admin/clientes/${clienteId}/eliminar`;
+            });
+        }
+    });
+</script>
+{% endblock %} 

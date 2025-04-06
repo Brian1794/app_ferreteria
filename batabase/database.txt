@@ -1,0 +1,217 @@
+-- Crear la base de datos
+CREATE DATABASE IF NOT EXISTS bzm5uc8abvbfoesn7g5v;
+USE bzm5uc8abvbfoesn7g5v;
+
+-- Tabla de Clientes
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    contrasena VARCHAR(255) NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Roles
+CREATE TABLE roles (
+    id_rol INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_rol VARCHAR(100) NOT NULL
+);
+
+-- Relación Cliente - Rol
+CREATE TABLE cliente_rol (
+    id_cliente INT,
+    id_rol INT,
+    PRIMARY KEY (id_cliente, id_rol),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
+);
+
+-- Tabla de Cargos
+CREATE TABLE cargos (
+    id_cargo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_cargo VARCHAR(100) NOT NULL
+);
+
+-- Tabla de Empleados
+CREATE TABLE empleados (
+    id_empleado INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    cedula VARCHAR(20) UNIQUE NOT NULL,
+    telefono VARCHAR(20),
+    direccion VARCHAR(150),
+    id_cargo INT,
+    FOREIGN KEY (id_cargo) REFERENCES cargos(id_cargo)
+);
+
+-- Tabla de Categorías de Productos
+CREATE TABLE categorias (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_categoria VARCHAR(100) NOT NULL
+);
+
+-- Tabla de Productos
+CREATE TABLE productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    stock INT DEFAULT 0,
+    precio DECIMAL(10,2) NOT NULL,
+    id_categoria INT,
+    FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
+);
+
+-- Tabla de Proveedores
+CREATE TABLE proveedores (
+    id_proveedor INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_proveedor VARCHAR(100) NOT NULL,
+    contacto VARCHAR(100),
+    telefono VARCHAR(20),
+    direccion VARCHAR(150)
+);
+
+-- Tabla de Ingresos de Productos
+CREATE TABLE ingresos_productos (
+    id_ingreso INT AUTO_INCREMENT PRIMARY KEY,
+    id_producto INT,
+    id_proveedor INT,
+    cantidad INT NOT NULL,
+    fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_empleado INT,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor),
+    FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
+);
+
+-- Tabla de Egresos de Productos
+CREATE TABLE egresos_productos (
+    id_egreso INT AUTO_INCREMENT PRIMARY KEY,
+    id_producto INT,
+    id_cliente INT,
+    cantidad INT NOT NULL,
+    fecha_egreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_empleado INT,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
+);
+
+-- Tabla de Ventas
+CREATE TABLE ventas (
+    id_venta INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,
+    fecha_venta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+-- Tabla de Detalles de Ventas
+CREATE TABLE detalle_ventas (
+    id_detalle_venta INT AUTO_INCREMENT PRIMARY KEY,
+    id_venta INT,
+    id_producto INT,
+    cantidad INT,
+    precio_unitario DECIMAL(10,2),
+    FOREIGN KEY (id_venta) REFERENCES ventas(id_venta),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+-- Tabla de Compras
+CREATE TABLE compras (
+    id_compra INT AUTO_INCREMENT PRIMARY KEY,
+    id_proveedor INT,
+    fecha_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2),
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+);
+
+-- Tabla de Detalles de Compras
+CREATE TABLE detalle_compras (
+    id_detalle_compra INT AUTO_INCREMENT PRIMARY KEY,
+    id_compra INT,
+    id_producto INT,
+    cantidad INT,
+    precio_unitario DECIMAL(10,2),
+    FOREIGN KEY (id_compra) REFERENCES compras(id_compra),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+-- Tabla de Reparaciones
+CREATE TABLE reparaciones (
+    id_reparacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,
+    descripcion TEXT,
+    fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_entrega TIMESTAMP,
+    estado ENUM('Pendiente', 'En Proceso', 'Completado', 'Entregado'),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+-- Tabla de Detalles de Reparaciones
+CREATE TABLE detalle_reparaciones (
+    id_detalle_reparacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_reparacion INT,
+    id_producto INT,
+    cantidad INT,
+    FOREIGN KEY (id_reparacion) REFERENCES reparaciones(id_reparacion),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+-- Tabla de Seguimiento de Reparaciones
+CREATE TABLE seguimiento_reparaciones (
+    id_seguimiento INT AUTO_INCREMENT PRIMARY KEY,
+    id_reparacion INT,
+    fecha_seguimiento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT,
+    FOREIGN KEY (id_reparacion) REFERENCES reparaciones(id_reparacion)
+);
+
+-- Tabla de Configuración
+CREATE TABLE configuracion (
+    id_configuracion INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(100) NOT NULL,
+    valor VARCHAR(255) NOT NULL
+);
+
+-- Tabla de Contabilidad
+CREATE TABLE contabilidad (
+    id_contabilidad INT AUTO_INCREMENT PRIMARY KEY,
+    descripcion TEXT,
+    monto DECIMAL(10,2),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tipo ENUM('Ingreso', 'Egreso')
+);
+
+-- Tabla de Módulos
+CREATE TABLE modulos (
+    id_modulo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_modulo VARCHAR(100) NOT NULL
+);
+
+-- Tabla de Permisos
+CREATE TABLE permisos (
+    id_permiso INT AUTO_INCREMENT PRIMARY KEY,
+    id_rol INT,
+    id_modulo INT,
+    FOREIGN KEY (id_rol) REFERENCES roles(id_rol),
+    FOREIGN KEY (id_modulo) REFERENCES modulos(id_modulo)
+);
+
+-- Tabla de Carrito
+CREATE TABLE carrito (
+    id_carrito INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,
+    id_producto INT,
+    cantidad INT,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+-- Tabla de Estados de Producto
+CREATE TABLE estados_producto (
+    id_estado INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_estado VARCHAR(100) NOT NULL
+);
+
+ 

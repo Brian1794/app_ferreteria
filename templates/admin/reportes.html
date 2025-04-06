@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        margin-bottom: 30px;
+    }
+    
+    .admin-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--heading-color);
+        margin-bottom: 10px;
+    }
+    
+    .admin-subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+    
+    .report-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--box-shadow-hover);
+        text-decoration: none;
+        color: var(--text-color);
+    }
+    
+    .report-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+    
+    .report-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--heading-color);
+    }
+    
+    .report-description {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+    }
+    
+    .card-footer {
+        margin-top: auto;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .icon-ventas {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+    }
+    
+    .icon-clientes {
+        background-color: rgba(var(--info-rgb), 0.1);
+        color: rgba(var(--info-rgb), 1);
+    }
+    
+    .icon-productos {
+        background-color: rgba(var(--success-rgb), 0.1);
+        color: rgba(var(--success-rgb), 1);
+    }
+    
+    .icon-reparaciones {
+        background-color: rgba(var(--warning-rgb), 0.1);
+        color: rgba(var(--warning-rgb), 1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-header">
+        <h1 class="admin-title">Reportes y Estadísticas</h1>
+        <p class="admin-subtitle">Analiza el rendimiento de tu negocio con reportes detallados</p>
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Panel
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ url_for('admin.reportes_ventas') }}" class="report-card">
+                <div class="report-icon icon-ventas">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="report-title">Ventas</h3>
+                <p class="report-description">Análisis de ventas por período, productos más vendidos y mejores clientes.</p>
+                <div class="card-footer">
+                    <span class="btn btn-sm btn-outline-primary">Ver reporte</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ url_for('admin.reportes', tipo='clientes') }}" class="report-card">
+                <div class="report-icon icon-clientes">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="report-title">Clientes</h3>
+                <p class="report-description">Estadísticas de clientes, frecuencia de compra y adquisición de nuevos clientes.</p>
+                <div class="card-footer">
+                    <span class="btn btn-sm btn-outline-primary">Ver reporte</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ url_for('admin.reportes', tipo='inventario') }}" class="report-card">
+                <div class="report-icon icon-productos">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 class="report-title">Inventario</h3>
+                <p class="report-description">Análisis de stock, productos con bajo inventario y rotación.</p>
+                <div class="card-footer">
+                    <span class="btn btn-sm btn-outline-primary">Ver reporte</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ url_for('admin.reportes', tipo='reparaciones') }}" class="report-card">
+                <div class="report-icon icon-reparaciones">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="report-title">Reparaciones</h3>
+                <p class="report-description">Estadísticas de servicios técnicos, tiempo de resolución y satisfacción.</p>
+                <div class="card-footer">
+                    <span class="btn btn-sm btn-outline-primary">Ver reporte</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Informes personalizados</h2>
+        </div>
+        <div class="card-body">
+            <p>Selecciona el tipo de informe y período para generar un reporte personalizado:</p>
+            <form action="{{ url_for('admin.reportes') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="tipo" class="form-label">Tipo de reporte</label>
+                    <select name="tipo" id="tipo" class="form-select">
+                        <option value="ventas" {% if tipo_reporte == 'ventas' %}selected{% endif %}>Ventas</option>
+                        <option value="clientes" {% if tipo_reporte == 'clientes' %}selected{% endif %}>Clientes</option>
+                        <option value="inventario" {% if tipo_reporte == 'inventario' %}selected{% endif %}>Inventario</option>
+                        <option value="reparaciones" {% if tipo_reporte == 'reparaciones' %}selected{% endif %}>Reparaciones</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="periodo" class="form-label">Período</label>
+                    <select name="periodo" id="periodo" class="form-select">
+                        <option value="dia" {% if periodo == 'dia' %}selected{% endif %}>Diario (últimos 30 días)</option>
+                        <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Mensual (último año)</option>
+                        <option value="año" {% if periodo == 'año' %}selected{% endif %}>Anual</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-chart-line me-2"></i>Generar reporte
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

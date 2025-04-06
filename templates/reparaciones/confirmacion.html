@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitud Enviada{% endblock %}
+
+{% block extra_css %}
+<style>
+    .confirmation-container {
+        max-width: 700px;
+        margin: 50px auto;
+        text-align: center;
+        padding: 30px;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .confirmation-icon {
+        font-size: 80px;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+    
+    .confirmation-title {
+        font-size: 2rem;
+        color: var(--heading-color);
+        margin-bottom: 15px;
+    }
+    
+    .confirmation-message {
+        font-size: 1.1rem;
+        color: var(--text-color);
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    
+    .next-steps {
+        background-color: var(--bg-secondary);
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-left: 4px solid var(--primary-color);
+        text-align: left;
+    }
+    
+    .next-steps h3 {
+        color: var(--heading-color);
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    .next-steps ul {
+        padding-left: 20px;
+    }
+    
+    .next-steps li {
+        margin-bottom: 10px;
+        color: var(--text-color);
+    }
+    
+    .btn-action {
+        margin: 5px;
+        padding: 10px 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .confirmation-container {
+            margin: 30px 15px;
+            padding: 20px;
+        }
+        
+        .confirmation-icon {
+            font-size: 60px;
+        }
+        
+        .confirmation-title {
+            font-size: 1.6rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="confirmation-container">
+        <div class="confirmation-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        
+        <h1 class="confirmation-title">¡Solicitud Enviada con Éxito!</h1>
+        
+        <p class="confirmation-message">
+            Hemos recibido tu solicitud de reparación. Un técnico especializado revisará 
+            tu caso y te contactará a la brevedad para coordinar la revisión del electrodoméstico.
+        </p>
+        
+        <div class="next-steps">
+            <h3>Próximos Pasos:</h3>
+            <ul>
+                <li>Recibirás un correo electrónico con la confirmación de tu solicitud.</li>
+                <li>Uno de nuestros técnicos te contactará en un plazo de 24-48 horas hábiles.</li>
+                <li>Se coordinará contigo la fecha y hora para la revisión del electrodoméstico.</li>
+                <li>Después de la revisión, te proporcionaremos un presupuesto detallado.</li>
+            </ul>
+        </div>
+        
+        <div class="reference-number">
+            <p>Si necesitas contactarnos, por favor llámanos al <strong>(02) 123-4567</strong> o escríbenos a <strong>soporte@ferreteriala-u.com</strong></p>
+        </div>
+        
+        <div class="actions mt-4">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-action">Volver al Inicio</a>
+            <a href="{{ url_for('reparaciones.index') }}" class="btn btn-outline-secondary btn-action">Más Servicios</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

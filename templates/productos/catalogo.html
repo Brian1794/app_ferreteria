@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo de Productos - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .categoria-filtros {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 30px;
+        justify-content: center;
+    }
+    
+    .filtro-btn {
+        padding: 8px 15px;
+        border-radius: 50px;
+        background-color: var(--card-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    
+    .filtro-btn:hover, .filtro-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .productos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+    }
+    
+    .producto-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .producto-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .producto-img {
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .producto-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .producto-card:hover .producto-img img {
+        transform: scale(1.05);
+    }
+    
+    .producto-categoria {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .producto-destacado {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: var(--accent-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .producto-info {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .producto-titulo {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+    }
+    
+    .producto-descripcion {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        flex: 1;
+    }
+    
+    .producto-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+    
+    .producto-precio {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+    }
+    
+    .btn-agregar {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-agregar:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .stock-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: inline-block;
+    }
+    
+    .en-stock {
+        background-color: rgba(var(--success-color), 0.1);
+        color: var(--success-color);
+    }
+    
+    .sin-stock {
+        background-color: rgba(var(--danger-color), 0.1);
+        color: var(--danger-color);
+    }
+    
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .section-header h1 {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+    }
+    
+    .section-header p {
+        color: var(--text-muted);
+        max-width: 700px;
+        margin: 0 auto;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .productos-grid {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+        
+        .producto-img {
+            height: 160px;
+        }
+        
+        .section-header h1 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h1>Catálogo de Productos</h1>
+    <p>Descubre nuestra amplia selección de herramientas y materiales de alta calidad para tus proyectos</p>
+</div>
+
+<!-- Filtros por categoría -->
+<div class="categoria-filtros">
+    <a href="{{ url_for('productos.catalogo') }}" class="filtro-btn {% if not categoria_actual %}active{% endif %}">
+        Todos
+    </a>
+    {% for categoria in categorias %}
+    <a href="{{ url_for('productos.catalogo', categoria=categoria.id) }}" 
+       class="filtro-btn {% if categoria_actual and categoria_actual|int == categoria.id|int %}active{% endif %}">
+        {{ categoria.nombre }}
+    </a>
+    {% endfor %}
+</div>
+
+{% if productos %}
+<div class="productos-grid">
+    {% for producto in productos %}
+    <div class="producto-card">
+        <div class="producto-img">
+            {% if producto.imagen %}
+            <img src="{{ url_for('static', filename='uploads/productos/' + producto.imagen) }}" alt="{{ producto.nombre }}">
+            {% else %}
+            <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ producto.nombre }}">
+            {% endif %}
+            
+            {% if producto.categoria_nombre %}
+            <div class="producto-categoria">{{ producto.categoria_nombre }}</div>
+            {% endif %}
+            
+            {% if producto.destacado %}
+            <div class="producto-destacado">Destacado</div>
+            {% endif %}
+        </div>
+        
+        <div class="producto-info">
+            <h3 class="producto-titulo">{{ producto.nombre }}</h3>
+            
+            {% if producto.stock > 0 %}
+            <span class="stock-badge en-stock">En stock</span>
+            {% else %}
+            <span class="stock-badge sin-stock">Sin stock</span>
+            {% endif %}
+            
+            <p class="producto-descripcion">
+                {% if producto.descripcion %}
+                {{ producto.descripcion|truncate(100) }}
+                {% else %}
+                Producto de alta calidad disponible en nuestra ferretería.
+                {% endif %}
+            </p>
+            
+            <div class="producto-footer">
+                <div class="producto-precio">${{ producto.precio_venta }}</div>
+                
+                {% if producto.stock > 0 %}
+                <button class="btn-agregar" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio_venta }}')">
+                    <i class="fas fa-shopping-cart"></i> Agregar
+                </button>
+                {% else %}
+                <button class="btn-agregar" disabled style="background-color: var(--secondary-color);">
+                    Sin stock
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center my-5">
+    <i class="fas fa-box-open fa-3x mb-3" style="color: var(--text-muted);"></i>
+    <h3>No hay productos disponibles</h3>
+    <p>Pronto agregaremos nuevos productos a nuestro catálogo.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function agregarAlCarrito(id, nombre, precio) {
+        // Esta función se puede implementar cuando esté lista la funcionalidad del carrito
+        alert(`Producto ${nombre} agregado al carrito`);
+        
+        // Aquí podría implementarse la lógica para agregar al carrito mediante AJAX
+        // o actualizar el contador del carrito en la interfaz
+    }
+</script>
+{% endblock %} 

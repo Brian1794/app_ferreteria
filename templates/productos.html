@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Productos</title>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block content %}
+    <h1>Productos Disponibles</h1>
+    <div class="container">
+        {% for producto in productos %}
+        <div class="card">
+            <h2>{{ producto[1] }}</h2>
+            <p>{{ producto[2] }}</p>
+            <p>Precio: ${{ producto[3] }}</p>
+            <p>Stock: {{ producto[4] }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endblock %}
+</body>
+</html>

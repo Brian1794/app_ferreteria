@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Reparación #{{ reparacion.id }} - Ferretería{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reparaciones/detalle.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reparacion-container">
+    <div class="section-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>Reparación #{{ reparacion.id }}</h1>
+            <div class="actions">
+                {% if current_user.tipo == 'empleado' %}
+                <a href="{{ url_for('reparaciones.lista') }}" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a la lista
+                </a>
+                <button id="btnActualizarEstado" class="btn-primary">
+                    <i class="fas fa-edit"></i> Actualizar estado
+                </button>
+                {% else %}
+                <a href="{{ url_for('reparaciones.mis_reparaciones') }}" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a mis reparaciones
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card-grid">
+        <!-- Información principal -->
+        <div class="info-card">
+            <div class="card-header">
+                <h3>Información principal</h3>
+                <span class="badge badge-{{ reparacion.estado }}">{{ reparacion.estado_texto }}</span>
+            </div>
+            <div class="card-content">
+                <div class="info-row">
+                    <span class="info-label">Descripción:</span>
+                    <span class="info-value">{{ reparacion.descripcion }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cliente:</span>
+                    <span class="info-value">{{ reparacion.cliente_nombre }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Técnico asignado:</span>
+                    <span class="info-value">{{ reparacion.tecnico_nombre or 'Sin asignar' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha de recepción:</span>
+                    <span class="info-value">{{ reparacion.fecha_recepcion }}</span>
+                </div>
+                {% if reparacion.fecha_entrega_estimada %}
+                <div class="info-row">
+                    <span class="info-label">Entrega estimada:</span>
+                    <span class="info-value">{{ reparacion.fecha_entrega_estimada }}</span>
+                </div>
+                {% endif %}
+                {% if reparacion.costo_estimado %}
+                <div class="info-row">
+                    <span class="info-label">Costo estimado:</span>
+                    <span class="info-value">${{ reparacion.costo_estimado }}</span>
+                </div>
+                {% endif %}
+                {% if reparacion.costo_final %}
+                <div class="info-row">
+                    <span class="info-label">Costo final:</span>
+                    <span class="info-value">${{ reparacion.costo_final }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Historial de la reparación -->
+        <div class="history-card">
+            <div class="card-header">
+                <h3>Historial</h3>
+            </div>
+            <div class="card-content">
+                {% if historial %}
+                <div class="timeline">
+                    {% for evento in historial %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h4>{{ evento.estado_nuevo }}</h4>
+                            <p>{{ evento.descripcion }}</p>
+                            <small>{{ evento.fecha }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-message">No hay eventos registrados en el historial.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if current_user.tipo == 'empleado' %}
+        <!-- Formulario de actualización (solo para empleados) -->
+        <div class="update-card" id="updateForm" style="display: none;">
+            <div class="card-header">
+                <h3>Actualizar estado</h3>
+            </div>
+            <div class="card-content">
+                <form action="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="estado">Nuevo estado</label>
+                        <select name="estado" id="estado" class="form-control" required>
+                            <option value="recibido" {% if reparacion.estado == 'recibido' %}selected{% endif %}>Recibido</option>
+                            <option value="diagnostico" {% if reparacion.estado == 'diagnostico' %}selected{% endif %}>En diagnóstico</option>
+                            <option value="progreso" {% if reparacion.estado == 'progreso' %}selected{% endif %}>En progreso</option>
+                            <option value="listo" {% if reparacion.estado == 'listo' %}selected{% endif %}>Listo para entrega</option>
+                            <option value="entregado" {% if reparacion.estado == 'entregado' %}selected{% endif %}>Entregado</option>
+                            <option value="cancelado" {% if reparacion.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción del cambio</label>
+                        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tecnico_id">Asignar técnico</label>
+                        <select name="tecnico_id" id="tecnico_id" class="form-control">
+                            <option value="">Sin asignar</option>
+                            <!-- Aquí se cargarían los técnicos disponibles desde la base de datos -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_entrega_estimada">Fecha de entrega estimada</label>
+                        <input type="date" name="fecha_entrega_estimada" id="fecha_entrega_estimada" 
+                               class="form-control" value="{{ reparacion.fecha_entrega_estimada }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="costo_estimado">Costo estimado</label>
+                        <input type="number" name="costo_estimado" id="costo_estimado" 
+                               class="form-control" step="0.01" value="{{ reparacion.costo_estimado or '' }}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="btnCancelarUpdate" class="btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn-primary">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnActualizar = document.getElementById('btnActualizarEstado');
+        const btnCancelar = document.getElementById('btnCancelarUpdate');
+        const updateForm = document.getElementById('updateForm');
+        
+        if (btnActualizar) {
+            btnActualizar.addEventListener('click', function() {
+                updateForm.style.display = 'block';
+                btnActualizar.style.display = 'none';
+            });
+        }
+        
+        if (btnCancelar) {
+            btnCancelar.addEventListener('click', function() {
+                updateForm.style.display = 'none';
+                btnActualizar.style.display = 'inline-block';
+            });
+        }
+    });
+</script>
+{% endblock %} 

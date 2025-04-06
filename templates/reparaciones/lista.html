@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo|default("Todas las Reparaciones") }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    .page-title {
+        color: var(--primary-color);
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .table-container {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(var(--primary-rgb), 0.05);
+    }
+    
+    .badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        color: white;
+    }
+    
+    .badge-recibido {
+        background-color: var(--info-color);
+    }
+    
+    .badge-diagnostico {
+        background-color: var(--secondary-color);
+    }
+    
+    .badge-en_progreso {
+        background-color: var(--primary-color);
+    }
+    
+    .badge-listo {
+        background-color: var(--success-color);
+    }
+    
+    .badge-entregado {
+        background-color: var(--accent-color);
+    }
+    
+    .badge-cancelado {
+        background-color: var(--danger-color);
+    }
+    
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--border-color);
+    }
+    
+    @media (max-width: 768px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-group {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ titulo|default("Todas las Reparaciones") }}</h1>
+    <div class="actions">
+        <div class="btn-group">
+            <a href="{{ url_for('reparaciones.nueva') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Reparación
+            </a>
+        </div>
+        <div class="btn-group">
+            {% if solo_pendientes %}
+                <a href="{{ url_for('reparaciones.admin') }}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Ver Todas
+                </a>
+            {% else %}
+                <a href="{{ url_for('reparaciones.pendientes') }}" class="btn btn-secondary">
+                    <i class="fas fa-clock"></i> Ver Pendientes
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    {% if reparaciones %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Recepción</th>
+                    <th>Entrega Est.</th>
+                    <th>Técnico</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reparacion in reparaciones %}
+                    <tr>
+                        <td>{{ reparacion.id }}</td>
+                        <td>{{ reparacion.descripcion }}</td>
+                        <td>{{ reparacion.cliente }}</td>
+                        <td>
+                            <span class="badge badge-{{ reparacion.estado|lower }}">
+                                {{ reparacion.estado }}
+                            </span>
+                        </td>
+                        <td>{{ reparacion.fecha_recepcion }}</td>
+                        <td>{{ reparacion.fecha_entrega_estimada or '-' }}</td>
+                        <td>{{ reparacion.tecnico or 'Sin asignar' }}</td>
+                        <td>
+                            <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-tools"></i>
+            <h3>No hay reparaciones registradas</h3>
+            <p>Comienza creando una nueva reparación con el botón de arriba.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

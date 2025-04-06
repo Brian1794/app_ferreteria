@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp Marketing - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-title {
+        color: var(--primary-color);
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .dashboard-summary {
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--box-shadow);
+        color: var(--text-color);
+    }
+    
+    .dashboard-summary p {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .module-card {
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: var(--box-shadow);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .module-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .module-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        border-radius: 12px;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .module-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .module-content {
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    
+    .module-content p {
+        color: var(--text-color);
+        margin-bottom: 0;
+    }
+    
+    .module-actions {
+        margin-top: auto;
+    }
+    
+    .benefits-section {
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        box-shadow: var(--box-shadow);
+        margin-top: 2rem;
+    }
+    
+    .benefits-title {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .benefit-item {
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .benefit-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        border-radius: 12px;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .benefit-content h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .benefit-content p {
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+    
+    /* Ajustes de temas */
+    [data-theme="dark"] .module-icon {
+        background-color: rgba(var(--primary-rgb), 0.2);
+    }
+    
+    [data-theme="dark"] .benefit-icon {
+        background-color: rgba(var(--primary-rgb), 0.2);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .module-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .benefits-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">WhatsApp Marketing</h1>
+        <div class="dashboard-summary">
+            <p>Gestiona la comunicación con tus clientes a través de WhatsApp. Envía notificaciones, promociones, recordatorios y más de manera eficiente.</p>
+        </div>
+    </div>
+    
+    <div class="module-grid">
+        <div class="module-card">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <h2 class="module-title">Enviar Mensajes</h2>
+            </div>
+            <div class="module-content">
+                <p>Envía mensajes personalizados a clientes individuales o grupos. Ideal para comunicar promociones, novedades o información importante.</p>
+            </div>
+            <div class="module-actions">
+                <a href="{{ url_for('whatsapp.enviar_mensaje') }}" class="btn btn-primary">Enviar mensaje</a>
+            </div>
+        </div>
+        
+        <div class="module-card">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h2 class="module-title">Plantillas</h2>
+            </div>
+            <div class="module-content">
+                <p>Crea y administra plantillas de mensajes para ahorrar tiempo. Personaliza tus mensajes con variables como nombre, fecha o productos.</p>
+            </div>
+            <div class="module-actions">
+                <a href="{{ url_for('whatsapp.plantillas') }}" class="btn btn-primary">Gestionar plantillas</a>
+            </div>
+        </div>
+        
+        <div class="module-card">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h2 class="module-title">Mensajes Automáticos</h2>
+            </div>
+            <div class="module-content">
+                <p>Configura mensajes que se envían automáticamente en momentos específicos, como cumpleaños, recordatorios de pago o seguimiento post-venta.</p>
+            </div>
+            <div class="module-actions">
+                <a href="{{ url_for('whatsapp.automaticos') }}" class="btn btn-primary">Configurar automatizaciones</a>
+            </div>
+        </div>
+        
+        <div class="module-card">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h2 class="module-title">Historial</h2>
+            </div>
+            <div class="module-content">
+                <p>Revisa el historial completo de mensajes enviados, verificando su estado de entrega y visualización. Reenvía mensajes que no se entregaron.</p>
+            </div>
+            <div class="module-actions">
+                <a href="{{ url_for('whatsapp.historial') }}" class="btn btn-primary">Ver historial</a>
+            </div>
+        </div>
+        
+        <div class="module-card">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h2 class="module-title">Configuración</h2>
+            </div>
+            <div class="module-content">
+                <p>Configura tu conexión con Twilio o la API de WhatsApp Business. Establece tus preferencias para el envío de mensajes y notificaciones.</p>
+            </div>
+            <div class="module-actions">
+                <a href="{{ url_for('whatsapp.configuracion') }}" class="btn btn-primary">Configurar</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="benefits-section">
+        <h2 class="benefits-title">Ventajas del WhatsApp Marketing</h2>
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="benefit-content">
+                    <h3>Alta tasa de apertura</h3>
+                    <p>Los mensajes de WhatsApp tienen una tasa de apertura del 98%, muy superior al email marketing.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="benefit-content">
+                    <h3>Comunicación directa</h3>
+                    <p>Contacta con tus clientes de forma personal y directa, mejorando la experiencia del cliente.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="benefit-content">
+                    <h3>Construye confianza</h3>
+                    <p>Genera relaciones más cercanas con tus clientes a través de conversaciones personalizadas.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="benefit-content">
+                    <h3>Aumenta ventas</h3>
+                    <p>Promociona productos, ofertas y servicios de forma efectiva, incrementando tus conversiones.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles del Cliente - {{ cliente.nombre }} - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .client-container {
+        max-width: 1200px;
+        margin: 30px auto;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .back-btn {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: var(--text-color);
+        transition: color 0.3s;
+    }
+    
+    .back-btn:hover {
+        color: var(--primary-color);
+    }
+    
+    .client-profile {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        font-size: 2.5rem;
+        color: var(--text-muted);
+    }
+    
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    
+    .profile-info {
+        flex: 1;
+    }
+    
+    .profile-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--heading-color);
+        margin-bottom: 5px;
+    }
+    
+    .profile-since {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .details-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 1.1rem;
+        color: var(--text-color);
+    }
+    
+    .statistics-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .statistic-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .statistic-title {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+    }
+    
+    .statistic-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--heading-color);
+    }
+    
+    .data-section {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        margin-bottom: 30px;
+    }
+    
+    .section-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--heading-color);
+        margin: 0;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th {
+        background-color: var(--bg-secondary);
+        color: var(--heading-color);
+        font-weight: 600;
+        text-align: left;
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .data-table td {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .repair-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-pendiente {
+        background-color: rgba(var(--warning-rgb), 0.1);
+        color: rgba(var(--warning-rgb), 1);
+    }
+    
+    .status-recibido {
+        background-color: rgba(var(--info-rgb), 0.1);
+        color: rgba(var(--info-rgb), 1);
+    }
+    
+    .status-en_proceso {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+    }
+    
+    .status-finalizado {
+        background-color: rgba(var(--success-rgb), 0.1);
+        color: rgba(var(--success-rgb), 1);
+    }
+    
+    .status-entregado {
+        background-color: rgba(var(--secondary-rgb), 0.1);
+        color: rgba(var(--secondary-rgb), 1);
+    }
+    
+    .empty-section {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 2.5rem;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+    }
+    
+    .empty-title {
+        font-size: 1.3rem;
+        color: var(--heading-color);
+        margin-bottom: 5px;
+    }
+    
+    .empty-text {
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container client-container">
+    <div class="page-header">
+        <a href="{{ url_for('admin.clientes') }}" class="back-btn">
+            <i class="fas fa-arrow-left me-2"></i> Volver a la lista de clientes
+        </a>
+        <div class="action-buttons">
+            <a href="#" class="btn btn-outline-primary">
+                <i class="fas fa-edit me-1"></i> Editar
+            </a>
+            <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteClientModal">
+                <i class="fas fa-trash-alt me-1"></i> Eliminar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Perfil del cliente -->
+    <div class="client-profile">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if cliente.foto_perfil %}
+                    <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="{{ cliente.nombre }}">
+                {% else %}
+                    <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <h1 class="profile-name">{{ cliente.nombre }}</h1>
+                <div class="profile-since">
+                    Cliente desde {{ cliente.fecha_registro.strftime('%d de %B, %Y') if cliente.fecha_registro else 'fecha desconocida' }}
+                </div>
+                <div class="profile-badges">
+                    {% if metricas and metricas.total_compras > 10 %}
+                        <span class="badge bg-primary">Cliente Frecuente</span>
+                    {% endif %}
+                    {% if metricas and metricas.total_gastado > 1000000 %}
+                        <span class="badge bg-success">Cliente Premium</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-row">
+            <div class="detail-item">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ cliente.email }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Teléfono</div>
+                <div class="detail-value">{{ cliente.telefono if cliente.telefono else 'No registrado' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Dirección</div>
+                <div class="detail-value">{{ cliente.direccion if cliente.direccion else 'No registrada' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Ciudad</div>
+                <div class="detail-value">{{ cliente.ciudad if cliente.ciudad else 'No registrada' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Último acceso</div>
+                <div class="detail-value">
+                    {% if cliente.ultimo_login %}
+                        {{ cliente.ultimo_login.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                        Nunca
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas del cliente -->
+    <div class="statistics-row">
+        <div class="statistic-card">
+            <div class="statistic-title">Total de Compras</div>
+            <div class="statistic-value">{{ metricas.total_compras|default(0) }}</div>
+        </div>
+        <div class="statistic-card">
+            <div class="statistic-title">Total Gastado</div>
+            <div class="statistic-value">${{ metricas.total_gastado|default(0)|float|round(2) }}</div>
+        </div>
+        <div class="statistic-card">
+            <div class="statistic-title">Promedio por Compra</div>
+            <div class="statistic-value">${{ metricas.promedio_compra|default(0)|float|round(2) }}</div>
+        </div>
+        <div class="statistic-card">
+            <div class="statistic-title">Última Compra</div>
+            <div class="statistic-value">
+                {% if metricas.ultima_compra %}
+                    {{ metricas.ultima_compra.strftime('%d/%m/%Y') }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Historial de compras -->
+    <div class="data-section">
+        <div class="section-header">
+            <h2 class="section-title">Historial de Compras</h2>
+        </div>
+        
+        {% if compras %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Items</th>
+                            <th>Vendedor</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for compra in compras %}
+                            <tr>
+                                <td>#{{ compra.id }}</td>
+                                <td>{{ compra.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>${{ compra.total|float|round(2) }}</td>
+                                <td>{{ compra.items|default(0) }}</td>
+                                <td>{{ compra.empleado|default('--') }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-section">
+                <div class="empty-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="empty-title">No hay compras registradas</h3>
+                <p class="empty-text">Este cliente aún no ha realizado ninguna compra en la tienda.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Reparaciones solicitadas -->
+    <div class="data-section">
+        <div class="section-header">
+            <h2 class="section-title">Reparaciones Solicitadas</h2>
+        </div>
+        
+        {% if reparaciones %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Electrodoméstico</th>
+                            <th>Problema</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reparacion in reparaciones %}
+                            <tr>
+                                <td>#{{ reparacion.id }}</td>
+                                <td>{{ reparacion.tipo_electrodomestico }} {{ reparacion.marca }}</td>
+                                <td>{{ reparacion.problema|truncate(30) }}</td>
+                                <td>{{ reparacion.fecha_recepcion.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <span class="repair-status status-{{ reparacion.estado }}">
+                                        {% if reparacion.estado == 'pendiente' %}
+                                            Pendiente
+                                        {% elif reparacion.estado == 'recibido' %}
+                                            Recibido
+                                        {% elif reparacion.estado == 'en_proceso' %}
+                                            En proceso
+                                        {% elif reparacion.estado == 'finalizado' %}
+                                            Finalizado
+                                        {% elif reparacion.estado == 'entregado' %}
+                                            Entregado
+                                        {% else %}
+                                            {{ reparacion.estado|capitalize }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-section">
+                <div class="empty-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="empty-title">No hay reparaciones solicitadas</h3>
+                <p class="empty-text">Este cliente aún no ha solicitado ningún servicio de reparación.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteClientModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar al cliente <strong>{{ cliente.nombre }}</strong>?</p>
+                <p class="text-danger">Esta acción no se puede deshacer y eliminará todos los datos asociados al cliente, incluyendo su historial de compras y reparaciones.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_cliente', cliente_id=cliente.id_cliente) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

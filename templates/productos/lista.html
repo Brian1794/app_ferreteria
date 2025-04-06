@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Listado de Productos - Ferretería{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Inventario de Productos</h1>
+        <a href="{{ url_for('productos.agregar') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Código de Barras</th>
+                            <th>Categoría</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Venta</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if productos %}
+                            {% for producto in productos %}
+                                <tr>
+                                    <td>{{ producto[0] }}</td>
+                                    <td>
+                                        {% if producto|length > 7 and producto[7] %}
+                                            <img src="{{ url_for('static', filename='uploads/productos/' + producto[7]) }}" 
+                                                 alt="{{ producto[1] }}" style="max-height: 50px; max-width: 50px;" 
+                                                 class="img-thumbnail">
+                                        {% else %}
+                                            <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa; color: #adb5bd;">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ producto[1] }}</td>
+                                    <td>{{ producto[2] or '--' }}</td>
+                                    <td>{{ producto[6] or 'Sin categoría' }}</td>
+                                    <td>${{ producto[3] }}</td>
+                                    <td>${{ producto[4] }}</td>
+                                    <td>
+                                        {% if producto[5]|int <= 5 %}
+                                            <span class="badge bg-danger">{{ producto[5] }}</span>
+                                        {% else %}
+                                            {{ producto[5] }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('productos.editar', id=producto[0]) }}" class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmarEliminar('{{ producto[0] }}', '{{ producto[1] }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center">No hay productos registrados</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEliminarLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar el producto <span id="nombreProducto"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminar" method="POST">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmarEliminar(id, nombre) {
+        document.getElementById('nombreProducto').textContent = nombre;
+        document.getElementById('formEliminar').action = "{{ url_for('productos.eliminar', id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+    }
+</script>
+{% endblock %} 

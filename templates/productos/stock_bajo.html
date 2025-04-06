@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Productos con Stock Bajo - Ferretería{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Productos con Stock Bajo</h1>
+        <div>
+            <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{{ url_for('productos.agregar') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> Estos productos tienen un stock igual o inferior al mínimo establecido.
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Stock Actual</th>
+                            <th>Stock Mínimo</th>
+                            <th>Precio Venta</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if productos %}
+                            {% for producto in productos %}
+                                <tr>
+                                    <td>{{ producto[0] }}</td>
+                                    <td>{{ producto[1] }}</td>
+                                    <td>{{ producto[7] or 'Sin categoría' }}</td>
+                                    <td class="text-danger fw-bold">{{ producto[5] }}</td>
+                                    <td>{{ producto[6] }}</td>
+                                    <td>${{ producto[4] }}</td>
+                                    <td>
+                                        <a href="{{ url_for('productos.editar', id=producto[0]) }}" class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center">No hay productos con stock bajo</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

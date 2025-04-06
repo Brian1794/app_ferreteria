@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Historial de Compras - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compras-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .historial-titulo {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-color);
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .tabla-historial {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+    }
+    
+    .tabla-historial th, 
+    .tabla-historial td {
+        padding: 0.75rem;
+        text-align: left;
+    }
+    
+    .tabla-historial th {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--text-color);
+        font-weight: 600;
+    }
+    
+    .tabla-historial tr {
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .tabla-historial tr:last-child {
+        border-bottom: none;
+    }
+    
+    .tabla-historial tr:nth-child(even) {
+        background-color: var(--hover-bg);
+    }
+    
+    .estado-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .estado-pagada {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .estado-pendiente {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .estado-cancelada {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .accion-btn {
+        padding: 0.4rem 0.8rem;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: background-color 0.3s;
+    }
+    
+    .accion-btn:hover {
+        background-color: var(--primary-dark);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .accion-btn-outline {
+        background-color: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .accion-btn-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .tabla-historial {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="compras-container">
+    <h1 class="historial-titulo">
+        <i class="fas fa-shopping-bag mr-2"></i> Mi Historial de Compras
+    </h1>
+    
+    {% if compras %}
+        <table class="tabla-historial">
+            <thead>
+                <tr>
+                    <th>Nº Factura</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compra in compras %}
+                <tr>
+                    <td>#{{ compra.id }}</td>
+                    <td>{{ compra.fecha.strftime('%d/%m/%Y') if compra.fecha else '' }}</td>
+                    <td>${{ "{:,.2f}".format(compra.total|float) }}</td>
+                    <td>
+                        <span class="estado-badge estado-{{ compra.estado|lower }}">
+                            {{ compra.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('tienda.compra_exitosa', venta_id=compra.id) }}" class="accion-btn accion-btn-outline">
+                            <i class="fas fa-eye"></i> Ver detalles
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-shopping-cart"></i>
+            <p>No tienes compras realizadas todavía.</p>
+            <a href="{{ url_for('productos.catalogo') }}" class="accion-btn">Ir a la tienda</a>
+        </div>
+    {% endif %}
+    
+    <a href="{{ url_for('main.mi_cuenta') }}" class="accion-btn">
+        <i class="fas fa-arrow-left"></i> Volver a mi cuenta
+    </a>
+</div>
+{% endblock %} 

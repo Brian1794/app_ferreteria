@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Control - Ferretería "El Constructor"{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h1>Bienvenido, {{ current_user.nombre }}</h1>
+        <p>Panel de control - {{ empleado.cargo_nombre }}</p>
+    </div>
+    
+    <div class="card-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-text">
+                <h3>Ventas</h3>
+                <div class="stat-value">{{ stats_ventas.total }}</div>
+                <p>{{ stats_ventas.hoy }} hoy</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-text">
+                <h3>Stock Bajo</h3>
+                <div class="stat-value">{{ productos_bajo_stock.total }}</div>
+                <p>Productos para reabastecer</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="stat-text">
+                <h3>Reparaciones Pendientes</h3>
+                <div class="stat-value">{{ reparaciones_pendientes.total }}</div>
+                <p>{{ reparaciones_pendientes.recibidas }} recibidas, {{ reparaciones_pendientes.en_progreso }} en progreso</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modules-section">
+        <h2>Módulos del Sistema</h2>
+        <div class="modules-grid">
+            {% if 'ventas' in modulos_permitidos %}
+            <a href="{{ url_for('ventas.index') }}" class="module-card module-ventas">
+                <div class="module-icon">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div class="module-title">Ventas</div>
+                <div class="module-description">Gestionar ventas y facturación</div>
+            </a>
+            {% endif %}
+            
+            {% if 'productos' in modulos_permitidos %}
+            <a href="{{ url_for('productos.listar_productos') }}" class="module-card module-productos">
+                <div class="module-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <div class="module-title">Productos</div>
+                <div class="module-description">Administrar inventario</div>
+            </a>
+            {% endif %}
+            
+            {% if 'clientes' in modulos_permitidos %}
+            <a href="{{ url_for('clientes.index') }}" class="module-card module-clientes">
+                <div class="module-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="module-title">Clientes</div>
+                <div class="module-description">Gestionar información de clientes</div>
+            </a>
+            {% endif %}
+            
+            {% if 'compras' in modulos_permitidos %}
+            <a href="#" class="module-card module-compras">
+                <div class="module-icon">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <div class="module-title">Compras</div>
+                <div class="module-description">Administrar proveedores y pedidos</div>
+            </a>
+            {% endif %}
+            
+            {% if 'reparaciones' in modulos_permitidos or current_user.es_admin %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                <a href="{{ url_for('reparaciones.admin') }}" class="module-card module-reparaciones">
+                    <div class="module-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3>Reparaciones</h3>
+                    <p>Gestiona y da seguimiento a las reparaciones de electrodomésticos</p>
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if 'whatsapp' in modulos_permitidos %}
+            <a href="{{ url_for('whatsapp.index') }}" class="module-card module-whatsapp">
+                <div class="module-icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <div class="module-title">WhatsApp</div>
+                <div class="module-description">Marketing y comunicación</div>
+            </a>
+            {% endif %}
+            
+            {% if 'empleados' in modulos_permitidos %}
+            <a href="{{ url_for('empleados.index') }}" class="module-card module-empleados">
+                <div class="module-icon">
+                    <i class="fas fa-id-card"></i>
+                </div>
+                <div class="module-title">Empleados</div>
+                <div class="module-description">Gestión de personal</div>
+            </a>
+            {% endif %}
+            
+            {% if 'reportes' in modulos_permitidos %}
+            <a href="{{ url_for('ventas.reportes') }}" class="module-card module-reportes">
+                <div class="module-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="module-title">Reportes</div>
+                <div class="module-description">Estadísticas y análisis</div>
+            </a>
+            {% endif %}
+            
+            {% if 'configuracion' in modulos_permitidos or current_user.is_admin %}
+            <a href="{{ url_for('admin.configuracion') }}" class="module-card module-configuracion">
+                <div class="module-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="module-title">Configuración</div>
+                <div class="module-description">Ajustes del sistema</div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

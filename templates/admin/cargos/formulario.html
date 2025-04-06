@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if cargo else 'Nuevo' }} Cargo - Ferretería La U{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ 'Editar' if cargo else 'Nuevo' }} Cargo</h1>
+        <a href="{{ url_for('admin.cargos') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('admin.editar_cargo', cargo_id=cargo.id) if cargo else url_for('admin.nuevo_cargo') }}" method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="nombre">Nombre del Cargo <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ cargo.nombre if cargo else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="descripcion">Descripción</label>
+                            <input type="text" class="form-control" id="descripcion" name="descripcion" value="{{ cargo.descripcion if cargo else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4 mb-3">Permisos del Cargo</h4>
+                
+                <div class="row">
+                    <!-- Permisos para Ventas -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="permiso_ventas" id="permiso_ventas" 
+                                        {{ 'checked' if cargo and permisos and 'ventas' in permisos else '' }}>
+                                    <label class="form-check-label fw-bold" for="permiso_ventas">
+                                        Ventas
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="permiso_detalle_ventas" id="permiso_ventas_simple" value="simple" 
+                                        {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is boolean else '' }}>
+                                    <label class="form-check-label" for="permiso_ventas_simple">
+                                        Acceso completo
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="permiso_detalle_ventas" id="permiso_ventas_detallado" value="detallado"
+                                        {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is mapping else '' }}>
+                                    <label class="form-check-label" for="permiso_ventas_detallado">
+                                        Acceso personalizado
+                                    </label>
+                                </div>
+                                <div class="ms-4 mt-2 permisos-detallados">
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="ver_ventas" id="ver_ventas" 
+                                            {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is mapping and permisos['ventas'].ver else '' }}>
+                                        <label class="form-check-label" for="ver_ventas">Ver</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="crear_ventas" id="crear_ventas" 
+                                            {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is mapping and permisos['ventas'].crear else '' }}>
+                                        <label class="form-check-label" for="crear_ventas">Crear</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="editar_ventas" id="editar_ventas" 
+                                            {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is mapping and permisos['ventas'].editar else '' }}>
+                                        <label class="form-check-label" for="editar_ventas">Editar</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="eliminar_ventas" id="eliminar_ventas" 
+                                            {{ 'checked' if cargo and permisos and 'ventas' in permisos and permisos['ventas'] is mapping and permisos['ventas'].eliminar else '' }}>
+                                        <label class="form-check-label" for="eliminar_ventas">Eliminar</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permisos para Productos -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="permiso_productos" id="permiso_productos" 
+                                        {{ 'checked' if cargo and permisos and 'productos' in permisos else '' }}>
+                                    <label class="form-check-label fw-bold" for="permiso_productos">
+                                        Productos
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="permiso_detalle_productos" id="permiso_productos_simple" value="simple" 
+                                        {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is boolean else '' }}>
+                                    <label class="form-check-label" for="permiso_productos_simple">
+                                        Acceso completo
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="permiso_detalle_productos" id="permiso_productos_detallado" value="detallado"
+                                        {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is mapping else '' }}>
+                                    <label class="form-check-label" for="permiso_productos_detallado">
+                                        Acceso personalizado
+                                    </label>
+                                </div>
+                                <div class="ms-4 mt-2 permisos-detallados">
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="ver_productos" id="ver_productos" 
+                                            {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is mapping and permisos['productos'].ver else '' }}>
+                                        <label class="form-check-label" for="ver_productos">Ver</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="crear_productos" id="crear_productos" 
+                                            {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is mapping and permisos['productos'].crear else '' }}>
+                                        <label class="form-check-label" for="crear_productos">Crear</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="editar_productos" id="editar_productos" 
+                                            {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is mapping and permisos['productos'].editar else '' }}>
+                                        <label class="form-check-label" for="editar_productos">Editar</label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="eliminar_productos" id="eliminar_productos" 
+                                            {{ 'checked' if cargo and permisos and 'productos' in permisos and permisos['productos'] is mapping and permisos['productos'].eliminar else '' }}>
+                                        <label class="form-check-label" for="eliminar_productos">Eliminar</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{{ url_for('admin.cargos') }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'Actualizar' if cargo else 'Guardar' }} Cargo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Función para mostrar/ocultar permisos detallados según la opción seleccionada
+    function toggleDetallePermisos() {
+        document.querySelectorAll('input[type="radio"][name^="permiso_detalle_"]').forEach(radio => {
+            const modulo = radio.name.replace('permiso_detalle_', '');
+            const detallesContainer = radio.closest('.card-body').querySelector('.permisos-detallados');
+            
+            if (radio.checked && radio.value === 'detallado') {
+                detallesContainer.style.display = 'block';
+            } else if (radio.checked && radio.value === 'simple') {
+                detallesContainer.style.display = 'none';
+            }
+            
+            radio.addEventListener('change', function() {
+                detallesContainer.style.display = this.value === 'detallado' ? 'block' : 'none';
+            });
+        });
+    }
+    
+    // Ejecutar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleDetallePermisos();
+    });
+</script>
+{% endblock %} 

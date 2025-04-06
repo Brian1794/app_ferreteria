@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+
+{% block title %}Servicio de Reparaciones{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/img/reparaciones-hero.jpg');
+        background-size: cover;
+        background-position: center;
+        color: #fff;
+        padding: 80px 0;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .hero-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    
+    .hero-section p {
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 30px;
+    }
+    
+    .service-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        padding: 25px;
+        height: 100%;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .service-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+    }
+    
+    .service-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--heading-color);
+    }
+    
+    .service-description {
+        color: var(--text-color);
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    
+    .cta-section {
+        background-color: var(--bg-secondary);
+        padding: 50px 0;
+        text-align: center;
+        margin: 40px 0;
+        border-radius: 8px;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+        color: var(--heading-color);
+        margin-bottom: 20px;
+    }
+    
+    .cta-text {
+        color: var(--text-color);
+        max-width: 800px;
+        margin: 0 auto 30px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    .faq-section {
+        margin: 60px 0;
+    }
+    
+    .faq-title {
+        text-align: center;
+        margin-bottom: 40px;
+        color: var(--heading-color);
+    }
+    
+    .faq-item {
+        margin-bottom: 20px;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .faq-question {
+        padding: 15px 20px;
+        background-color: var(--bg-secondary);
+        color: var(--heading-color);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .faq-answer {
+        padding: 20px;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+    
+    .btn-cta {
+        font-size: 1.1rem;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .brands-section {
+        text-align: center;
+        margin: 50px 0;
+    }
+    
+    .brand-logos {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .brand-logo {
+        filter: var(--logo-filter);
+        height: 40px;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+    }
+    
+    .brand-logo:hover {
+        opacity: 1;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 60px 0;
+        }
+        
+        .hero-section h1 {
+            font-size: 2rem;
+        }
+        
+        .service-card {
+            margin-bottom: 20px;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .faq-section .col-lg-6 {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>Servicio Técnico de Reparación</h1>
+        <p>Reparamos todo tipo de electrodomésticos con técnicos especializados y garantía en nuestros trabajos. ¡Solucionamos tus problemas de forma rápida y eficiente!</p>
+        <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-primary btn-lg">Solicitar Reparación</a>
+    </div>
+</section>
+
+<!-- Servicios -->
+<section class="container">
+    <div class="row text-center mb-4">
+        <div class="col-12">
+            <h2 class="section-title">Nuestros Servicios de Reparación</h2>
+            <p class="section-subtitle">Contamos con técnicos especializados para reparar diferentes tipos de electrodomésticos</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-snowflake"></i>
+                </div>
+                <h3 class="service-title">Refrigeración</h3>
+                <p class="service-description">Reparamos refrigeradoras, congeladores, aires acondicionados y sistemas de enfriamiento de cualquier marca y modelo.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <h3 class="service-title">Lavado y Secado</h3>
+                <p class="service-description">Especialistas en reparación de lavadoras, secadoras y equipos de lavandería con diagnóstico preciso y soluciones duraderas.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <h3 class="service-title">Cocina</h3>
+                <p class="service-description">Reparamos cocinas, hornos, microondas y pequeños electrodomésticos de cocina con técnicos certificados.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-tv"></i>
+                </div>
+                <h3 class="service-title">Televisores y Audio</h3>
+                <p class="service-description">Reparación de televisores, equipos de sonido y sistemas de entretenimiento con técnicos especializados en electrónica.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="service-title">Pequeños Electrodomésticos</h3>
+                <p class="service-description">Reparamos licuadoras, batidoras, cafeteras y todo tipo de pequeños electrodomésticos con repuestos originales.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card text-center">
+                <div class="service-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="service-title">Mantenimiento Preventivo</h3>
+                <p class="service-description">Servicio de mantenimiento para extender la vida útil de tus electrodomésticos y prevenir fallas futuras.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-outline-primary">Solicitar Servicio</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="container">
+    <div class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">¿Necesitas una reparación urgente?</h2>
+            <p class="cta-text">Contamos con técnicos disponibles para atenderte lo más pronto posible. Llena el formulario y nos pondremos en contacto contigo en menos de 24 horas para agendar la visita técnica.</p>
+            <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-primary btn-lg btn-cta">Solicitar Reparación Ahora</a>
+        </div>
+    </div>
+</section>
+
+<!-- Marcas que reparamos -->
+<section class="container brands-section">
+    <h2 class="mb-4">Trabajamos con todas las marcas</h2>
+    <p class="mb-4">Nuestros técnicos están capacitados para reparar electrodomésticos de todas estas marcas y muchas más</p>
+    
+    <div class="brand-logos">
+        <img src="https://via.placeholder.com/150x50?text=Samsung" alt="Samsung" class="brand-logo">
+        <img src="https://via.placeholder.com/150x50?text=LG" alt="LG" class="brand-logo">
+        <img src="https://via.placeholder.com/150x50?text=Whirlpool" alt="Whirlpool" class="brand-logo">
+        <img src="https://via.placeholder.com/150x50?text=Mabe" alt="Mabe" class="brand-logo">
+        <img src="https://via.placeholder.com/150x50?text=Electrolux" alt="Electrolux" class="brand-logo">
+        <img src="https://via.placeholder.com/150x50?text=Bosch" alt="Bosch" class="brand-logo">
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="container faq-section">
+    <h2 class="faq-title">Preguntas Frecuentes</h2>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Cuánto tiempo tarda una reparación?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    El tiempo de reparación varía según el tipo de electrodoméstico y la complejidad del problema. Después de la revisión inicial, nuestros técnicos te darán un estimado preciso. La mayoría de las reparaciones se completan en 24-48 horas una vez que tenemos los repuestos necesarios.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Ofrecen garantía en sus reparaciones?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Sí, todas nuestras reparaciones incluyen garantía de 3 meses en mano de obra y en los repuestos instalados. Algunos trabajos específicos pueden tener garantías extendidas de hasta 6 meses.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Cómo puedo saber el estado de mi reparación?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Puedes consultar el estado de tu reparación iniciando sesión en tu cuenta de cliente. También te enviaremos actualizaciones por correo electrónico o SMS sobre el progreso de tu reparación.
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Cuál es el costo de una revisión técnica?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    La visita de diagnóstico tiene un costo de $20, que se descontará del valor total si decides proceder con la reparación. Si no podemos reparar tu electrodoméstico, solo pagas la visita de diagnóstico.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Realizan reparaciones a domicilio?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Sí, la mayoría de nuestras reparaciones se realizan a domicilio. Algunos electrodomésticos pequeños o casos complejos pueden requerir traslado a nuestro taller, lo cual se coordinará contigo.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    ¿Qué métodos de pago aceptan?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Aceptamos efectivo, tarjetas de crédito/débito, transferencias bancarias y pagos a través de nuestra página web. Para reparaciones mayores, también ofrecemos planes de financiamiento.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle para las preguntas frecuentes
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const icon = question.querySelector('i');
+                
+                // Toggle la respuesta
+                if (answer.style.maxHeight) {
+                    answer.style.maxHeight = null;
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                } else {
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                }
+            });
+        });
+        
+        // Inicialmente ocultar todas las respuestas
+        document.querySelectorAll('.faq-answer').forEach(answer => {
+            answer.style.maxHeight = null;
+        });
+    });
+</script>
+{% endblock %} 

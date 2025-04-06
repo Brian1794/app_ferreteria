@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración del Sistema - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-container {
+        max-width: 1200px;
+        margin: 30px auto;
+    }
+    
+    .config-header {
+        margin-bottom: 25px;
+    }
+    
+    .config-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--heading-color);
+        margin-bottom: 10px;
+    }
+    
+    .config-subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+    
+    .config-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 15px;
+    }
+    
+    .config-tab {
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 500;
+        color: var(--text-color);
+        background-color: var(--bg-secondary);
+        transition: all 0.3s ease;
+    }
+    
+    .config-tab:hover {
+        background-color: var(--hover-bg);
+        color: var(--text-color);
+    }
+    
+    .config-tab.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .config-form {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .config-section {
+        margin-bottom: 30px;
+    }
+    
+    .config-section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--heading-color);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .config-description {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container config-container">
+    <div class="config-header">
+        <h1 class="config-title">Configuración del Sistema</h1>
+        <p class="config-subtitle">Personaliza los ajustes de tu ferretería según tus necesidades</p>
+    </div>
+    
+    <!-- Pestañas de configuración -->
+    <div class="config-tabs">
+        <a href="{{ url_for('admin.configuracion', grupo='empresa') }}" class="config-tab {% if grupo_actual == 'empresa' %}active{% endif %}">
+            Información de la Empresa
+        </a>
+        <a href="{{ url_for('admin.configuracion', grupo='sistema') }}" class="config-tab {% if grupo_actual == 'sistema' %}active{% endif %}">
+            Sistema
+        </a>
+        <a href="{{ url_for('admin.configuracion', grupo='facturacion') }}" class="config-tab {% if grupo_actual == 'facturacion' %}active{% endif %}">
+            Facturación
+        </a>
+        <a href="{{ url_for('admin.configuracion', grupo='correo') }}" class="config-tab {% if grupo_actual == 'correo' %}active{% endif %}">
+            Correo Electrónico
+        </a>
+        <a href="{{ url_for('admin.configuracion', grupo='apariencia') }}" class="config-tab {% if grupo_actual == 'apariencia' %}active{% endif %}">
+            Apariencia
+        </a>
+    </div>
+    
+    <!-- Formulario de configuración -->
+    <div class="config-form">
+        {% if grupos[grupo_actual] %}
+            <form method="POST" action="{{ url_for('admin.configuracion') }}">
+                <input type="hidden" name="grupo" value="{{ grupo_actual }}">
+                
+                <div class="config-section">
+                    <h2 class="config-section-title">
+                        {% if grupo_actual == 'empresa' %}
+                            Información de la Empresa
+                        {% elif grupo_actual == 'sistema' %}
+                            Configuración del Sistema
+                        {% elif grupo_actual == 'facturacion' %}
+                            Ajustes de Facturación
+                        {% elif grupo_actual == 'correo' %}
+                            Configuración de Correo Electrónico
+                        {% elif grupo_actual == 'apariencia' %}
+                            Ajustes de Apariencia
+                        {% else %}
+                            {{ grupo_actual|capitalize }}
+                        {% endif %}
+                    </h2>
+                    
+                    {% for config in grupos[grupo_actual] %}
+                        <div class="form-group">
+                            <label for="{{ grupo_actual }}_{{ config.nombre }}">{{ config.etiqueta }}</label>
+                            
+                            {% if config.tipo == 'texto' %}
+                                <input type="text" class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}" value="{{ config.valor }}">
+                            {% elif config.tipo == 'numero' %}
+                                <input type="number" class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}" value="{{ config.valor }}">
+                            {% elif config.tipo == 'booleano' %}
+                                <select class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}">
+                                    <option value="1" {% if config.valor == '1' %}selected{% endif %}>Sí</option>
+                                    <option value="0" {% if config.valor == '0' %}selected{% endif %}>No</option>
+                                </select>
+                            {% elif config.tipo == 'area_texto' %}
+                                <textarea class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}" rows="4">{{ config.valor }}</textarea>
+                            {% elif config.tipo == 'seleccion' %}
+                                <select class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}">
+                                    {% for opcion in config.opciones.split(',') %}
+                                        <option value="{{ opcion.strip() }}" {% if config.valor == opcion.strip() %}selected{% endif %}>{{ opcion.strip() }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% elif config.tipo == 'color' %}
+                                <input type="color" class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}" value="{{ config.valor }}">
+                            {% else %}
+                                <input type="text" class="form-control" id="{{ grupo_actual }}_{{ config.nombre }}" name="{{ grupo_actual }}_{{ config.nombre }}" value="{{ config.valor }}">
+                            {% endif %}
+                            
+                            {% if config.descripcion %}
+                                <div class="config-description">{{ config.descripcion }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group text-end">
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="alert alert-info">
+                No hay configuraciones disponibles para este grupo. Por favor, selecciona otro grupo o contacta al administrador del sistema.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

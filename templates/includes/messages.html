@@ -1,0 +1,176 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <style>
+            .alert {
+                position: relative;
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+                border: 1px solid transparent;
+                border-radius: var(--border-radius);
+                box-shadow: var(--box-shadow);
+                animation: fadeIn 0.4s ease;
+                transition: var(--theme-transition);
+            }
+            
+            .alert-success {
+                background-color: rgba(var(--success-color), 0.1);
+                border-left: 4px solid rgba(var(--success-color), 1);
+                color: rgba(var(--success-color), 1);
+            }
+            
+            .alert-danger {
+                background-color: rgba(var(--danger-color), 0.1);
+                border-left: 4px solid rgba(var(--danger-color), 1);
+                color: rgba(var(--danger-color), 1);
+            }
+            
+            .alert-warning {
+                background-color: rgba(var(--warning-color), 0.1);
+                border-left: 4px solid rgba(var(--warning-color), 1);
+                color: rgba(var(--warning-color), 0.9);
+            }
+            
+            .alert-info {
+                background-color: rgba(var(--info-color), 0.1);
+                border-left: 4px solid rgba(var(--info-color), 1);
+                color: rgba(var(--info-color), 1);
+            }
+            
+            .alert-dismissible {
+                padding-right: 4rem;
+            }
+            
+            .alert-dismissible .close {
+                position: absolute;
+                top: 0;
+                right: 0;
+                padding: 1rem;
+                color: inherit;
+                background: transparent;
+                border: 0;
+                cursor: pointer;
+                font-size: 1.1rem;
+                opacity: 0.5;
+                transition: opacity 0.3s;
+            }
+            
+            .alert-dismissible .close:hover {
+                opacity: 1;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            /* Botón de cierre para alertas */
+            .alert .btn-close {
+                position: absolute;
+                top: 0.75rem;
+                right: 0.75rem;
+                background: transparent;
+                border: none;
+                font-size: 1.25rem;
+                line-height: 1;
+                color: inherit;
+                opacity: 0.5;
+                cursor: pointer;
+                transition: opacity 0.2s ease;
+            }
+            
+            .alert .btn-close:hover {
+                opacity: 1;
+            }
+            
+            /* Iconos según tipo de alerta */
+            .alert-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                margin-right: 0.75rem;
+                border-radius: 50%;
+                font-size: 14px;
+            }
+            
+            .alert-success .alert-icon {
+                background-color: rgba(var(--success-color), 0.2);
+                color: rgba(var(--success-color), 1);
+            }
+            
+            .alert-danger .alert-icon {
+                background-color: rgba(var(--danger-color), 0.2);
+                color: rgba(var(--danger-color), 1);
+            }
+            
+            .alert-warning .alert-icon {
+                background-color: rgba(var(--warning-color), 0.2);
+                color: rgba(var(--warning-color), 0.9);
+            }
+            
+            .alert-info .alert-icon {
+                background-color: rgba(var(--info-color), 0.2);
+                color: rgba(var(--info-color), 1);
+            }
+        </style>
+
+        <div class="messages fade-in">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" {% if message == 'Has cerrado sesión correctamente.' %}id="logout-success-message"{% endif %}>
+                    <div class="alert-content">
+                        <span class="alert-icon">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% elif category == 'info' %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                        </span>
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <script>
+            // Script para detectar mensaje de cierre de sesión exitoso
+            document.addEventListener('DOMContentLoaded', function() {
+                const logoutMessage = document.getElementById('logout-success-message');
+                if (logoutMessage) {
+                    // Si hay un mensaje de cierre de sesión, forzar recarga
+                    if (window.location.pathname === '/') {
+                        // Si ya estamos en la página principal, forzar recarga para limpiar estado
+                        setTimeout(function() {
+                            window.location.reload(true);
+                        }, 1000);
+                    }
+                }
+                
+                // Hacer que las alertas sean descartables con un clic
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    alert.addEventListener('click', function() {
+                        this.style.opacity = '0';
+                        setTimeout(() => {
+                            this.style.display = 'none';
+                        }, 300);
+                    });
+                });
+                
+                // Auto-esconder alertas después de 5 segundos
+                setTimeout(() => {
+                    alerts.forEach(alert => {
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            alert.style.display = 'none';
+                        }, 300);
+                    });
+                }, 5000);
+            });
+        </script>
+    {% endif %}
+{% endwith %} 

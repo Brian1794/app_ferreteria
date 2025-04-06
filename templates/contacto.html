@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Contacto - {{ empresa_nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-header {
+        background-color: var(--primary);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+    
+    .contact-header h1 {
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .contact-header p {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .contact-info-card {
+        background-color: var(--bg-card);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .contact-info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    
+    .contact-info-card i {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .contact-info-card h3 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .map-container {
+        overflow: hidden;
+        position: relative;
+        height: 400px;
+        border-radius: 10px;
+        margin-bottom: 3rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .contact-form {
+        background-color: var(--bg-card);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .contact-form h2 {
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: block;
+        color: var(--text-primary);
+    }
+    
+    .form-control {
+        background-color: var(--bg-input);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 5px;
+        padding: 0.8rem;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
+    }
+    
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    .social-links {
+        margin: 2rem 0;
+        text-align: center;
+    }
+    
+    .social-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--bg-card);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin: 0 10px;
+        font-size: 1.8rem;
+        color: var(--primary);
+        transition: all 0.3s ease;
+    }
+    
+    .social-link:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    
+    .whatsapp {
+        color: #25D366;
+    }
+    
+    .email {
+        color: #D44638;
+    }
+    
+    .map {
+        color: #4285F4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-header">
+    <div class="container">
+        <h1>Contacto</h1>
+        <p>Estamos aquí para ayudarte. No dudes en ponerte en contacto con nosotros por cualquier consulta, presupuesto o servicio que necesites.</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="contact-info-card text-center">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Dirección</h3>
+                <p>{{ empresa_direccion }}</p>
+                <a href="https://goo.gl/maps/Vz1SRvP5s8eJkXwv5" class="btn btn-outline-primary mt-3" target="_blank">Ver en Google Maps</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="contact-info-card text-center">
+                <i class="fas fa-phone-alt"></i>
+                <h3>Teléfono</h3>
+                <p>{{ empresa_telefono }}</p>
+                <a href="tel:+57{{ empresa_telefono | replace(' ', '') }}" class="btn btn-outline-primary mt-3">Llamar ahora</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="contact-info-card text-center">
+                <i class="fab fa-whatsapp"></i>
+                <h3>WhatsApp</h3>
+                <p>+57 {{ empresa_whatsapp }}</p>
+                <a href="https://wa.me/57{{ empresa_whatsapp }}?text=Hola,%20estoy%20interesado%20en%20obtener%20información%20sobre%20sus%20productos." class="btn btn-outline-success mt-3" target="_blank">Enviar mensaje</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="contact-form">
+                <h2>Envíanos un mensaje</h2>
+                <form id="contactForm" action="{{ url_for('main.contacto') }}" method="POST">
+                    <div class="form-group">
+                        <label for="nombre">Nombre completo</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono (opcional)</label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono">
+                    </div>
+                    <div class="form-group">
+                        <label for="asunto">Asunto</label>
+                        <input type="text" class="form-control" id="asunto" name="asunto" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mensaje">Mensaje</label>
+                        <textarea class="form-control" id="mensaje" name="mensaje" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enviar mensaje</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.8325140650327!2d-74.14!3d4.62!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9ba4cf9fffff%3A0x1cba35cb4ed572c8!2sCra.%2069C%20%237A-14%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1626364842543!5m2!1ses!2sco" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+            
+            <div class="contact-info-card">
+                <h3>Horario de atención</h3>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><strong>Lunes - Viernes:</strong> 8:00 AM - 6:00 PM</li>
+                    <li class="mb-2"><strong>Sábados:</strong> 8:00 AM - 4:00 PM</li>
+                    <li class="mb-2"><strong>Domingos:</strong> 9:00 AM - 1:00 PM</li>
+                </ul>
+                <p class="mt-3">¿Tienes una emergencia? ¡Contáctanos por WhatsApp!</p>
+            </div>
+            
+            <div class="social-links">
+                <a href="https://wa.me/57{{ empresa_whatsapp }}" class="social-link whatsapp" target="_blank">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="mailto:{{ empresa_email }}" class="social-link email">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                <a href="https://goo.gl/maps/Vz1SRvP5s8eJkXwv5" class="social-link map" target="_blank">
+                    <i class="fas fa-map-marked-alt"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contactForm = document.getElementById('contactForm');
+        
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Aquí normalmente enviarías el formulario por AJAX
+                // Por ahora, simulamos un envío exitoso
+                
+                alert('Gracias por tu mensaje. Te contactaremos pronto.');
+                contactForm.reset();
+            });
+        }
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,132 @@
+/* Estilos para la página de dashboard */
+
+.dashboard-container {
+    padding: 2rem;
+}
+
+.welcome-section {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--box-shadow);
+}
+
+.welcome-section h1 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    display: flex;
+    align-items: center;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-right: 1rem;
+    color: var(--primary-color);
+}
+
+.stat-text h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.stat-text .stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+}
+
+.stat-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.modules-section {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: var(--box-shadow);
+}
+
+.modules-section h2 {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.module-card {
+    background-color: var(--bg-color);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.module-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.module-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.module-description {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Colores para los diferentes íconos de módulos */
+.module-ventas .module-icon { color: #4caf50; }
+.module-productos .module-icon { color: #2196f3; }
+.module-clientes .module-icon { color: #9c27b0; }
+.module-compras .module-icon { color: #f44336; }
+.module-reparaciones .module-icon { color: #ff9800; }
+.module-whatsapp .module-icon { color: #25d366; }
+.module-empleados .module-icon { color: #795548; }
+.module-reportes .module-icon { color: #607d8b; }
+.module-configuracion .module-icon { color: #9e9e9e; }
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .card-grid,
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+} 

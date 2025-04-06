@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Reparaciones{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reparaciones-container {
+        max-width: 1000px;
+        margin: 30px auto;
+    }
+    
+    .section-title {
+        color: var(--heading-color);
+        margin-bottom: 25px;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .reparaciones-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .reparacion-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+        position: relative;
+    }
+    
+    .reparacion-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .reparacion-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pendiente {
+        background-color: rgba(var(--warning-color), 0.2);
+        color: #ff9800;
+    }
+    
+    .status-en-proceso {
+        background-color: rgba(var(--info-color), 0.2);
+        color: #2196F3;
+    }
+    
+    .status-completada {
+        background-color: rgba(var(--success-color), 0.2);
+        color: #4CAF50;
+    }
+    
+    .status-cancelada {
+        background-color: rgba(var(--danger-color), 0.2);
+        color: #F44336;
+    }
+    
+    .reparacion-header {
+        padding: 20px;
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .reparacion-titulo {
+        font-size: 1.4rem;
+        color: var(--heading-color);
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .reparacion-fecha {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .reparacion-body {
+        padding: 20px;
+    }
+    
+    .reparacion-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .info-item {
+        margin-bottom: 15px;
+    }
+    
+    .info-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 1rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+    
+    .reparacion-problema {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .reparacion-footer {
+        padding: 15px 20px;
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .empty-state i {
+        font-size: 60px;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: var(--heading-color);
+        margin-bottom: 15px;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 25px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .timeline {
+        position: relative;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+    }
+    
+    .timeline::after {
+        content: '';
+        position: absolute;
+        width: 2px;
+        background-color: var(--border-color);
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        margin-left: -1px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        width: 50%;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+    
+    .timeline-item:nth-child(odd) {
+        left: 0;
+    }
+    
+    .timeline-item:nth-child(even) {
+        left: 50%;
+    }
+    
+    .timeline-content {
+        padding: 15px;
+        background-color: var(--card-bg);
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+    
+    .timeline-content::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: var(--card-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 50%;
+        top: 15px;
+        z-index: 1;
+    }
+    
+    .timeline-item:nth-child(odd) .timeline-content::after {
+        right: -32px;
+    }
+    
+    .timeline-item:nth-child(even) .timeline-content::after {
+        left: -32px;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .timeline::after {
+            left: 31px;
+        }
+        
+        .timeline-item {
+            width: 100%;
+            padding-left: 70px;
+            padding-right: 25px;
+        }
+        
+        .timeline-item:nth-child(even) {
+            left: 0;
+        }
+        
+        .timeline-content::after {
+            left: -35px !important;
+            top: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="reparaciones-container">
+        <h1 class="section-title">Mis Solicitudes de Reparación</h1>
+        
+        <div class="reparaciones-header">
+            <p>Visualiza el estado de tus solicitudes de reparación</p>
+            <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Solicitud
+            </a>
+        </div>
+        
+        {% include 'includes/messages.html' %}
+        
+        {% if reparaciones %}
+            {% for reparacion in reparaciones %}
+                <div class="reparacion-card">
+                    <div class="reparacion-status {% if reparacion.estado == 'RECIBIDO' %}status-pendiente
+                        {% elif reparacion.estado == 'DIAGNOSTICO' or reparacion.estado == 'REPARACION' or reparacion.estado == 'ESPERA_REPUESTOS' %}status-en-proceso
+                        {% elif reparacion.estado == 'LISTO' or reparacion.estado == 'ENTREGADO' %}status-completada
+                        {% elif reparacion.estado == 'CANCELADO' %}status-cancelada
+                        {% else %}status-pendiente{% endif %}">
+                        {{ reparacion.estado_texto }}
+                    </div>
+                    
+                    <div class="reparacion-header">
+                        <h2 class="reparacion-titulo">{{ reparacion.electrodomestico }} {{ reparacion.marca }} {{ reparacion.modelo }}</h2>
+                        <p class="reparacion-fecha">
+                            <i class="far fa-calendar-alt"></i> Recepción: {{ reparacion.fecha_recepcion_fmt }}
+                        </p>
+                    </div>
+                    
+                    <div class="reparacion-body">
+                        <div class="reparacion-info">
+                            <div>
+                                <div class="info-item">
+                                    <div class="info-label">Electrodoméstico</div>
+                                    <div class="info-value">{{ reparacion.electrodomestico }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Marca</div>
+                                    <div class="info-value">{{ reparacion.marca or 'No especificada' }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="info-item">
+                                    <div class="info-label">Modelo</div>
+                                    <div class="info-value">{{ reparacion.modelo or 'No especificado' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Estado Actual</div>
+                                    <div class="info-value">
+                                        <span class="badge {% if reparacion.estado == 'RECIBIDO' %}bg-warning text-dark
+                                            {% elif reparacion.estado == 'DIAGNOSTICO' %}bg-info
+                                            {% elif reparacion.estado == 'REPARACION' %}bg-primary
+                                            {% elif reparacion.estado == 'ESPERA_REPUESTOS' %}bg-info
+                                            {% elif reparacion.estado == 'LISTO' %}bg-success
+                                            {% elif reparacion.estado == 'ENTREGADO' %}bg-success
+                                            {% elif reparacion.estado == 'CANCELADO' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ reparacion.estado_texto }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Entrega Estimada</div>
+                                    <div class="info-value">{{ reparacion.fecha_entrega_estimada_fmt }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if reparacion.problema %}
+                        <div class="reparacion-problema">
+                            <div class="info-label">Descripción del Problema</div>
+                            <p>{{ reparacion.problema }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="reparacion-footer">
+                        <div>
+                            <small class="text-muted">
+                                Recibido: {{ reparacion.fecha_recepcion_fmt }}
+                            </small>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-tools"></i>
+                <h3>No tienes reparaciones solicitadas</h3>
+                <p>Aún no has solicitado ninguna reparación. Si necesitas que reparemos algún electrodoméstico, puedes hacerlo fácilmente con el botón de abajo.</p>
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-primary btn-lg">
+                    Solicitar Reparación
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

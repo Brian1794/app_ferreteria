@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitar Reparación - Ferretería{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reparaciones/solicitar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="solicitud-container">
+    <div class="section-header">
+        <h1>Solicitar Reparación</h1>
+        <p>Complete el formulario para solicitar un servicio de reparación</p>
+    </div>
+    
+    <div class="info-box">
+        <p><i class="fas fa-info-circle"></i> Después de enviar tu solicitud, te contactaremos para coordinar la recepción del artículo o brindarte más información.</p>
+    </div>
+    
+    <div class="form-card">
+        <form action="{{ url_for('reparaciones.solicitar') }}" method="POST">
+            <div class="form-group">
+                <label for="descripcion">Descripción del artículo *</label>
+                <input type="text" id="descripcion" name="descripcion" class="form-control" required 
+                       placeholder="Ej: Taladro eléctrico, Licuadora, Pulidora">
+                <small class="form-text text-muted">Indique qué tipo de artículo desea reparar</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="electrodomestico">Tipo de electrodoméstico *</label>
+                <input type="text" id="electrodomestico" name="electrodomestico" class="form-control" required
+                       placeholder="Ej: Taladro, Licuadora, Plancha">
+            </div>
+            
+            <div class="form-group">
+                <label for="marca">Marca</label>
+                <input type="text" id="marca" name="marca" class="form-control" 
+                       placeholder="Ej: DeWalt, Oster, Bosch">
+            </div>
+            
+            <div class="form-group">
+                <label for="modelo">Modelo</label>
+                <input type="text" id="modelo" name="modelo" class="form-control" 
+                       placeholder="Ej: DCD777, 465-15, GWS 7-115">
+                <small class="form-text text-muted">Si conoce la marca y modelo, indíquelo para un mejor servicio</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="problema">Detalles del problema *</label>
+                <textarea id="problema" name="problema" class="form-control" rows="4" required
+                          placeholder="Describa el problema que presenta el artículo. Sea lo más específico posible."></textarea>
+                <small class="form-text text-muted">Incluya cualquier síntoma, sonido extraño o circunstancia relacionada con la falla</small>
+            </div>
+            
+            <div class="form-note">
+                <p>* Campos obligatorios</p>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('reparaciones.mis_reparaciones') }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary">Enviar solicitud</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="tips-section">
+        <h3>Consejos para un mejor servicio</h3>
+        <div class="tip-grid">
+            <div class="tip-card">
+                <i class="fas fa-camera"></i>
+                <h4>Añade fotos después</h4>
+                <p>Puedes tomar fotos del artículo y enviarlas por WhatsApp para ayudar en el diagnóstico.</p>
+            </div>
+            <div class="tip-card">
+                <i class="fas fa-tools"></i>
+                <h4>Mantén los accesorios</h4>
+                <p>Si es posible, incluye todos los accesorios originales del artículo.</p>
+            </div>
+            <div class="tip-card">
+                <i class="fas fa-file-alt"></i>
+                <h4>Conserva documentos</h4>
+                <p>Guarda facturas o garantías, podrían ser útiles durante la reparación.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
