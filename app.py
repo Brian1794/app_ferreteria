@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from flask_login import current_user
 from datetime import datetime
 import logging
+from flask_wtf.csrf import CSRFProtect
 
 # Importar extensiones
 from extensions import login_manager, bcrypt, mysql, init_app, get_cursor, mail
@@ -23,6 +24,7 @@ from routes.clientes import clientes_bp
 from routes.admin import admin_bp
 from routes.ventas import ventas_bp
 from routes.empleados import empleados_bp
+from routes.carrito import carrito_bp
 
 # Importar database
 import database as db
@@ -80,51 +82,58 @@ def load_user(user_id):
         id_campo = 'id_empleado' if 'id_empleado' in columnas_empleados else 'id'
         cargo_campo = 'id_cargo' if 'id_cargo' in columnas_empleados else 'cargo_id'
         
+        # Depuración de empleados
+        print("=== LOAD_USER DEBUG ===")
+        print(f"Columnas empleados: {list(columnas_empleados.keys())}")
+        print(f"ID campo: {id_campo}")
+        print(f"Cargo campo: {cargo_campo}")
+        
         # Si no es cliente, intentar buscar en empleados
         try:
             # Adaptar la consulta según la estructura
             cargo_nombre = None
-            if 'nombre_cargo' in columnas_empleados:
-                # Consulta directa sin join
-                cursor.execute(f'SELECT * FROM empleados WHERE {id_campo} = %s', (user_id,))
-                user_data = cursor.fetchone()
-            else:
-                # Consulta con join a cargos
-                cursor.execute(f"""
-                    SELECT e.*, c.nombre as nombre_cargo 
-                    FROM empleados e 
-                    LEFT JOIN cargos c ON e.{cargo_campo} = c.id
-                    WHERE e.{id_campo} = %s
-                """, (user_id,))
-                user_data = cursor.fetchone()
-                if user_data and 'nombre_cargo' in user_data:
-                    cargo_nombre = user_data['nombre_cargo']
+            cursor.execute(f"""
+                SELECT e.*, c.nombre as nombre_cargo 
+                FROM empleados e 
+                LEFT JOIN cargos c ON e.{cargo_campo} = c.id
+                WHERE e.{id_campo} = %s
+            """, (user_id,))
+            user_data = cursor.fetchone()
+            
+            print(f"Datos del empleado: {user_data}")
             
             if user_data:
-                # Es un empleado
-                # Obtener el nombre del cargo si no se obtuvo en la consulta anterior
-                if not cargo_nombre and user_data.get(cargo_campo):
+                if 'nombre_cargo' in user_data and user_data['nombre_cargo']:
+                    cargo_nombre = user_data['nombre_cargo']
+                    print(f"Cargo del usuario encontrado: {cargo_nombre}")
+                elif user_data.get(cargo_campo):
                     try:
                         cursor.execute("SELECT nombre FROM cargos WHERE id = %s", (user_data.get(cargo_campo),))
                         cargo_result = cursor.fetchone()
                         if cargo_result:
                             cargo_nombre = cargo_result['nombre']
+                            print(f"Cargo obtenido por consulta adicional: {cargo_nombre}")
                     except Exception as e:
                         print(f"Error al obtener nombre de cargo: {e}")
                 
                 # Determinar si es admin por el campo es_admin o por el nombre del cargo
                 es_admin = user_data.get('es_admin', False) or cargo_nombre == 'Administrador'
                 
+                # Crear usuario con los datos disponibles
                 user = Usuario(
                     id=user_data.get(id_campo, user_data.get('id', user_id)),
                     nombre=f"{user_data.get('nombre', '')} {user_data.get('apellido', '')}".strip(),
                     email=user_data.get('correo', user_data.get('email', user_data.get('cedula', ''))),
                     es_admin=es_admin,
                     es_cliente=False,
-                    cargo_id=user_data.get(cargo_campo, user_data.get('cargo_id', None)),
+                    cargo_id=user_data.get(cargo_campo),
                     cargo_nombre=cargo_nombre,
                     foto_perfil=user_data.get('foto_perfil', None)
                 )
+                
+                print(f"Usuario cargado: id={user.id}, cargo_id={user.cargo_id}, cargo_nombre={user.cargo_nombre}")
+                print("=======================")
+                
                 cursor.close()
                 return user
         except Exception as e:
@@ -256,6 +265,15 @@ def create_app(config_name=None):
     if not app.config.get('SECRET_KEY'):
         app.config['SECRET_KEY'] = 'clave-super-secreta-ferreteria-app'
     
+    # Configurar protección CSRF
+    csrf = CSRFProtect(app)
+    
+    # Añadir la función csrf_token a los templates
+    @app.context_processor
+    def inject_csrf_token():
+        from flask_wtf.csrf import generate_csrf
+        return {'csrf_token': lambda: generate_csrf()}
+    
     # Asegurarse de que la configuración de MySQL está definida correctamente
     app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
     app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
@@ -284,6 +302,10 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(ventas_bp, url_prefix='/ventas')
     app.register_blueprint(empleados_bp, url_prefix='/empleados')
+    app.register_blueprint(carrito_bp, url_prefix='/carrito')
+    
+    # Configurar rutas que no requieren CSRF después de registrar blueprints
+    csrf.exempt(carrito_bp)  # Exentar todo el blueprint de carrito
     
     # Registrar manejadores de error personalizados
     register_error_handlers(app)

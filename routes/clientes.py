@@ -215,7 +215,13 @@ def ver(cliente_id):
 @login_required
 def editar(cliente_id):
     """Editar datos de un cliente"""
-    if not current_user.is_empleado:
+    # Si es un cliente, solo puede editar su propio perfil
+    if current_user.es_cliente and current_user.id != cliente_id:
+        flash('Acceso denegado', 'danger')
+        return redirect(url_for('main.index'))
+    
+    # Si es empleado, puede editar cualquier perfil de cliente
+    if not current_user.es_cliente and not current_user.is_empleado:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     
@@ -227,7 +233,7 @@ def editar(cliente_id):
     
     if not cliente:
         flash('Cliente no encontrado', 'warning')
-        return redirect(url_for('clientes.index'))
+        return redirect(url_for('main.mi_cuenta' if current_user.es_cliente else 'clientes.index'))
     
     if request.method == 'POST':
         # Obtener datos del formulario
@@ -306,7 +312,13 @@ def editar(cliente_id):
             cur.close()
             
             flash('Cliente actualizado con éxito', 'success')
-            return redirect(url_for('clientes.ver', cliente_id=cliente_id))
+            
+            # Si es un cliente actualizando su propio perfil, redireccionar al carrito
+            if current_user.es_cliente:
+                return redirect(url_for('carrito.checkout'))
+            # Si es un empleado, redireccionar a la vista de detalles del cliente
+            else:
+                return redirect(url_for('clientes.ver', cliente_id=cliente_id))
             
         except Exception as e:
             flash(f'Error al actualizar el cliente: {str(e)}', 'danger')

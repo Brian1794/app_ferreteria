@@ -21,12 +21,27 @@ def index():
     productos_destacados = cur.fetchall()
     
     # Obtener categorías
-    cur.execute('SELECT * FROM categorias WHERE activa = TRUE')
+    cur.execute('SELECT * FROM categorias WHERE activo = TRUE')
     categorias = cur.fetchall()
     
     # Obtener configuración de la tienda
-    cur.execute("SELECT * FROM configuracion WHERE grupo = 'tienda_online'")
-    config = {row['nombre']: row['valor'] for row in cur.fetchall()}
+    try:
+        # Primero verificamos si existe la columna 'grupo' en la tabla configuracion
+        cur.execute("DESCRIBE configuracion")
+        columnas = cur.fetchall()
+        grupo_existe = any(col.get('Field', col[0]) == 'grupo' for col in columnas)
+        
+        if grupo_existe:
+            cur.execute("SELECT * FROM configuracion WHERE grupo = 'tienda_online'")
+        else:
+            # Si no existe la columna 'grupo', obtenemos todas las configuraciones
+            cur.execute("SELECT * FROM configuracion")
+        
+        config = {row['nombre']: row['valor'] for row in cur.fetchall()}
+    except Exception as e:
+        print(f"Error al obtener configuración: {str(e)}")
+        config = {}  # Config vacía en caso de error
+    
     cur.close()
     
     return render_template('tienda/index.html', 
@@ -67,7 +82,7 @@ def productos():
     productos = cur.fetchall()
     
     # Obtener categorías para el menú lateral
-    cur.execute('SELECT * FROM categorias WHERE activa = TRUE')
+    cur.execute('SELECT * FROM categorias WHERE activo = TRUE')
     categorias = cur.fetchall()
     cur.close()
     
@@ -112,7 +127,8 @@ def ver_producto(producto_id):
 def carrito():
     """Página de carrito de compras"""
     # Si el usuario no está autenticado, usamos un carrito de sesión
-    if not current_user.is_authenticated or not current_user.es_cliente:
+    es_cliente = current_user.is_authenticated and getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         carrito_items = session.get('carrito', [])
         producto_ids = [item['producto_id'] for item in carrito_items]
         
@@ -189,7 +205,8 @@ def agregar_carrito():
         return redirect(url_for('tienda.productos'))
     
     # Si el usuario no está autenticado, usar carrito de sesión
-    if not current_user.is_authenticated or not current_user.es_cliente:
+    es_cliente = current_user.is_authenticated and getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         carrito = session.get('carrito', [])
         
         # Verificar si el producto ya está en el carrito
@@ -245,7 +262,8 @@ def agregar_carrito():
 def eliminar_carrito(item_id):
     """Eliminar producto del carrito"""
     # Si el usuario no está autenticado, eliminar del carrito de sesión
-    if not current_user.is_authenticated or not current_user.es_cliente:
+    es_cliente = current_user.is_authenticated and getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         carrito = session.get('carrito', [])
         
         if item_id < len(carrito):
@@ -280,7 +298,8 @@ def mi_cuenta():
 @login_required
 def ver_reparacion(reparacion_id):
     """Ver detalle de una reparación"""
-    if not current_user.es_cliente:
+    es_cliente = getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     
@@ -330,7 +349,8 @@ def ver_reparacion(reparacion_id):
 @login_required
 def checkout():
     """Proceso de checkout/pago"""
-    if not current_user.es_cliente:
+    es_cliente = getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     
@@ -476,7 +496,8 @@ def checkout():
 @login_required
 def mis_compras():
     """Muestra el historial de compras del cliente"""
-    if not current_user.es_cliente:
+    es_cliente = getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     
@@ -498,7 +519,8 @@ def mis_compras():
 @login_required
 def compra_exitosa(venta_id):
     """Página de confirmación de compra exitosa"""
-    if not current_user.es_cliente:
+    es_cliente = getattr(current_user, 'es_cliente', False)
+    if not es_cliente:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     

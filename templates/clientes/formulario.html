@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if cliente %}Editar Cliente{% else %}Nuevo Cliente{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{% if cliente %}Editar Perfil{% else %}Nuevo Cliente{% endif %}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% if cliente %}{{ url_for('clientes.editar', cliente_id=cliente.id) }}{% else %}{{ url_for('clientes.nuevo') }}{% endif %}">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ cliente.nombre if cliente else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" value="{{ cliente.apellido if cliente else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono if cliente else '' }}" required>
+                                <small class="text-muted">Requerido para completar pedidos</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email {% if not cliente %}<span class="text-danger">*</span>{% endif %}</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ cliente.email if cliente else '' }}" {% if not cliente %}required{% endif %} {% if cliente %}readonly{% endif %}>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ cliente.direccion if cliente else '' }}" required>
+                            <small class="text-muted">Requerido para envío de productos</small>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="ciudad" class="form-label">Ciudad</label>
+                                <input type="text" class="form-control" id="ciudad" name="ciudad" value="{{ cliente.ciudad if cliente else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="codigo_postal" class="form-label">Código Postal</label>
+                                <input type="text" class="form-control" id="codigo_postal" name="codigo_postal" value="{{ cliente.codigo_postal if cliente else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="identificacion" class="form-label">Identificación</label>
+                            <input type="text" class="form-control" id="identificacion" name="identificacion" value="{{ cliente.identificacion if cliente else '' }}">
+                        </div>
+
+                        {% if not cliente or current_user.is_admin %}
+                        <div class="mb-3">
+                            <label for="tipo_cliente" class="form-label">Tipo de Cliente</label>
+                            <select class="form-select" id="tipo_cliente" name="tipo_cliente">
+                                <option value="Regular" {% if cliente and cliente.tipo_cliente == 'Regular' %}selected{% endif %}>Regular</option>
+                                <option value="VIP" {% if cliente and cliente.tipo_cliente == 'VIP' %}selected{% endif %}>VIP</option>
+                                <option value="Mayorista" {% if cliente and cliente.tipo_cliente == 'Mayorista' %}selected{% endif %}>Mayorista</option>
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        {% if not cliente or current_user.is_admin %}
+                        <div class="mb-3">
+                            <label for="notas" class="form-label">Notas</label>
+                            <textarea class="form-control" id="notas" name="notas" rows="3">{{ cliente.notas if cliente else '' }}</textarea>
+                        </div>
+                        {% endif %}
+
+                        {% if not cliente %}
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        {% elif current_user.is_admin %}
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Nueva Contraseña (dejar en blanco para mantener actual)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        {% endif %}
+
+                        {% if current_user.is_admin %}
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="activo" name="activo" {% if cliente and cliente.activo %}checked{% endif %}>
+                            <label class="form-check-label" for="activo">Cuenta Activa</label>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="puede_comprar_online" name="puede_comprar_online" {% if cliente and cliente.puede_comprar_online %}checked{% endif %}>
+                            <label class="form-check-label" for="puede_comprar_online">Puede Comprar Online</label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            {% if current_user.es_cliente %}
+                            <a href="{{ url_for('main.mi_cuenta') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            {% else %}
+                            <a href="{{ url_for('clientes.index') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

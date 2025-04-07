@@ -160,29 +160,7 @@
             text-decoration: underline !important;
         }
 
-        /* Estilos del selector de tema */
-        .theme-selector {
-            margin: 8px 16px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .theme-selector .theme-label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .theme-selector .theme-checkbox {
-            margin-left: 8px;
-            position: relative;
-            width: 50px;
-            height: 26px;
-            margin: 0;
-            opacity: 0;
-        }
+        /* Estilos del selector de tema - movidos a theme.css */
 
         .theme-slider {
             position: absolute;
@@ -198,9 +176,6 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 5px;
-            width: 50px;
-            height: 26px;
-            margin-left: 10px;
         }
 
         .theme-slider:before {
@@ -223,35 +198,6 @@
         .theme-checkbox:checked + .theme-slider:before {
             transform: translateX(22px);
         }
-        
-        /* Estilo del icono del carrito */
-        .cart-icon {
-            display: inline-flex;
-            position: relative;
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            margin-right: 10px;
-            transition: color 0.3s;
-        }
-        
-        .cart-icon:hover {
-            color: var(--primary-color);
-        }
-        
-        .cart-counter {
-            position: absolute;
-            top: 0;
-            right: -5px;
-            font-size: 0.65rem;
-            padding: 0.25rem 0.45rem;
-            background-color: var(--danger-color);
-            color: white;
-            border-radius: 50%;
-            border: 2px solid var(--body-bg);
-            transform: scale(0.8);
-        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -269,14 +215,15 @@
                 </a>
 
                 <div class="nav-links">
-                    {% if current_user.is_authenticated and current_user.es_cliente %}
-                    <a href="{{ url_for('carrito.ver_carrito') }}" class="cart-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                        {% if session.get('cart') and session['cart']|length > 0 %}
-                        <span class="cart-counter">{{ session['cart']|length }}</span>
-                        {% endif %}
-                    </a>
-                    {% endif %}
+                    <div class="theme-selector">
+                        <label for="theme-toggle" class="theme-label">
+                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
+                            <span class="theme-slider">
+                                <i class="fa-solid fa-sun light-icon"></i>
+                                <i class="fa-solid fa-moon dark-icon"></i>
+                            </span>
+                        </label>
+                    </div>
 
                     <button class="mobile-menu-btn" id="mobile-menu-toggle">
                         <i class="fas fa-bars"></i>
@@ -312,24 +259,11 @@
                                     {% if current_user.es_cliente %}
                                         <a href="{{ url_for('main.mi_cuenta') }}"><i class="fas fa-user"></i> Mi Perfil</a>
                                         <a href="{{ url_for('reparaciones.mis_reparaciones') }}"><i class="fas fa-tools"></i> Mis Reparaciones</a>
-                                        <a href="{{ url_for('carrito.ver_carrito') }}"><i class="fas fa-shopping-cart"></i> Mi Carrito</a>
                                     {% else %}
                                         <a href="{{ url_for('empleados.mi_perfil') }}"><i class="fas fa-user"></i> Mi Perfil</a>
                                     {% endif %}
                                     <a href="{{ url_for('auth.cambiar_password') }}"><i class="fas fa-key"></i> Cambiar Contraseña</a>
                                     <a href="#" id="editarFotoPerfil"><i class="fas fa-camera"></i> Cambiar Foto</a>
-                                    
-                                    <div class="theme-selector">
-                                        <label for="theme-toggle" class="theme-label">
-                                            <i class="fas fa-moon dark-icon"></i> Modo Oscuro
-                                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
-                                            <span class="theme-slider">
-                                                <i class="fa-solid fa-sun light-icon"></i>
-                                                <i class="fa-solid fa-moon dark-icon"></i>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    
                                     <div class="dropdown-divider"></div>
                                     <a href="{{ url_for('auth.logout', _external=True) }}" id="cerrarSesionLink" onclick="this.href += '?t=' + Date.now()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
                                 </div>
@@ -558,12 +492,10 @@
                     // Hacer una solicitud fetch para cerrar sesión
                     fetch(logoutUrl, {
                         method: 'GET',
-                        credentials: 'same-origin'
+                        credentials: 'same-origin',
+                        cache: 'no-store'
                     }).then(() => {
-                        // Limpiar localStorage si es necesario
-                        localStorage.removeItem('user_data');
-                        
-                        // Redirigir a la página principal con forzado de recarga
+                        // Después de cerrar sesión, redirigir a la página principal con forzado de recarga
                         window.location.href = '/?fresh=' + Date.now();
                     }).catch(() => {
                         // En caso de error, intentar redirigir directamente
@@ -571,10 +503,20 @@
                     });
                 });
             }
+
+            // Modal para cambiar foto de perfil
+            const editarFotoBtn = document.getElementById('editarFotoPerfil');
+            if (editarFotoBtn) {
+                const modalCambiarFoto = new bootstrap.Modal(document.getElementById('modalCambiarFoto'));
+                editarFotoBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    modalCambiarFoto.show();
+                });
+            }
         });
     </script>
 
     <!-- Scripts específicos de cada página -->
-    {% block scripts %}{% endblock %}
+    {% block extra_js %}{% endblock %}
 </body>
 </html> 

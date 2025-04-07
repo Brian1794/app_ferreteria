@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Reparaciones - Ferretería{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reparaciones/lista.css') }}">
+<style>
+    .tecnico-dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tecnico-stat {
+        flex: 1;
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: var(--box-shadow);
+        min-width: 200px;
+        text-align: center;
+    }
+    
+    .tecnico-stat h4 {
+        margin-bottom: 0.5rem;
+        color: var(--text-color-light);
+    }
+    
+    .tecnico-stat .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .tecnico-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .tecnico-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .tecnico-info-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .tecnico-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .tecnico-data h3 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .tecnico-data p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .status-filters {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .status-filter {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background-color: var(--card-bg);
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 1px solid var(--border-color);
+    }
+    
+    .status-filter.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .reparacion-card {
+        display: flex;
+        flex-direction: column;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--box-shadow);
+        margin-bottom: 1rem;
+        background-color: var(--card-bg);
+        transition: transform 0.3s;
+    }
+    
+    .reparacion-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .reparacion-header {
+        background-color: var(--neutral-bg);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .reparacion-id {
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .reparacion-content {
+        padding: 1rem;
+    }
+    
+    .reparacion-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .reparacion-info-item {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .reparacion-info-label {
+        font-weight: 600;
+        color: var(--text-color-light);
+        margin-bottom: 0.25rem;
+    }
+    
+    .reparacion-footer {
+        padding: 0.75rem 1rem;
+        background-color: var(--neutral-bg);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .badge-recibido { background-color: #e7f5ff; color: #1c7ed6; }
+    .badge-diagnostico { background-color: #e3fafc; color: #0c8599; }
+    .badge-espera_repuestos { background-color: #fff9db; color: #f08c00; }
+    .badge-reparacion { background-color: #f3f0ff; color: #7048e8; }
+    .badge-listo { background-color: #ebfbee; color: #37b24d; }
+    .badge-entregado { background-color: #d3f9d8; color: #2b8a3e; }
+    .badge-cancelado { background-color: #ffe3e3; color: #e03131; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Panel del Técnico -->
+    <div class="tecnico-header">
+        <div class="tecnico-info">
+            <div class="tecnico-info-left">
+                <div class="tecnico-avatar">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="tecnico-data">
+                    <h3>{{ current_user.nombre }}</h3>
+                    <p>Técnico especialista</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tecnico-dashboard">
+        <div class="tecnico-stat">
+            <h4>Asignadas</h4>
+            <div class="stat-value">{{ reparaciones_totales|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>En progreso</h4>
+            <div class="stat-value">{{ reparaciones_progreso|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>Completadas</h4>
+            <div class="stat-value">{{ reparaciones_completadas|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>Eficiencia</h4>
+            <div class="stat-value">{{ eficiencia|default('N/A') }}</div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h1>Mis Reparaciones</h1>
+    </div>
+    
+    <div class="status-filters">
+        <div class="status-filter active" data-filter="all">Todas</div>
+        <div class="status-filter" data-filter="recibido">Recibidas</div>
+        <div class="status-filter" data-filter="diagnostico">En diagnóstico</div>
+        <div class="status-filter" data-filter="reparacion">En reparación</div>
+        <div class="status-filter" data-filter="espera_repuestos">Esperando repuestos</div>
+        <div class="status-filter" data-filter="listo">Listas</div>
+    </div>
+    
+    {% if reparaciones %}
+    <div class="reparaciones-grid">
+        {% for reparacion in reparaciones %}
+        <div class="reparacion-card" data-estado="{{ reparacion.estado.lower() }}">
+            <div class="reparacion-header">
+                <div class="reparacion-id">#{{ reparacion.id }}</div>
+                <div class="badge badge-{{ reparacion.estado.lower() }}">{{ reparacion.estado_texto }}</div>
+            </div>
+            <div class="reparacion-content">
+                <div class="reparacion-info">
+                    <div class="reparacion-info-item">
+                        <div class="reparacion-info-label">Cliente</div>
+                        <div>{{ reparacion.cliente_nombre }}</div>
+                    </div>
+                    <div class="reparacion-info-item">
+                        <div class="reparacion-info-label">Equipo</div>
+                        <div>{{ reparacion.electrodomestico }}</div>
+                    </div>
+                    <div class="reparacion-info-item">
+                        <div class="reparacion-info-label">Marca/Modelo</div>
+                        <div>{{ reparacion.marca or 'N/A' }} {{ reparacion.modelo or '' }}</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="reparacion-info-label">Problema</div>
+                    <div>{{ reparacion.problema }}</div>
+                </div>
+            </div>
+            <div class="reparacion-footer">
+                <div>
+                    <span class="reparacion-info-label">Recibido:</span> {{ reparacion.fecha_recepcion }}
+                </div>
+                <a href="{{ url_for('reparaciones.detalle', id=reparacion.id) }}" class="btn-primary btn-sm">
+                    <i class="fas fa-tools"></i> Gestionar
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-tools fa-3x"></i>
+        <h3>No hay reparaciones asignadas</h3>
+        <p>Actualmente no tienes reparaciones asignadas a tu cargo.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filtrado por estado
+        const statusFilters = document.querySelectorAll('.status-filter');
+        const reparacionCards = document.querySelectorAll('.reparacion-card');
+        
+        statusFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                // Quitar clase active de todos los filtros
+                statusFilters.forEach(f => f.classList.remove('active'));
+                
+                // Añadir clase active al filtro seleccionado
+                this.classList.add('active');
+                
+                const filterValue = this.getAttribute('data-filter');
+                
+                // Mostrar/ocultar tarjetas según el filtro
+                reparacionCards.forEach(card => {
+                    if (filterValue === 'all') {
+                        card.style.display = 'flex';
+                    } else {
+                        const cardEstado = card.getAttribute('data-estado');
+                        if (cardEstado === filterValue) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

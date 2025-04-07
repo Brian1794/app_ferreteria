@@ -296,6 +296,60 @@ def crear_tablas():
                     FOREIGN KEY (plantilla_id) REFERENCES whatsapp_plantillas(id) ON DELETE SET NULL
                 )
             ''')
+            
+            # Tabla de carrito de compras
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS carritos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    cliente_id INT NOT NULL,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+                )
+            ''')
+            
+            # Tabla de items del carrito
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS carrito_items (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    carrito_id INT NOT NULL,
+                    producto_id INT NOT NULL,
+                    cantidad INT NOT NULL,
+                    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (carrito_id) REFERENCES carritos(id) ON DELETE CASCADE,
+                    FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+                )
+            ''')
+            
+            # Tabla de pedidos
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS pedidos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    cliente_id INT NOT NULL,
+                    fecha_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    estado VARCHAR(50) DEFAULT 'PENDIENTE',
+                    total DECIMAL(12,2) NOT NULL,
+                    metodo_pago VARCHAR(50),
+                    referencia_pago VARCHAR(100),
+                    direccion_envio TEXT,
+                    telefono_contacto VARCHAR(50),
+                    notas TEXT,
+                    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+                )
+            ''')
+            
+            # Tabla de detalles de pedido
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS pedido_detalles (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    pedido_id INT NOT NULL,
+                    producto_id INT NOT NULL,
+                    cantidad INT NOT NULL,
+                    precio_unitario DECIMAL(12,2) NOT NULL,
+                    subtotal DECIMAL(12,2) NOT NULL,
+                    FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+                    FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+                )
+            ''')
         except Exception as e:
             print(f"Error durante la creación de tablas: {e}")
             
@@ -470,102 +524,198 @@ def get_cursor():
     return mysql.connection.cursor()
 
 def verificar_estructura_tablas():
-    """Verifica y actualiza la estructura de las tablas si es necesario"""
+    """Verifica la estructura de las tablas y actualiza si es necesario"""
     try:
+        # Verificar y crear la tabla historial_reparaciones
+        crear_tabla_historial_reparaciones()
+        
+        # Verificar si la tabla reparaciones tiene la columna diagnostico
         cursor = mysql.connection.cursor()
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'diagnostico'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN diagnostico TEXT NULL")
+            mysql.connection.commit()
+            print("Columna diagnostico añadida a la tabla reparaciones")
         
-        # Verificar y corregir la tabla clientes
-        cursor.execute("SHOW TABLES LIKE 'clientes'")
-        if cursor.fetchone():
-            # Verificar si existe la columna email en la tabla clientes
-            cursor.execute("SHOW COLUMNS FROM clientes LIKE 'email'")
-            existe_columna_email = cursor.fetchone()
-            
-            if not existe_columna_email:
-                cursor.execute("ALTER TABLE clientes ADD COLUMN email VARCHAR(100) UNIQUE AFTER nombre")
-                mysql.connection.commit()
-                print("Columna email añadida a la tabla clientes")
-                
-            # Verificar si existe la columna password
-            cursor.execute("SHOW COLUMNS FROM clientes LIKE 'password'")
-            existe_columna_password = cursor.fetchone()
-            
-            if not existe_columna_password:
-                cursor.execute("ALTER TABLE clientes ADD COLUMN password VARCHAR(255) NOT NULL DEFAULT '' AFTER email")
-                mysql.connection.commit()
-                print("Columna password añadida a la tabla clientes")
-        
-            # Verificar si existe la columna foto_perfil
-            cursor.execute("SHOW COLUMNS FROM clientes LIKE 'foto_perfil'")
-            existe_columna_foto = cursor.fetchone()
-            
-            if not existe_columna_foto:
-                cursor.execute("ALTER TABLE clientes ADD COLUMN foto_perfil VARCHAR(255) NULL")
-                mysql.connection.commit()
-                print("Columna foto_perfil añadida a la tabla clientes")
-        
-        # Verificar y corregir la tabla empleados
-        cursor.execute("SHOW TABLES LIKE 'empleados'")
-        if cursor.fetchone():
-            # Verificar si existe la columna es_admin
-            cursor.execute("SHOW COLUMNS FROM empleados LIKE 'es_admin'")
-            existe_columna_admin = cursor.fetchone()
-            
-            if not existe_columna_admin:
-                cursor.execute("ALTER TABLE empleados ADD COLUMN es_admin BOOLEAN DEFAULT FALSE AFTER cargo_id")
-                mysql.connection.commit()
-                print("Columna es_admin añadida a la tabla empleados")
-            
-            # Verificar si existe la columna foto_perfil
-            cursor.execute("SHOW COLUMNS FROM empleados LIKE 'foto_perfil'")
-            existe_columna_foto = cursor.fetchone()
-            
-            if not existe_columna_foto:
-                cursor.execute("ALTER TABLE empleados ADD COLUMN foto_perfil VARCHAR(255) NULL")
-                mysql.connection.commit()
-                print("Columna foto_perfil añadida a la tabla empleados")
-        
-        # Verificar y corregir la tabla ventas
-        cursor.execute("SHOW TABLES LIKE 'ventas'")
-        if cursor.fetchone():
-            # Asegurarse de que la estructura de ventas tenga la columna id como PRIMARY KEY
-            cursor.execute("SHOW KEYS FROM ventas WHERE Key_name = 'PRIMARY'")
-            tiene_primary_key = cursor.fetchone()
-            
-            if not tiene_primary_key:
-                # Si no tiene primary key, intentamos agregar una
-                try:
-                    cursor.execute("ALTER TABLE ventas ADD PRIMARY KEY (id)")
-                    mysql.connection.commit()
-                    print("Clave primaria añadida a la tabla ventas")
-                except Exception as e:
-                    print(f"Error al agregar clave primaria a ventas: {e}")
-                    
-        # Verificar la existencia de la tabla detalles_venta
-        cursor.execute("SHOW TABLES LIKE 'detalles_venta'")
-        existe_tabla_detalles = cursor.fetchone()
-        
-        if not existe_tabla_detalles:
-            # Crear la tabla detalles_venta si no existe
-            try:
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS detalles_venta (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        venta_id INT NOT NULL,
-                        producto_id INT,
-                        cantidad INT NOT NULL,
-                        precio_unitario DECIMAL(12,2) NOT NULL,
-                        subtotal DECIMAL(12,2) NOT NULL,
-                        FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE,
-                        FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL
-                    )
-                ''')
-                mysql.connection.commit()
-                print("Tabla detalles_venta creada")
-            except Exception as e:
-                print(f"Error al crear tabla detalles_venta: {e}")
+        # Verificar si la tabla reparaciones tiene la columna fecha_actualizacion
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'fecha_actualizacion'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN fecha_actualizacion DATETIME NULL")
+            mysql.connection.commit()
+            print("Columna fecha_actualizacion añadida a la tabla reparaciones")
             
         cursor.close()
     except Exception as e:
         print(f"Error al verificar estructura de tablas: {e}")
+
+# Crear la tabla de historial de reparaciones si no existe
+def crear_tabla_historial_reparaciones():
+    """Crea la tabla historial_reparaciones si no existe"""
+    cursor = mysql.connection.cursor()
+    try:
+        # Verificar si la tabla existe
+        cursor.execute("SHOW TABLES LIKE 'historial_reparaciones'")
+        if not cursor.fetchone():
+            # Crear la tabla
+            cursor.execute("""
+                CREATE TABLE historial_reparaciones (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    reparacion_id INT NOT NULL,
+                    estado VARCHAR(50) NOT NULL,
+                    fecha DATETIME NOT NULL,
+                    tecnico_id INT NULL,
+                    comentario TEXT NULL,
+                    FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
+                    FOREIGN KEY (tecnico_id) REFERENCES empleados(id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            mysql.connection.commit()
+            print("Tabla historial_reparaciones creada exitosamente")
+        else:
+            print("La tabla historial_reparaciones ya existe")
+    except Exception as e:
+        print(f"Error al crear tabla historial_reparaciones: {e}")
         mysql.connection.rollback()
+    finally:
+        cursor.close()
+
+def crear_tabla_reparaciones_repuestos():
+    """Crea la tabla para gestionar los repuestos usados en las reparaciones"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Comprobar si la tabla existe
+        cursor.execute("SHOW TABLES LIKE 'reparaciones_repuestos'")
+        if cursor.fetchone():
+            print("La tabla reparaciones_repuestos ya existe")
+            return
+        
+        # Crear la tabla
+        cursor.execute("""
+            CREATE TABLE reparaciones_repuestos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                reparacion_id INT NOT NULL,
+                producto_id INT NULL,
+                repuesto_descripcion VARCHAR(255) NOT NULL,
+                cantidad INT NOT NULL DEFAULT 1,
+                precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0,
+                subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
+                fecha_agregado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        
+        mysql.connection.commit()
+        print("Tabla reparaciones_repuestos creada exitosamente")
+    except Exception as e:
+        print(f"Error al crear tabla reparaciones_repuestos: {e}")
+    finally:
+        cursor.close()
+
+def crear_tabla_whatsapp_mensajes():
+    """Crea la tabla para los mensajes de WhatsApp enviados"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Comprobar si la tabla existe
+        cursor.execute("SHOW TABLES LIKE 'whatsapp_mensajes'")
+        if cursor.fetchone():
+            print("La tabla whatsapp_mensajes ya existe")
+            return
+        
+        # Crear la tabla
+        cursor.execute("""
+            CREATE TABLE whatsapp_mensajes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                telefono VARCHAR(20) NOT NULL,
+                mensaje TEXT NOT NULL,
+                tipo_mensaje VARCHAR(50) NOT NULL,
+                objeto_tipo VARCHAR(50) NOT NULL,
+                objeto_id INT NOT NULL,
+                fecha_envio DATETIME NOT NULL,
+                estado VARCHAR(20) DEFAULT 'enviado',
+                respuesta TEXT NULL,
+                INDEX (objeto_tipo, objeto_id),
+                INDEX (telefono)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        
+        mysql.connection.commit()
+        print("Tabla whatsapp_mensajes creada exitosamente")
+    except Exception as e:
+        print(f"Error al crear tabla whatsapp_mensajes: {e}")
+    finally:
+        cursor.close()
+
+def actualizar_tabla_reparaciones():
+    """Actualiza la tabla de reparaciones para agregar campos necesarios para diagnóstico y solución"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Verificar si la columna diagnostico existe
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'diagnostico'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN diagnostico TEXT NULL")
+            print("Columna diagnostico agregada")
+            
+        # Verificar si la columna notas existe
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'notas'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN notas TEXT NULL")
+            print("Columna notas agregada")
+            
+        # Verificar si la columna costo_estimado existe
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'costo_estimado'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN costo_estimado DECIMAL(10,2) NULL")
+            print("Columna costo_estimado agregada")
+            
+        # Verificar si la columna costo_final existe
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'costo_final'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN costo_final DECIMAL(10,2) NULL")
+            print("Columna costo_final agregada")
+            
+        # Verificar si la columna fecha_actualizacion existe
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'fecha_actualizacion'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN fecha_actualizacion DATETIME NULL")
+            print("Columna fecha_actualizacion agregada")
+            
+        # Añadir más campos específicos para la documentación técnica
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'solucion_tecnica'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN solucion_tecnica TEXT NULL")
+            print("Columna solucion_tecnica agregada")
+            
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'componentes_reemplazados'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN componentes_reemplazados TEXT NULL")
+            print("Columna componentes_reemplazados agregada")
+            
+        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'horas_trabajo'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE reparaciones ADD COLUMN horas_trabajo DECIMAL(5,2) NULL")
+            print("Columna horas_trabajo agregada")
+            
+        mysql.connection.commit()
+        print("Tabla reparaciones actualizada exitosamente")
+    except Exception as e:
+        print(f"Error al actualizar tabla reparaciones: {e}")
+    finally:
+        cursor.close()
+
+def inicializar_tablas_reparaciones():
+    """Inicializa todas las tablas necesarias para el módulo de reparaciones"""
+    try:
+        crear_tabla_historial_reparaciones()
+        crear_tabla_reparaciones_repuestos()
+        crear_tabla_whatsapp_mensajes()
+        actualizar_tabla_reparaciones()
+        print("Inicialización de tablas de reparaciones completada")
+    except Exception as e:
+        print(f"Error en inicialización de tablas: {e}")
+
+# Llamar a la función de inicialización al cargar el módulo
+inicializar_tablas_reparaciones()

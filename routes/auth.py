@@ -139,10 +139,16 @@ def login_empleado():
             cursor.execute(query, (correo,))
             empleado = cursor.fetchone()
             
+            print(f"=== LOGIN_EMPLEADO DEBUG ===")
+            print(f"Usuario encontrado: {empleado is not None}")
+            
             if not empleado:
                 flash('Usuario o contraseña incorrectos', 'danger')
                 cursor.close()
                 return render_template('auth/login_empleado.html')
+            
+            print(f"ID de empleado: {empleado['id']}")
+            print(f"Columnas del empleado: {list(empleado.keys())}")
             
             # Verificar si la cuenta está activa
             if not empleado.get('activo', True):
@@ -157,10 +163,12 @@ def login_empleado():
             # Verificar primero si la contraseña es texto plano
             if stored_password == password:
                 password_es_correcta = True
+                print("Contraseña verificada como texto plano")
             # Intentar verificar como hash bcrypt si no coincide como texto plano
             elif len(stored_password) > 20:  # Los hashes bcrypt son largos
                 try:
                     password_es_correcta = bcrypt.check_password_hash(stored_password, password)
+                    print(f"Contraseña bcrypt verificada: {password_es_correcta}")
                 except Exception as e:
                     print(f"Error al verificar hash bcrypt: {e}")
             
@@ -171,13 +179,23 @@ def login_empleado():
             
             # Obtener información del cargo si existe
             cargo_id = empleado.get('cargo_id')
+            print(f"Cargo ID inicial: {cargo_id}")
+            
+            # Si no hay cargo_id, intentar con id_cargo que es otro nombre común
+            if cargo_id is None and 'id_cargo' in empleado:
+                cargo_id = empleado.get('id_cargo')
+                print(f"Cargo ID obtenido de id_cargo: {cargo_id}")
+            
             cargo_nombre = None
             
             if cargo_id:
-                cursor.execute('SELECT nombre FROM cargos WHERE id = %s', (cargo_id,))
+                cursor.execute('SELECT id, nombre FROM cargos WHERE id = %s', (cargo_id,))
                 cargo = cursor.fetchone()
+                print(f"Información de cargo: {cargo}")
+                
                 if cargo:
                     cargo_nombre = cargo['nombre']
+                    print(f"Nombre de cargo: {cargo_nombre}")
             
             # Crear instancia de Usuario con información de cargo
             user = Usuario(
@@ -190,6 +208,9 @@ def login_empleado():
                 cargo_nombre=cargo_nombre,
                 foto_perfil=empleado.get('foto_perfil')
             )
+            
+            print(f"Usuario creado: id={user.id}, cargo_id={user.cargo_id}, cargo_nombre={user.cargo_nombre}")
+            print("========================")
             
             # Registrar la sesión con Flask-Login
             login_user(user, remember=recordar)
@@ -206,9 +227,15 @@ def login_empleado():
             if not next_page or urlparse(next_page).netloc != '':
                 # Redirigir según el cargo
                 if empleado.get('es_admin', False):
-                    next_page = url_for('main.dashboard')
+                    next_page = url_for('admin.index')
                 elif cargo_nombre == 'Técnico':
-                    next_page = url_for('reparaciones.pendientes')
+                    # Para técnicos: verificar nuevamente el cargo
+                    print(f"Redirigiendo a técnico. Cargo: {cargo_nombre}")
+                    # Actualizar el objeto de usuario para asegurar que tenga el cargo correcto
+                    user.cargo_id = cargo_id
+                    user.cargo_nombre = cargo_nombre
+                    # Redirigir a la vista de reparaciones
+                    next_page = url_for('reparaciones.por_tecnico')
                 elif cargo_nombre == 'Vendedor':
                     next_page = url_for('ventas.nueva')
                 else:
@@ -243,7 +270,7 @@ def logout():
     flash('Has cerrado sesión correctamente.', 'success')
     
     # Redireccionar al inicio con una URL absoluta para forzar la recarga completa
-    response = redirect(url_for('main.index', _external=True, _fresh=True))
+    response = redirect(url_for('main.index', _external=True, _timestamp=datetime.now().timestamp()))
     
     # Añadir encabezados para evitar caché
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'

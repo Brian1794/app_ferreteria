@@ -4,21 +4,250 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/reparaciones/detalle.css') }}">
+<style>
+    .section-tabs {
+        display: flex;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .tab-item {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .tab-item.active {
+        border-bottom-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .solucion-form, .mensaje-form {
+        background-color: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-col {
+        flex: 1;
+    }
+    
+    .repuestos-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .repuesto-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .repuesto-info {
+        flex: 1;
+    }
+    
+    .precio-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .mensaje-preview {
+        background-color: #e2f7cb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #25d366;
+    }
+    
+    .diagnostico-area {
+        width: 100%;
+        min-height: 120px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Nuevos estilos para el panel de técnico */
+    .tecnico-dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tecnico-stat {
+        flex: 1;
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: var(--box-shadow);
+        min-width: 200px;
+        text-align: center;
+    }
+    
+    .tecnico-stat h4 {
+        margin-bottom: 0.5rem;
+        color: var(--text-color-light);
+    }
+    
+    .tecnico-stat .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .tecnico-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .tecnico-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .tecnico-info-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .tecnico-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .tecnico-data h3 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .tecnico-data p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .tecnico-actions a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        background-color: rgba(255,255,255,0.2);
+        transition: all 0.3s;
+        display: inline-block;
+    }
+    
+    .tecnico-actions a:hover {
+        background-color: rgba(255,255,255,0.3);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="reparacion-container">
+    <!-- Datos ocultos para JavaScript -->
+    <div id="datos-mensaje" 
+         data-cliente="{{ reparacion.cliente_nombre }}" 
+         data-electro="{{ reparacion.electrodomestico }}" 
+         data-estado="{{ reparacion.estado_texto }}"
+         data-costo-est="{{ reparacion.costo_estimado or '0' }}"
+         data-costo-final="{{ reparacion.costo_final or '0' }}"
+         style="display:none;">
+    </div>
+    
+    {% if hasattr(current_user, 'cargo_id') and current_user.cargo_nombre == 'Técnico' %}
+    <!-- Panel del Técnico -->
+    <div class="tecnico-header">
+        <div class="tecnico-info">
+            <div class="tecnico-info-left">
+                <div class="tecnico-avatar">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="tecnico-data">
+                    <h3>{{ current_user.nombre }}</h3>
+                    <p>Técnico especialista - {{ reparacion.electrodomestico }}</p>
+                </div>
+            </div>
+            <div class="tecnico-actions">
+                <a href="{{ url_for('reparaciones.por_tecnico') }}">
+                    <i class="fas fa-clipboard-list"></i> Mis reparaciones
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tecnico-dashboard">
+        <div class="tecnico-stat">
+            <h4>Reparaciones asignadas</h4>
+            <div class="stat-value">{{ reparaciones_totales|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>En progreso</h4>
+            <div class="stat-value">{{ reparaciones_progreso|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>Completadas</h4>
+            <div class="stat-value">{{ reparaciones_completadas|default(0) }}</div>
+        </div>
+        <div class="tecnico-stat">
+            <h4>Eficiencia</h4>
+            <div class="stat-value">{{ eficiencia|default('N/A') }}</div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="section-header">
         <div class="d-flex justify-content-between align-items-center">
             <h1>Reparación #{{ reparacion.id }}</h1>
             <div class="actions">
-                {% if current_user.tipo == 'empleado' %}
+                {% if hasattr(current_user, 'cargo_id') %}
+                {% if current_user.cargo_nombre == 'Técnico' %}
+                <a href="{{ url_for('reparaciones.por_tecnico') }}" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a mis reparaciones
+                </a>
+                {% else %}
                 <a href="{{ url_for('reparaciones.lista') }}" class="btn-secondary">
                     <i class="fas fa-arrow-left"></i> Volver a la lista
                 </a>
-                <button id="btnActualizarEstado" class="btn-primary">
-                    <i class="fas fa-edit"></i> Actualizar estado
-                </button>
+                {% endif %}
                 {% else %}
                 <a href="{{ url_for('reparaciones.mis_reparaciones') }}" class="btn-secondary">
                     <i class="fas fa-arrow-left"></i> Volver a mis reparaciones
@@ -28,147 +257,461 @@
         </div>
     </div>
 
-    <div class="card-grid">
-        <!-- Información principal -->
-        <div class="info-card">
-            <div class="card-header">
-                <h3>Información principal</h3>
-                <span class="badge badge-{{ reparacion.estado }}">{{ reparacion.estado_texto }}</span>
+    <div class="badge badge-{{ reparacion.estado.lower() }}" style="display: inline-block; margin-bottom: 1rem; font-size: 1rem; padding: 0.5rem 1rem;">
+        {{ reparacion.estado_texto }}
+    </div>
+
+    {% if hasattr(current_user, 'cargo_id') and current_user.cargo_nombre == 'Técnico' %}
+    <div class="section-tabs">
+        <div class="tab-item active" data-tab="informacion">Información</div>
+        <div class="tab-item" data-tab="diagnostico">Diagnóstico y Solución</div>
+        <div class="tab-item" data-tab="repuestos">Repuestos</div>
+        <div class="tab-item" data-tab="mensajeria">Mensajería</div>
+    </div>
+    {% endif %}
+
+    <div class="tab-content active" id="tab-informacion">
+        <div class="card-grid">
+            <!-- Información principal -->
+            <div class="info-card">
+                <div class="card-header">
+                    <h3>Información principal</h3>
+                </div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="info-label">Descripción:</span>
+                        <span class="info-value">{{ reparacion.descripcion }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Electrodoméstico:</span>
+                        <span class="info-value">{{ reparacion.electrodomestico }}</span>
+                    </div>
+                    {% if reparacion.marca %}
+                    <div class="info-row">
+                        <span class="info-label">Marca:</span>
+                        <span class="info-value">{{ reparacion.marca }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reparacion.modelo %}
+                    <div class="info-row">
+                        <span class="info-label">Modelo:</span>
+                        <span class="info-value">{{ reparacion.modelo }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <span class="info-label">Problema reportado:</span>
+                        <span class="info-value">{{ reparacion.problema }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Cliente:</span>
+                        <span class="info-value">{{ reparacion.cliente_nombre }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Contacto:</span>
+                        <span class="info-value">
+                            {% if reparacion.cliente_telefono %}
+                                <a href="tel:{{ reparacion.cliente_telefono }}">{{ reparacion.cliente_telefono }}</a>
+                            {% else %}
+                                No disponible
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Técnico asignado:</span>
+                        <span class="info-value">{{ reparacion.tecnico_nombre or 'Sin asignar' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha de recepción:</span>
+                        <span class="info-value">{{ reparacion.fecha_recepcion }}</span>
+                    </div>
+                    {% if reparacion.fecha_entrega_estimada %}
+                    <div class="info-row">
+                        <span class="info-label">Entrega estimada:</span>
+                        <span class="info-value">{{ reparacion.fecha_entrega_estimada }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reparacion.costo_estimado %}
+                    <div class="info-row">
+                        <span class="info-label">Costo estimado:</span>
+                        <span class="info-value">${{ reparacion.costo_estimado }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reparacion.costo_final %}
+                    <div class="info-row">
+                        <span class="info-label">Costo final:</span>
+                        <span class="info-value">${{ reparacion.costo_final }}</span>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-content">
-                <div class="info-row">
-                    <span class="info-label">Descripción:</span>
-                    <span class="info-value">{{ reparacion.descripcion }}</span>
+
+            <!-- Historial de la reparación -->
+            <div class="history-card">
+                <div class="card-header">
+                    <h3>Historial</h3>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Cliente:</span>
-                    <span class="info-value">{{ reparacion.cliente_nombre }}</span>
+                <div class="card-content">
+                    {% if historial %}
+                    <div class="timeline">
+                        {% for evento in historial %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4>{{ evento.estado_nuevo }}</h4>
+                                <p>{{ evento.descripcion }}</p>
+                                <small>{{ evento.fecha }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-message">No hay eventos registrados en el historial.</p>
+                    {% endif %}
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Técnico asignado:</span>
-                    <span class="info-value">{{ reparacion.tecnico_nombre or 'Sin asignar' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña de Diagnóstico y Solución -->
+    {% if hasattr(current_user, 'cargo_id') and current_user.cargo_nombre == 'Técnico' %}
+    <div class="tab-content" id="tab-diagnostico">
+        <div class="solucion-form">
+            <h3>Diagnóstico Técnico</h3>
+            <form action="{{ url_for('reparaciones.actualizar_diagnostico', id=reparacion.id) }}" method="POST">
+                <div class="form-group">
+                    <label for="diagnostico">Diagnóstico detallado</label>
+                    <textarea name="diagnostico" id="diagnostico" class="diagnostico-area">{{ reparacion.diagnostico or '' }}</textarea>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Fecha de recepción:</span>
-                    <span class="info-value">{{ reparacion.fecha_recepcion }}</span>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="estado">Actualizar estado</label>
+                            <select name="estado" id="estado" class="form-control" required>
+                                {% for estado in estados.items() %}
+                                <option value="{{ estado[0] }}" {% if reparacion.estado == estado[0] %}selected{% endif %}>{{ estado[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="fecha_entrega_estimada">Fecha estimada de entrega</label>
+                            <input type="date" name="fecha_entrega_estimada" id="fecha_entrega_estimada" 
+                                class="form-control" value="{{ reparacion.fecha_entrega_estimada }}">
+                        </div>
+                    </div>
                 </div>
-                {% if reparacion.fecha_entrega_estimada %}
-                <div class="info-row">
-                    <span class="info-label">Entrega estimada:</span>
-                    <span class="info-value">{{ reparacion.fecha_entrega_estimada }}</span>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="costo_estimado">Costo estimado</label>
+                            <input type="number" name="costo_estimado" id="costo_estimado" 
+                                class="form-control" step="0.01" value="{{ reparacion.costo_estimado or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="costo_final">Costo final</label>
+                            <input type="number" name="costo_final" id="costo_final" 
+                                class="form-control" step="0.01" value="{{ reparacion.costo_final or '' }}">
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
-                {% if reparacion.costo_estimado %}
-                <div class="info-row">
-                    <span class="info-label">Costo estimado:</span>
-                    <span class="info-value">${{ reparacion.costo_estimado }}</span>
+
+                <div class="form-group">
+                    <label for="solucion_tecnica">Solución técnica aplicada</label>
+                    <textarea name="solucion_tecnica" id="solucion_tecnica" class="form-control" rows="4">{{ reparacion.solucion_tecnica or '' }}</textarea>
                 </div>
-                {% endif %}
-                {% if reparacion.costo_final %}
-                <div class="info-row">
-                    <span class="info-label">Costo final:</span>
-                    <span class="info-value">${{ reparacion.costo_final }}</span>
+
+                <div class="form-group">
+                    <label for="notas">Notas adicionales</label>
+                    <textarea name="notas" id="notas" class="form-control" rows="3">{{ reparacion.notas or '' }}</textarea>
                 </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pestaña de Repuestos -->
+    <div class="tab-content" id="tab-repuestos">
+        <div class="solucion-form">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Repuestos utilizados</h3>
+                <button id="btnAgregarRepuesto" class="btn-primary">
+                    <i class="fas fa-plus"></i> Agregar repuesto
+                </button>
+            </div>
+
+            <!-- Formulario para agregar repuesto -->
+            <div id="formAgregarRepuesto" style="display: none; margin-bottom: 2rem;">
+                <form action="{{ url_for('reparaciones.agregar_repuesto', id=reparacion.id) }}" method="POST">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="producto_id">Producto del inventario (opcional)</label>
+                                <select name="producto_id" id="producto_id" class="form-control select2-productos">
+                                    <option value="">-- Seleccionar producto --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="repuesto_descripcion">Descripción del repuesto</label>
+                                <input type="text" name="repuesto_descripcion" id="repuesto_descripcion" 
+                                      class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="cantidad">Cantidad</label>
+                                <input type="number" name="cantidad" id="cantidad" 
+                                      class="form-control" value="1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="precio_unitario">Precio unitario</label>
+                                <input type="number" name="precio_unitario" id="precio_unitario" 
+                                      class="form-control" step="0.01" value="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="btnCancelarRepuesto" class="btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn-primary">Agregar repuesto</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de repuestos -->
+            <div class="repuestos-list">
+                {% if repuestos %}
+                    {% for repuesto in repuestos %}
+                    <div class="repuesto-item">
+                        <div class="repuesto-info">
+                            <div><strong>{{ repuesto.repuesto_descripcion }}</strong></div>
+                            <div>Cantidad: {{ repuesto.cantidad }} x ${{ repuesto.precio_unitario }}</div>
+                        </div>
+                        <div class="repuesto-total">
+                            ${{ repuesto.subtotal }}
+                        </div>
+                        <div class="repuesto-actions">
+                            <form action="{{ url_for('reparaciones.eliminar_repuesto', id=reparacion.id, repuesto_id=repuesto.id) }}" method="POST">
+                                <button type="submit" class="btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este repuesto?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="precio-total">
+                        <span>Total repuestos:</span>
+                        <span>${{ repuestos|sum(attribute='subtotal') }}</span>
+                    </div>
+                {% else %}
+                    <p class="empty-message">No se han agregado repuestos a esta reparación.</p>
                 {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Historial de la reparación -->
-        <div class="history-card">
-            <div class="card-header">
-                <h3>Historial</h3>
-            </div>
-            <div class="card-content">
-                {% if historial %}
+    <!-- Pestaña de Mensajería -->
+    <div class="tab-content" id="tab-mensajeria">
+        <div class="mensaje-form">
+            <h3>Enviar mensaje al cliente</h3>
+            
+            <form action="{{ url_for('reparaciones.enviar_mensaje', id=reparacion.id) }}" method="POST">
+                <div class="form-group">
+                    <label for="tipo_mensaje">Tipo de mensaje</label>
+                    <select name="tipo_mensaje" id="tipo_mensaje" class="form-control">
+                        <option value="actualizacion">Actualización de estado</option>
+                        <option value="presupuesto">Presupuesto</option>
+                        <option value="listo">Equipo listo para recoger</option>
+                        <option value="personalizado">Mensaje personalizado</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="mensajePersonalizadoContainer" style="display: none;">
+                    <label for="mensaje_personalizado">Mensaje personalizado</label>
+                    <textarea name="mensaje_personalizado" id="mensaje_personalizado" class="form-control" rows="4"></textarea>
+                </div>
+                
+                <div class="mensaje-preview" id="mensajePreview">
+                    <p>Hola <strong>{{ reparacion.cliente_nombre }}</strong>, le informamos que su <strong>{{ reparacion.electrodomestico }}</strong> 
+                    está en estado <strong>{{ reparacion.estado_texto }}</strong>. Gracias por confiar en nosotros.</p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fab fa-whatsapp"></i> Enviar mensaje
+                    </button>
+                </div>
+            </form>
+            
+            <div class="historial-mensajes mt-4">
+                <h4>Historial de mensajes</h4>
+                
+                {% if mensajes %}
                 <div class="timeline">
-                    {% for evento in historial %}
+                    {% for mensaje in mensajes %}
                     <div class="timeline-item">
                         <div class="timeline-marker"></div>
                         <div class="timeline-content">
-                            <h4>{{ evento.estado_nuevo }}</h4>
-                            <p>{{ evento.descripcion }}</p>
-                            <small>{{ evento.fecha }}</small>
+                            <div class="mensaje-item">
+                                <p>{{ mensaje.mensaje }}</p>
+                                <div class="mensaje-meta">
+                                    <small>{{ mensaje.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    <span class="badge bg-{{ 'success' if mensaje.enviado else 'warning' }}">
+                                        {{ 'Enviado' if mensaje.enviado else 'Pendiente' }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="empty-message">No hay eventos registrados en el historial.</p>
+                <p class="empty-message">No hay mensajes enviados.</p>
                 {% endif %}
             </div>
         </div>
-        
-        {% if current_user.tipo == 'empleado' %}
-        <!-- Formulario de actualización (solo para empleados) -->
-        <div class="update-card" id="updateForm" style="display: none;">
-            <div class="card-header">
-                <h3>Actualizar estado</h3>
-            </div>
-            <div class="card-content">
-                <form action="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}" method="POST">
-                    <div class="form-group">
-                        <label for="estado">Nuevo estado</label>
-                        <select name="estado" id="estado" class="form-control" required>
-                            <option value="recibido" {% if reparacion.estado == 'recibido' %}selected{% endif %}>Recibido</option>
-                            <option value="diagnostico" {% if reparacion.estado == 'diagnostico' %}selected{% endif %}>En diagnóstico</option>
-                            <option value="progreso" {% if reparacion.estado == 'progreso' %}selected{% endif %}>En progreso</option>
-                            <option value="listo" {% if reparacion.estado == 'listo' %}selected{% endif %}>Listo para entrega</option>
-                            <option value="entregado" {% if reparacion.estado == 'entregado' %}selected{% endif %}>Entregado</option>
-                            <option value="cancelado" {% if reparacion.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="descripcion">Descripción del cambio</label>
-                        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="tecnico_id">Asignar técnico</label>
-                        <select name="tecnico_id" id="tecnico_id" class="form-control">
-                            <option value="">Sin asignar</option>
-                            <!-- Aquí se cargarían los técnicos disponibles desde la base de datos -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fecha_entrega_estimada">Fecha de entrega estimada</label>
-                        <input type="date" name="fecha_entrega_estimada" id="fecha_entrega_estimada" 
-                               class="form-control" value="{{ reparacion.fecha_entrega_estimada }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="costo_estimado">Costo estimado</label>
-                        <input type="number" name="costo_estimado" id="costo_estimado" 
-                               class="form-control" step="0.01" value="{{ reparacion.costo_estimado or '' }}">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" id="btnCancelarUpdate" class="btn-secondary">Cancelar</button>
-                        <button type="submit" class="btn-primary">Guardar cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const btnActualizar = document.getElementById('btnActualizarEstado');
-        const btnCancelar = document.getElementById('btnCancelarUpdate');
-        const updateForm = document.getElementById('updateForm');
+        // Gestión de pestañas
+        const tabItems = document.querySelectorAll('.tab-item');
+        const tabContents = document.querySelectorAll('.tab-content');
         
-        if (btnActualizar) {
-            btnActualizar.addEventListener('click', function() {
-                updateForm.style.display = 'block';
-                btnActualizar.style.display = 'none';
+        tabItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Quitar clase active de todas las pestañas
+                tabItems.forEach(tab => tab.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Añadir clase active a la pestaña seleccionada
+                this.classList.add('active');
+                document.getElementById('tab-' + tabId).classList.add('active');
+            });
+        });
+        
+        // Agregar repuestos
+        const btnAgregarRepuesto = document.getElementById('btnAgregarRepuesto');
+        const formAgregarRepuesto = document.getElementById('formAgregarRepuesto');
+        const btnCancelarRepuesto = document.getElementById('btnCancelarRepuesto');
+        
+        if (btnAgregarRepuesto) {
+            btnAgregarRepuesto.addEventListener('click', function() {
+                formAgregarRepuesto.style.display = 'block';
+                btnAgregarRepuesto.style.display = 'none';
             });
         }
         
-        if (btnCancelar) {
-            btnCancelar.addEventListener('click', function() {
-                updateForm.style.display = 'none';
-                btnActualizar.style.display = 'inline-block';
+        if (btnCancelarRepuesto) {
+            btnCancelarRepuesto.addEventListener('click', function() {
+                formAgregarRepuesto.style.display = 'none';
+                btnAgregarRepuesto.style.display = 'inline-block';
             });
+        }
+        
+        // Select2 para productos
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2-productos').select2({
+                placeholder: 'Buscar productos...',
+                ajax: {
+                    url: '/reparaciones/productos/buscar',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.items
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2
+            });
+            
+            $('.select2-productos').on('select2:select', function(e) {
+                const data = e.params.data;
+                if (data.precio) {
+                    document.getElementById('precio_unitario').value = data.precio;
+                }
+            });
+        }
+        
+        // Previsualización de mensajes
+        const tipoMensaje = document.getElementById('tipo_mensaje');
+        const mensajePersonalizadoContainer = document.getElementById('mensajePersonalizadoContainer');
+        const mensajePreview = document.getElementById('mensajePreview');
+        const mensajePersonalizado = document.getElementById('mensaje_personalizado');
+        
+        if (tipoMensaje) {
+            tipoMensaje.addEventListener('change', function() {
+                const tipo = this.value;
+                let mensajeTexto = '';
+                
+                if (tipo === 'personalizado') {
+                    mensajePersonalizadoContainer.style.display = 'block';
+                    return;
+                } else {
+                    mensajePersonalizadoContainer.style.display = 'none';
+                }
+                
+                // Obtener los datos del cliente y la reparación del DOM
+                const datosMensaje = document.getElementById('datos-mensaje');
+                const clienteNombre = datosMensaje.getAttribute('data-cliente');
+                const electrodomestico = datosMensaje.getAttribute('data-electro');
+                const estadoTexto = datosMensaje.getAttribute('data-estado');
+                const costoEstimado = datosMensaje.getAttribute('data-costo-est');
+                const costoFinal = datosMensaje.getAttribute('data-costo-final');
+                
+                switch(tipo) {
+                    case 'actualizacion':
+                        mensajeTexto = `Hola <strong>${clienteNombre}</strong>, le informamos que su <strong>${electrodomestico}</strong> 
+                        está en estado <strong>${estadoTexto}</strong>. Gracias por confiar en nosotros.`;
+                        break;
+                    case 'presupuesto':
+                        mensajeTexto = `Hola <strong>${clienteNombre}</strong>, hemos diagnosticado su <strong>${electrodomestico}</strong>. 
+                        El presupuesto estimado es de $<strong>${costoEstimado}</strong>. Por favor, confírmenos si desea proceder con la reparación.`;
+                        break;
+                    case 'listo':
+                        mensajeTexto = `Hola <strong>${clienteNombre}</strong>, su <strong>${electrodomestico}</strong> 
+                        ya está reparado y listo para recoger. El costo final es de $<strong>${costoFinal}</strong>. 
+                        Le esperamos en nuestra tienda. ¡Gracias por su confianza!`;
+                        break;
+                }
+                
+                mensajePreview.innerHTML = `<p>${mensajeTexto}</p>`;
+            });
+            
+            if (mensajePersonalizado) {
+                mensajePersonalizado.addEventListener('input', function() {
+                    mensajePreview.innerHTML = `<p>${this.value}</p>`;
+                });
+            }
         }
     });
 </script>

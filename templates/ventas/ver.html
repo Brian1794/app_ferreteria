@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles de Venta #{{ venta.id }} - Ferretería "La U"{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Detalles de Venta #{{ venta.id }}</h1>
+        <div>
+            <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <button type="button" class="btn btn-primary" onclick="imprimirFactura()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+        </div>
+    </div>
+    
+    <!-- Información general de la venta -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Información de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Fecha:</th>
+                            <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') if venta.fecha else 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span class="badge bg-{{ 'success' if venta.estado == 'Pagada' else 'warning' if venta.estado == 'Pendiente' else 'danger' }}">
+                                    {{ venta.estado }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Método de Pago:</th>
+                            <td>{{ venta.metodo_pago }}</td>
+                        </tr>
+                        <tr>
+                            <th>Vendedor:</th>
+                            <td>{{ venta.vendedor_nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Notas:</th>
+                            <td>{{ venta.notas or 'Sin notas' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Información del Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Nombre:</th>
+                            <td>{{ venta.cliente_nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Teléfono:</th>
+                            <td>{{ venta.cliente_telefono or 'No disponible' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ venta.cliente_email or 'No disponible' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos vendidos -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Productos Vendidos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Código</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detalle in detalles %}
+                            <tr>
+                                <td>
+                                    {% if detalle.imagen %}
+                                        <img src="{{ url_for('static', filename='uploads/productos/' ~ detalle.imagen) }}" 
+                                             alt="{{ detalle.producto_nombre }}" class="img-thumbnail me-2" style="width: 50px; height: 50px;">
+                                    {% endif %}
+                                    {{ detalle.producto_nombre }}
+                                </td>
+                                <td>{{ detalle.codigo_barras or 'N/A' }}</td>
+                                <td>{{ detalle.cantidad }}</td>
+                                <td>${{ detalle.precio_unitario|float|round(2) }}</td>
+                                <td>${{ detalle.subtotal|float|round(2) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                            <td>${{ (venta.total + venta.descuento)|float|round(2) }}</td>
+                        </tr>
+                        {% if venta.descuento %}
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Descuento:</strong></td>
+                                <td>-${{ venta.descuento|float|round(2) }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                            <td><strong>${{ venta.total|float|round(2) }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cambiar estado (Solo si no está cancelada) -->
+    {% if venta.estado != 'Cancelada' %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Cambiar Estado</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('ventas.cambiar_estado', venta_id=venta.id) }}" method="post" class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">Nuevo Estado:</label>
+                        <select name="estado" id="estado" class="form-select" required>
+                            <option value="Pagada" {% if venta.estado == 'Pagada' %}selected{% endif %}>Pagada</option>
+                            <option value="Pendiente" {% if venta.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <p class="text-danger mb-2">Nota: Si cambia el estado a "Cancelada", se devolverán los productos al inventario y no se podrá revertir.</p>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function imprimirFactura() {
+        window.print();
+    }
+</script>
+{% endblock %} 

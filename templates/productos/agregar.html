@@ -70,8 +70,8 @@
                             <label for="categoria_id">Categoría</label>
                             <select class="form-control" id="categoria_id" name="categoria_id">
                                 <option value="">-- Seleccionar Categoría --</option>
-                                {% for categoria in categorias %}
-                                    <option value="{{ categoria[0] }}">{{ categoria[1] }}</option>
+                                {% for cat in categorias %}
+                                    <option value="{{ cat[0] }}">{{ cat[1] }}</option>
                                 {% endfor %}
                             </select>
                         </div>

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas - Ferretería "La U"{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Gestión de Ventas</h1>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filtros de búsqueda</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{{ url_for('ventas.index') }}" class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="estado" class="form-label">Estado:</label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="todas" {% if estado == 'todas' %}selected{% endif %}>Todas</option>
+                        <option value="Pagada" {% if estado == 'Pagada' %}selected{% endif %}>Pagada</option>
+                        <option value="Pendiente" {% if estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="Cancelada" {% if estado == 'Cancelada' %}selected{% endif %}>Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="desde" class="form-label">Desde:</label>
+                    <input type="date" name="desde" id="desde" class="form-control" value="{{ desde }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="hasta" class="form-label">Hasta:</label>
+                    <input type="date" name="hasta" id="hasta" class="form-control" value="{{ hasta }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="cliente" class="form-label">Cliente:</label>
+                    <input type="text" name="cliente" id="cliente" class="form-control" value="{{ cliente }}" placeholder="Nombre del cliente">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync"></i> Limpiar filtros
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Botones de acción -->
+    <div class="mb-4">
+        <a href="{{ url_for('ventas.nueva') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nueva Venta
+        </a>
+        <button type="button" class="btn btn-info" id="btnExportarExcel">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
+        <button type="button" class="btn btn-danger" id="btnExportarPDF">
+            <i class="fas fa-file-pdf"></i> Exportar a PDF
+        </button>
+    </div>
+    
+    <!-- Tabla de ventas -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Listado de Ventas</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Método de Pago</th>
+                            <th>Vendedor</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if ventas %}
+                            {% for venta in ventas %}
+                                <tr>
+                                    <td>{{ venta.id }}</td>
+                                    <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') if venta.fecha else '' }}</td>
+                                    <td>{{ venta.cliente_nombre }}</td>
+                                    <td>${{ venta.total|float|round(2) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if venta.estado == 'Pagada' else 'warning' if venta.estado == 'Pendiente' else 'danger' }}">
+                                            {{ venta.estado }}
+                                        </span>
+                                    </td>
+                                    <td>{{ venta.metodo_pago }}</td>
+                                    <td>{{ venta.vendedor_nombre }}</td>
+                                    <td>
+                                        <a href="{{ url_for('ventas.ver', venta_id=venta.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if venta.estado != 'Cancelada' %}
+                                            <button type="button" class="btn btn-sm btn-warning btn-cambiar-estado" data-venta-id="{{ venta.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No hay ventas registradas con los filtros seleccionados</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+<div class="modal fade" id="cambiarEstadoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Estado de Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cambiarEstadoForm" method="post" action="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nuevoEstado" class="form-label">Nuevo Estado:</label>
+                        <select name="estado" id="nuevoEstado" class="form-select" required>
+                            <option value="Pagada">Pagada</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar fechas si están vacías
+        const hoy = new Date();
+        const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        
+        const inputDesde = document.getElementById('desde');
+        const inputHasta = document.getElementById('hasta');
+        
+        if (!inputDesde.value) {
+            inputDesde.value = primerDiaMes.toISOString().split('T')[0];
+        }
+        
+        if (!inputHasta.value) {
+            inputHasta.value = hoy.toISOString().split('T')[0];
+        }
+        
+        // Eventos para exportar
+        document.getElementById('btnExportarExcel').addEventListener('click', function() {
+            alert('Función de exportar a Excel no implementada');
+        });
+        
+        document.getElementById('btnExportarPDF').addEventListener('click', function() {
+            alert('Función de exportar a PDF no implementada');
+        });
+        
+        // Eventos para cambiar estado
+        const botonesEstado = document.querySelectorAll('.btn-cambiar-estado');
+        botonesEstado.forEach(function(boton) {
+            boton.addEventListener('click', function() {
+                const ventaId = this.getAttribute('data-venta-id');
+                const form = document.getElementById('cambiarEstadoForm');
+                form.action = "{{ url_for('ventas.cambiar_estado', venta_id=0) }}".replace('0', ventaId);
+                
+                const modal = new bootstrap.Modal(document.getElementById('cambiarEstadoModal'));
+                modal.show();
+            });
+        });
+    });
+</script>
+{% endblock %} 

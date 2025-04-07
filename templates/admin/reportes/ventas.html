@@ -112,15 +112,15 @@
         <div class="col-md-3">
             <div class="data-card">
                 <h3>Ingresos</h3>
-                <div class="stat-value">${{ "%.2f"|format(stats.ingresos_totales) }}</div>
-                <div class="stat-label">Valor total</div>
+                <div class="stat-value">${{ "%.2f"|format(stats.ingresos_totales|float) }}</div>
+                <div class="stat-label">Total de Ingresos</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="data-card">
                 <h3>Promedio</h3>
-                <div class="stat-value">${{ "%.2f"|format(stats.promedio_venta) }}</div>
-                <div class="stat-label">Valor por venta</div>
+                <div class="stat-value">${{ "%.2f"|format(stats.promedio_venta|float) }}</div>
+                <div class="stat-label">Promedio por Venta</div>
             </div>
         </div>
         <div class="col-md-3">
@@ -169,7 +169,7 @@
                                     <td>{{ loop.index }}</td>
                                     <td>{{ producto.nombre }}</td>
                                     <td>{{ producto.cantidad }}</td>
-                                    <td>${{ "%.2f"|format(producto.total) }}</td>
+                                    <td>${{ "%.2f"|format(producto.total|float) }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -202,7 +202,7 @@
                                     <td>{{ loop.index }}</td>
                                     <td>{{ cliente.nombre }}</td>
                                     <td>{{ cliente.compras }}</td>
-                                    <td>${{ "%.2f"|format(cliente.total) }}</td>
+                                    <td>${{ "%.2f"|format(cliente.total|float) }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

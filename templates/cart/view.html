@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Carrito{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Mi Carrito de Compras</h1>
+    
+    {% if items and items|length > 0 %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="row">
+                    <div class="col-md-6">Producto</div>
+                    <div class="col-md-2 text-center">Precio</div>
+                    <div class="col-md-2 text-center">Cantidad</div>
+                    <div class="col-md-2 text-center">Subtotal</div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% for item in items %}
+                <div class="row mb-3 align-items-center product-row">
+                    <div class="col-md-6 d-flex align-items-center">
+                        {% if item.imagen %}
+                        <img src="{{ url_for('static', filename='uploads/productos/' ~ item.imagen) }}" alt="{{ item.nombre }}" class="product-thumbnail">
+                        {% else %}
+                        <div class="no-image-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        {% endif %}
+                        <div class="product-info ml-3">
+                            <h5 class="mb-1">{{ item.nombre }}</h5>
+                            <span class="text-muted">Código: {{ item.codigo }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        ${{ item.precio }}
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <div class="quantity-control">
+                            <button class="btn-quantity btn-decrease" data-product-id="{{ item.producto_id }}" data-action="decrease">-</button>
+                            <input type="number" class="quantity-input" value="{{ item.cantidad }}" min="1" max="99" data-product-id="{{ item.producto_id }}">
+                            <button class="btn-quantity btn-increase" data-product-id="{{ item.producto_id }}" data-action="increase">+</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        ${{ item.subtotal }}
+                        <br>
+                        <button class="btn btn-sm btn-outline-danger mt-2 remove-item" data-product-id="{{ item.producto_id }}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if not loop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-md-8 text-md-right text-left">
+                        <button id="vaciarCarrito" class="btn btn-outline-secondary">
+                            <i class="fas fa-trash-alt"></i> Vaciar Carrito
+                        </button>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <h5>Total: ${{ total }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <a href="{{ url_for('productos.catalogo') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Seguir Comprando
+                </a>
+            </div>
+            <div class="col-md-6 text-right">
+                <a href="{{ url_for('carrito.checkout') }}" class="btn btn-success btn-lg">
+                    Proceder al Pago <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+                <h3>Tu carrito está vacío</h3>
+                <p class="lead">Agrega productos para comenzar a comprar</p>
+                <a href="{{ url_for('productos.catalogo') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-store"></i> Ir al catálogo
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Actualizar cantidad
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        const btnDecrease = document.querySelectorAll('.btn-decrease');
+        const btnIncrease = document.querySelectorAll('.btn-increase');
+        const removeButtons = document.querySelectorAll('.remove-item');
+        const vaciarCarritoBtn = document.getElementById('vaciarCarrito');
+        
+        function updateQuantity(productId, newQty) {
+            fetch('{{ url_for("carrito.actualizar_carrito") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    producto_id: productId,
+                    cantidad: newQty
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al actualizar el carrito');
+            });
+        }
+        
+        btnDecrease.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                const currentValue = parseInt(input.value);
+                if (currentValue > 1) {
+                    updateQuantity(productId, currentValue - 1);
+                }
+            });
+        });
+        
+        btnIncrease.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                const currentValue = parseInt(input.value);
+                updateQuantity(productId, currentValue + 1);
+            });
+        });
+        
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const productId = this.dataset.productId;
+                let newValue = parseInt(this.value);
+                
+                if (isNaN(newValue) || newValue < 1) {
+                    newValue = 1;
+                    this.value = 1;
+                }
+                
+                updateQuantity(productId, newValue);
+            });
+        });
+        
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de eliminar este producto del carrito?')) {
+                    const productId = this.dataset.productId;
+                    
+                    fetch(`{{ url_for('carrito.eliminar_del_carrito', producto_id=0) }}`.replace('0', productId), {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al eliminar el producto');
+                    });
+                }
+            });
+        });
+        
+        if (vaciarCarritoBtn) {
+            vaciarCarritoBtn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de vaciar todo el carrito?')) {
+                    fetch('{{ url_for("carrito.vaciar_carrito") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert(data.message || 'Error al vaciar el carrito');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al vaciar el carrito');
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

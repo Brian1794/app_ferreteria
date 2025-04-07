@@ -12,8 +12,7 @@ UPLOAD_FOLDER = 'static/uploads/productos'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def save_image(file):
     if file and allowed_file(file.filename):
@@ -31,6 +30,19 @@ def save_image(file):
         return unique_filename
     return None
 
+def convertir_a_dict(filas, claves):
+    """
+    Recibe una lista de filas y las convierte a diccionarios usando la lista 'claves'
+    Si la fila ya es un diccionario, se retorna tal cual.
+    """
+    resultado = []
+    for fila in filas:
+        if isinstance(fila, dict):
+            resultado.append(fila)
+        else:
+            resultado.append(dict(zip(claves, fila)))
+    return resultado
+
 @productos_bp.route('/catalogo')
 def catalogo():
     """Muestra el catálogo de productos para clientes"""
@@ -38,7 +50,7 @@ def catalogo():
     
     # Obtener categorías para filtrado
     cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
-    categorias = cursor.fetchall()
+    categorias_raw = cursor.fetchall()
     
     # Obtener productos destacados o todos si no hay destacados
     categoria_id = request.args.get('categoria')
@@ -65,38 +77,22 @@ def catalogo():
         """)
     
     productos_raw = cursor.fetchall()
-    # Convertir lista de tuplas a lista de diccionarios para mantener compatibilidad con la plantilla
-    productos = []
-    for p in productos_raw:
-        productos.append({
-            'id': p[0],
-            'nombre': p[1],
-            'descripcion': p[2],
-            'precio_compra': p[3],
-            'precio_venta': p[4],
-            'stock': p[5],
-            'stock_minimo': p[6],
-            'destacado': p[7],
-            'activo': p[8],
-            'imagen': p[9],
-            'categoria_id': p[10],
-            'categoria_nombre': p[11]
-        })
-    
-    # Convertir categorías de tuplas a diccionarios
-    categorias_dict = []
-    for c in categorias:
-        categorias_dict.append({
-            'id': c[0],
-            'nombre': c[1]
-        })
-    
     cursor.close()
     
+    # Definir claves según la consulta
+    claves_producto = ['id', 'nombre', 'descripcion', 'precio_compra', 'precio_venta', 
+                       'stock', 'stock_minimo', 'destacado', 'activo', 'imagen', 
+                       'categoria_id', 'categoria_nombre']
+    productos = convertir_a_dict(productos_raw, claves_producto)
+    
+    # Convertir categorías a diccionarios
+    claves_categoria = ['id', 'nombre']
+    categorias = convertir_a_dict(categorias_raw, claves_categoria)
+    
     return render_template('productos/catalogo.html', 
-                          productos=productos, 
-                          categorias=categorias_dict,
-                          categoria_actual=categoria_id)
+                           productos=productos, 
+                           categorias=categorias,
+                           categoria_actual=categoria_id)
 
 @productos_bp.route('/')
 @login_required
@@ -110,8 +106,12 @@ def listar_productos():
         LEFT JOIN categorias c ON p.categoria_id = c.id
         ORDER BY p.nombre
     """)
-    productos = cursor.fetchall()
+    filas = cursor.fetchall()
     cursor.close()
+    
+    claves = ['id', 'nombre', 'codigo_barras', 'precio_compra', 'precio_venta', 'stock', 'categoria', 'imagen']
+    productos = convertir_a_dict(filas, claves)
+    
     return render_template('productos/lista.html', productos=productos)
 
 @productos_bp.route('/agregar', methods=['GET', 'POST'])
@@ -141,7 +141,6 @@ def agregar():
             flash('Los campos nombre, precio de compra y precio de venta son obligatorios', 'danger')
             return redirect(url_for('productos.agregar'))
         
-        # Insertar en la base de datos
         cursor = mysql.connection.cursor()
         try:
             cursor.execute("""
@@ -149,7 +148,7 @@ def agregar():
                                       stock, stock_minimo, categoria_id, imagen)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (nombre, descripcion, codigo_barras, precio_compra, precio_venta, 
-                 stock, stock_minimo, categoria_id if categoria_id else None, imagen_filename))
+                  stock, stock_minimo, categoria_id if categoria_id else None, imagen_filename))
             mysql.connection.commit()
             flash('Producto agregado correctamente', 'success')
             return redirect(url_for('productos.listar_productos'))
@@ -162,8 +161,11 @@ def agregar():
     # Obtener categorías para el formulario
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
-    categorias = cursor.fetchall()
+    categorias_raw = cursor.fetchall()
     cursor.close()
+    
+    claves = ['id', 'nombre']
+    categorias = convertir_a_dict(categorias_raw, claves)
     
     return render_template('productos/agregar.html', categorias=categorias)
 
@@ -191,23 +193,25 @@ def editar(id):
             if imagen_file.filename != '':
                 imagen_filename = save_image(imagen_file)
                 
-                # Si hay una imagen existente, podríamos borrarla
+                # Si hay una imagen existente, intentar borrarla
                 cursor.execute("SELECT imagen FROM productos WHERE id = %s", (id,))
-                old_image = cursor.fetchone()[0]
-                if old_image:
-                    try:
+                old_image_data = cursor.fetchone()
+                if old_image_data:
+                    # Dependiendo de cómo se devuelvan los datos, puede ser dict o tupla
+                    old_image = old_image_data.get(0) if isinstance(old_image_data, dict) else old_image_data[0]
+                    if old_image:
                         old_image_path = os.path.join(UPLOAD_FOLDER, old_image)
                         if os.path.exists(old_image_path):
-                            os.remove(old_image_path)
-                    except Exception as e:
-                        print(f"Error al eliminar imagen anterior: {str(e)}")
+                            try:
+                                os.remove(old_image_path)
+                            except Exception as e:
+                                print(f"Error al eliminar imagen anterior: {str(e)}")
         
         # Validar datos
         if not all([nombre, precio_compra, precio_venta]):
             flash('Los campos nombre, precio de compra y precio de venta son obligatorios', 'danger')
             return redirect(url_for('productos.editar', id=id))
         
-        # Actualizar en la base de datos
         try:
             if imagen_filename:
                 # Si se subió una nueva imagen
@@ -217,7 +221,7 @@ def editar(id):
                         precio_venta = %s, stock = %s, stock_minimo = %s, categoria_id = %s, imagen = %s
                     WHERE id = %s
                 """, (nombre, descripcion, codigo_barras, precio_compra, precio_venta, 
-                     stock, stock_minimo, categoria_id if categoria_id else None, imagen_filename, id))
+                      stock, stock_minimo, categoria_id if categoria_id else None, imagen_filename, id))
             else:
                 # Si no se subió nueva imagen, mantener la existente
                 cursor.execute("""
@@ -226,7 +230,7 @@ def editar(id):
                         precio_venta = %s, stock = %s, stock_minimo = %s, categoria_id = %s
                     WHERE id = %s
                 """, (nombre, descripcion, codigo_barras, precio_compra, precio_venta, 
-                     stock, stock_minimo, categoria_id if categoria_id else None, id))
+                      stock, stock_minimo, categoria_id if categoria_id else None, id))
             
             mysql.connection.commit()
             flash('Producto actualizado correctamente', 'success')
@@ -234,25 +238,49 @@ def editar(id):
         except Exception as e:
             mysql.connection.rollback()
             flash(f'Error al actualizar producto: {str(e)}', 'danger')
+        finally:
+            cursor.close()
     
-    # Obtener datos del producto
+    # Obtener datos del producto a editar
+    cursor = mysql.connection.cursor()
     cursor.execute("""
         SELECT id, nombre, descripcion, codigo_barras, precio_compra, precio_venta, 
                stock, stock_minimo, categoria_id, imagen
         FROM productos
         WHERE id = %s
     """, (id,))
-    producto = cursor.fetchone()
+    prod = cursor.fetchone()
+    cursor.close()
     
-    if not producto:
-        cursor.close()
+    if not prod:
         flash('Producto no encontrado', 'danger')
         return redirect(url_for('productos.listar_productos'))
     
+    # Convertir el producto a diccionario
+    if isinstance(prod, dict):
+        producto = prod
+    else:
+        producto = {
+            'id': prod[0],
+            'nombre': prod[1],
+            'descripcion': prod[2],
+            'codigo_barras': prod[3],
+            'precio_compra': prod[4],
+            'precio_venta': prod[5],
+            'stock': prod[6],
+            'stock_minimo': prod[7],
+            'categoria_id': prod[8],
+            'imagen': prod[9]
+        }
+    
     # Obtener categorías para el formulario
+    cursor = mysql.connection.cursor()
     cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
-    categorias = cursor.fetchall()
+    categorias_raw = cursor.fetchall()
     cursor.close()
+    
+    claves = ['id', 'nombre']
+    categorias = convertir_a_dict(categorias_raw, claves)
     
     return render_template('productos/editar.html', producto=producto, categorias=categorias)
 
@@ -269,8 +297,12 @@ def stock_bajo():
         WHERE p.stock <= p.stock_minimo
         ORDER BY p.stock ASC
     """)
-    productos = cursor.fetchall()
+    filas = cursor.fetchall()
     cursor.close()
+    
+    claves = ['id', 'nombre', 'descripcion', 'precio_compra', 'precio_venta', 'stock', 'stock_minimo', 'categoria']
+    productos = convertir_a_dict(filas, claves)
+    
     return render_template('productos/stock_bajo.html', productos=productos)
 
 @productos_bp.route('/eliminar/<int:id>', methods=['POST'])
@@ -281,13 +313,13 @@ def eliminar(id):
     try:
         # Primero verificamos si el producto existe
         cursor.execute("SELECT nombre FROM productos WHERE id = %s", (id,))
-        producto = cursor.fetchone()
+        producto_data = cursor.fetchone()
         
-        if not producto:
+        if not producto_data:
             flash('Producto no encontrado', 'danger')
             return redirect(url_for('productos.listar_productos'))
         
-        # Verificamos si el producto está referenciado en otras tablas
+        # Verificar si el producto está referenciado en otras tablas
         cursor.execute("""
             SELECT 
                 (SELECT COUNT(*) FROM detalles_venta WHERE producto_id = %s) +
@@ -301,11 +333,13 @@ def eliminar(id):
             flash('No se puede eliminar el producto porque está siendo utilizado en ventas, compras o reparaciones', 'danger')
             return redirect(url_for('productos.listar_productos'))
         
-        # Si no hay referencias, eliminamos el producto
+        # Si no hay referencias, eliminar el producto
         cursor.execute("DELETE FROM productos WHERE id = %s", (id,))
         mysql.connection.commit()
         
-        flash(f'Producto "{producto[0]}" eliminado correctamente', 'success')
+        # producto_data puede ser diccionario o tupla; se accede de forma segura
+        nombre_prod = producto_data.get(0) if isinstance(producto_data, dict) else producto_data[0]
+        flash(f'Producto "{nombre_prod}" eliminado correctamente', 'success')
     except Exception as e:
         mysql.connection.rollback()
         flash(f'Error al eliminar el producto: {str(e)}', 'danger')

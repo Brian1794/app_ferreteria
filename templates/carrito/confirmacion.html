@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmación de Pedido{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <div class="mb-4">
+                <span class="fa-stack fa-3x">
+                    <i class="fas fa-circle fa-stack-2x text-success"></i>
+                    <i class="fas fa-check fa-stack-1x fa-inverse"></i>
+                </span>
+            </div>
+            <h1 class="display-4 text-success">¡Gracias por tu compra!</h1>
+            <p class="lead">Tu pedido ha sido recibido y está siendo procesado.</p>
+            <p>Pedido #{{ pedido.id }} - {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+        
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Detalles del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Estado del pedido -->
+                    <div class="mb-4">
+                        <h6>Estado del Pedido</h6>
+                        <div class="alert alert-{{ 'success' if pedido.estado_pago == 'PAGADO' else 'warning' }}">
+                            {% if pedido.estado_pago == 'PAGADO' %}
+                                <i class="fas fa-check-circle mr-2"></i> Pago confirmado
+                            {% else %}
+                                <i class="fas fa-clock mr-2"></i> Pendiente de pago
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Método de pago -->
+                    <div class="mb-4">
+                        <h6>Método de Pago</h6>
+                        <p>
+                            {% if pedido.metodo_pago == 'transferencia' %}
+                                <i class="fas fa-university mr-2"></i> Transferencia Bancaria
+                                {% if pedido.referencia_pago %}
+                                <br><small class="text-muted">Referencia: {{ pedido.referencia_pago }}</small>
+                                {% endif %}
+                            {% elif pedido.metodo_pago == 'efectivo' %}
+                                <i class="fas fa-money-bill-wave mr-2"></i> Pago en Efectivo al recoger
+                            {% elif pedido.metodo_pago == 'oxxo' %}
+                                <i class="fas fa-store mr-2"></i> Pago en OXXO
+                            {% else %}
+                                {{ pedido.metodo_pago }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Información de envío -->
+                    <div class="mb-4">
+                        <h6>Información de Envío</h6>
+                        <address>
+                            <strong>{{ pedido.nombre }} {{ pedido.apellido }}</strong><br>
+                            {{ pedido.direccion }}<br>
+                            {{ pedido.ciudad }}, {{ pedido.estado }} {{ pedido.codigo_postal }}<br>
+                            <abbr title="Teléfono">Tel:</abbr> {{ pedido.telefono }}<br>
+                            <abbr title="Email">Email:</abbr> {{ pedido.email }}
+                        </address>
+                    </div>
+                    
+                    <!-- Productos -->
+                    <div class="mb-4">
+                        <h6>Productos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-right">Precio</th>
+                                        <th class="text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in detalles %}
+                                    <tr>
+                                        <td>{{ item.nombre }}</td>
+                                        <td class="text-center">{{ item.cantidad }}</td>
+                                        <td class="text-right">${{ item.precio_unitario|float|round(2) }}</td>
+                                        <td class="text-right">${{ item.subtotal|float|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-right"><strong>Total</strong></td>
+                                        <td class="text-right"><strong>${{ "{:,.0f}".format(pedido.total|float) }} COP</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Instrucciones -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle mr-2"></i> ¿Qué sigue?</h6>
+                        <ul class="mb-0">
+                            {% if pedido.estado_pago == 'PAGADO' %}
+                                <li>Tu pedido está siendo procesado por nuestro equipo.</li>
+                                <li>Recibirás un correo electrónico con la información de envío.</li>
+                                <li>Puedes seguir el estado de tu pedido en la sección "Mis Pedidos".</li>
+                            {% else %}
+                                <li>Por favor, completa el pago lo antes posible para que podamos procesar tu pedido.</li>
+                                <li>Una vez confirmado el pago, procesaremos tu pedido.</li>
+                                <li>Puedes revisar el estado de tu pedido en la sección "Mis Pedidos".</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('carrito.mis_pedidos') }}" class="btn btn-primary">
+                            <i class="fas fa-clipboard-list mr-2"></i> Ver mis pedidos
+                        </a>
+                        <a href="{{ url_for('productos.catalogo') }}" class="btn btn-secondary">
+                            <i class="fas fa-shopping-bag mr-2"></i> Seguir comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

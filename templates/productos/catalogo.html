@@ -65,7 +65,13 @@
     }
     
     .producto-card:hover .producto-img img {
-        transform: scale(1.05);
+        transform: scale(1.1);
+    }
+    
+    .producto-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
     }
     
     .producto-categoria {
@@ -189,6 +195,59 @@
             font-size: 1.8rem;
         }
     }
+
+    /* Notificación de carrito */
+    .cart-notification-toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(100px);
+        transition: all 0.3s ease;
+    }
+
+    .cart-notification-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .cart-notification-toast img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 15px;
+    }
+
+    .cart-notification-toast .product-name {
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+
+    .cart-notification-toast .message {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .cart-notification-toast .close-toast {
+        margin-left: 15px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        font-size: 1.2rem;
+    }
+
+    .cart-notification-toast .close-toast:hover {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
 
@@ -215,24 +274,28 @@
 <div class="productos-grid">
     {% for producto in productos %}
     <div class="producto-card">
-        <div class="producto-img">
-            {% if producto.imagen %}
-            <img src="{{ url_for('static', filename='uploads/productos/' + producto.imagen) }}" alt="{{ producto.nombre }}">
-            {% else %}
-            <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ producto.nombre }}">
-            {% endif %}
-            
-            {% if producto.categoria_nombre %}
-            <div class="producto-categoria">{{ producto.categoria_nombre }}</div>
-            {% endif %}
-            
-            {% if producto.destacado %}
-            <div class="producto-destacado">Destacado</div>
-            {% endif %}
-        </div>
+        <a href="{{ url_for('tienda.ver_producto', producto_id=producto.id) }}" class="producto-link">
+            <div class="producto-img">
+                {% if producto.imagen %}
+                <img src="{{ url_for('static', filename='uploads/productos/' + producto.imagen) }}" alt="{{ producto.nombre }}">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ producto.nombre }}">
+                {% endif %}
+                
+                {% if producto.categoria_nombre %}
+                <div class="producto-categoria">{{ producto.categoria_nombre }}</div>
+                {% endif %}
+                
+                {% if producto.destacado %}
+                <div class="producto-destacado">Destacado</div>
+                {% endif %}
+            </div>
+        </a>
         
         <div class="producto-info">
-            <h3 class="producto-titulo">{{ producto.nombre }}</h3>
+            <a href="{{ url_for('tienda.ver_producto', producto_id=producto.id) }}" class="producto-link">
+                <h3 class="producto-titulo">{{ producto.nombre }}</h3>
+            </a>
             
             {% if producto.stock > 0 %}
             <span class="stock-badge en-stock">En stock</span>
@@ -250,16 +313,6 @@
             
             <div class="producto-footer">
                 <div class="producto-precio">${{ producto.precio_venta }}</div>
-                
-                {% if producto.stock > 0 %}
-                <button class="btn-agregar" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio_venta }}')">
-                    <i class="fas fa-shopping-cart"></i> Agregar
-                </button>
-                {% else %}
-                <button class="btn-agregar" disabled style="background-color: var(--secondary-color);">
-                    Sin stock
-                </button>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -276,12 +329,88 @@
 
 {% block extra_js %}
 <script>
-    function agregarAlCarrito(id, nombre, precio) {
-        // Esta función se puede implementar cuando esté lista la funcionalidad del carrito
-        alert(`Producto ${nombre} agregado al carrito`);
+    // Agregar elementos para la notificación al DOM
+    document.addEventListener('DOMContentLoaded', function() {
+        // Crear el elemento de notificación
+        const toastEl = document.createElement('div');
+        toastEl.className = 'cart-notification-toast';
+        toastEl.innerHTML = `
+            <img id="productImage" src="" alt="Producto">
+            <div>
+                <div id="productName" class="product-name"></div>
+                <div id="productMessage" class="message"></div>
+            </div>
+            <span class="close-toast">&times;</span>
+        `;
+        document.body.appendChild(toastEl);
+
+        // Agregar evento al botón de cerrar
+        const closeToast = toastEl.querySelector('.close-toast');
+        closeToast.addEventListener('click', function() {
+            toastEl.classList.remove('show');
+        });
+
+        // Agregar eventos a todos los botones de agregar al carrito
+        const botonesAgregar = document.querySelectorAll('.btn-cart-add');
         
-        // Aquí podría implementarse la lógica para agregar al carrito mediante AJAX
-        // o actualizar el contador del carrito en la interfaz
-    }
+        botonesAgregar.forEach(function(boton) {
+            boton.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const nombre = this.dataset.nombre;
+                const precio = parseFloat(this.dataset.precio);
+                
+                // Agregar producto al carrito mediante AJAX
+                fetch('{{ url_for("carrito.agregar_al_carrito") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        producto_id: id,
+                        cantidad: 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar contador del carrito en la barra de navegación
+                        const cartCounter = document.querySelector('.cart-counter');
+                        if (cartCounter) {
+                            cartCounter.textContent = data.total_items;
+                        }
+                        
+                        // Mostrar notificación elegante
+                        const productImage = document.getElementById('productImage');
+                        const productName = document.getElementById('productName');
+                        const productMessage = document.getElementById('productMessage');
+                        
+                        // Configurar la notificación
+                        if (data.product_image) {
+                            productImage.src = '{{ url_for("static", filename="uploads/productos/") }}' + data.product_image;
+                        } else {
+                            productImage.src = '{{ url_for("static", filename="img/producto-default.jpg") }}';
+                        }
+                        
+                        productName.textContent = data.product_name || nombre;
+                        productMessage.textContent = data.message || 'Producto agregado al carrito';
+                        
+                        // Mostrar la notificación
+                        toastEl.classList.add('show');
+                        
+                        // Ocultar después de 4 segundos
+                        setTimeout(function() {
+                            toastEl.classList.remove('show');
+                        }, 4000);
+                    } else {
+                        alert(data.message || 'Error al agregar al carrito');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al agregar al carrito');
+                });
+            });
+        });
+    });
 </script>
 {% endblock %} 

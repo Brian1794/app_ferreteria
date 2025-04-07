@@ -1,9 +1,3 @@
-/*
- * ESTILOS PRINCIPALES - FERRETERÍA APP
- * Desarrollado por: Mi empresa
- * Versión: 1.0.0
- */
-
 /* Variables globales */
 :root {
     /* Bordes redondeados modernos */
@@ -22,6 +16,12 @@
     /* Transición global */
     --transition: all 0.3s ease;
 }
+
+/* Variables específicas para tema claro */
+/* Eliminado - movido a theme.css */
+
+/* Variables específicas para tema oscuro */
+/* Eliminado - movido a theme.css */
 
 /* Estilos generales */
 * {
@@ -48,64 +48,41 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Transición global para el cambio de tema */
+/* Eliminado - movido a theme.css */
+
 main {
     flex: 1;
 }
 
-/* Títulos mejorados con estilos más claros */
 h1, h2, h3, h4, h5, h6 {
     color: var(--primary-color);
     margin-bottom: var(--spacing-md);
     font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
 }
 
 h1 {
     font-size: 2.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid var(--primary-light);
-    display: inline-block;
 }
 
 h2 {
     font-size: 2rem;
-    position: relative;
-    padding-left: 1rem;
-}
-
-h2::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.2em;
-    height: 70%;
-    width: 5px;
-    background-color: var(--primary-color);
-    border-radius: 2px;
 }
 
 h3 {
     font-size: 1.75rem;
-    padding-bottom: 0.3rem;
-    border-bottom: 1px dashed var(--border-color);
 }
 
 h4 {
     font-size: 1.5rem;
-    color: var(--secondary-color);
 }
 
 h5 {
     font-size: 1.25rem;
-    font-weight: 500;
-    color: var(--text-color);
 }
 
 h6 {
     font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
 a {
@@ -197,7 +174,41 @@ p {
     width: 100%;
 }
 
-/* Selector de tema - Definido en theme.css */
+/* Selector de tema */
+/* Los estilos del selector de tema se han movido a theme.css */
+
+/* Comentarios para documentación */
+/* Estas clases están definidas en theme.css */
+
+.theme-label {
+    /* Eliminado - movido a theme.css */
+}
+
+.light-icon, .dark-icon {
+    /* Eliminado - movido a theme.css */
+}
+
+.light-icon {
+    /* Eliminado - movido a theme.css */
+}
+
+.dark-icon {
+    /* Eliminado - movido a theme.css */
+}
+
+html[data-theme="dark"] .light-icon,
+html[data-theme="light"] .dark-icon {
+    /* Eliminado - movido a theme.css */
+}
+
+html[data-theme="dark"] .dark-icon,
+html[data-theme="light"] .light-icon {
+    /* Eliminado - movido a theme.css */
+}
+
+.theme-checkbox {
+    /* Eliminado - movido a theme.css */
+}
 
 /* Botón del menú móvil */
 .mobile-menu-btn {
@@ -285,12 +296,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-danger {
-    background-color: rgb(var(--danger-color));
+    background-color: rgba(var(--danger-color), 1);
     color: white;
 }
 
 .btn-danger:hover {
-    opacity: 0.9;
+    background-color: rgba(var(--danger-color), 0.8);
 }
 
 .btn-sm {
@@ -391,26 +402,26 @@ input:focus, select:focus, textarea:focus {
 
 .alert-success {
     background-color: rgba(var(--success-color), 0.1);
-    border-left-color: rgb(var(--success-color));
-    color: rgb(var(--success-color));
+    border-left-color: rgba(var(--success-color), 1);
+    color: rgba(var(--success-color), 1);
 }
 
 .alert-danger {
     background-color: rgba(var(--danger-color), 0.1);
-    border-left-color: rgb(var(--danger-color));
-    color: rgb(var(--danger-color));
+    border-left-color: rgba(var(--danger-color), 1);
+    color: rgba(var(--danger-color), 1);
 }
 
 .alert-warning {
     background-color: rgba(var(--warning-color), 0.1);
-    border-left-color: rgb(var(--warning-color));
-    color: rgb(var(--warning-color));
+    border-left-color: rgba(var(--warning-color), 1);
+    color: rgba(var(--warning-color), 0.9);
 }
 
 .alert-info {
     background-color: rgba(var(--info-color), 0.1);
-    border-left-color: rgb(var(--info-color));
-    color: rgb(var(--info-color));
+    border-left-color: rgba(var(--info-color), 1);
+    color: rgba(var(--info-color), 1);
 }
 
 /* Utilidades */
@@ -431,19 +442,19 @@ input:focus, select:focus, textarea:focus {
 }
 
 .text-success {
-    color: rgb(var(--success-color));
+    color: rgba(var(--success-color), 1);
 }
 
 .text-danger {
-    color: rgb(var(--danger-color));
+    color: rgba(var(--danger-color), 1);
 }
 
 .text-warning {
-    color: rgb(var(--warning-color));
+    color: rgba(var(--warning-color), 1);
 }
 
 .text-info {
-    color: rgb(var(--info-color));
+    color: rgba(var(--info-color), 1);
 }
 
 .text-muted {
@@ -520,7 +531,9 @@ input:focus, select:focus, textarea:focus {
         display: flex;
     }
     
-    /* Selector de tema en móvil - Definido en theme.css */
+    .theme-selector {
+        /* Eliminado - movido a theme.css */
+    }
     
     h1 {
         font-size: 2rem;
@@ -584,142 +597,11 @@ input:focus, select:focus, textarea:focus {
     right: -5px;
     font-size: 0.65rem;
     padding: 0.25rem 0.45rem;
-    background-color: rgb(var(--danger-color));
+    background-color: var(--danger-color);
     color: white;
     border-radius: 50%;
-    border: 2px solid var(--card-bg);
+    border: 2px solid var(--body-bg);
     transform: scale(0.8);
 }
 
-/* Sección de estilos para página de productos */
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-}
-
-.product-card {
-    transition: var(--transition);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--box-shadow);
-}
-
-.product-img-container {
-    height: 200px;
-    overflow: hidden;
-    background-color: #f5f5f5;
-}
-
-.product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transition: transform 0.5s ease;
-}
-
-.product-card:hover .product-img {
-    transform: scale(1.05);
-}
-
-.product-info {
-    padding: var(--spacing-md);
-    background-color: var(--card-bg);
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: var(--spacing-sm);
-}
-
-.product-price {
-    font-weight: 700;
-    color: var(--primary-color);
-    font-size: 1.2rem;
-    margin-bottom: var(--spacing-sm);
-}
-
-.product-actions {
-    margin-top: auto;
-}
-
-/* Paginación */
-.pagination {
-    display: flex;
-    justify-content: center;
-    list-style: none;
-    margin-top: var(--spacing-xl);
-    gap: var(--spacing-xs);
-}
-
-.pagination .page-item {
-    margin: 0 2px;
-}
-
-.pagination .page-link {
-    display: block;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--border-radius-sm);
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    transition: var(--transition);
-}
-
-.pagination .page-link:hover {
-    background-color: var(--primary-light);
-    color: white;
-}
-
-.pagination .active .page-link {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-/* Tablas */
-.table {
-    width: 100%;
-    margin-bottom: var(--spacing-lg);
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    text-align: left;
-}
-
-.table thead th {
-    background-color: rgba(var(--primary-rgb), 0.05);
-    color: var(--primary-color);
-    font-weight: 600;
-    border-bottom: 2px solid var(--primary-color);
-}
-
-.table tbody tr:hover {
-    background-color: rgba(var(--primary-rgb), 0.03);
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.table-condensed th,
-.table-condensed td {
-    padding: 0.4rem;
-}
-
-/* Fin de estilos adicionales */ 
+/* Fin de estilos del carrito */

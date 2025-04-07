@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+
+{% block title %}{{ producto.nombre }} - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .producto-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+    
+    @media (max-width: 768px) {
+        .producto-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .producto-imagen {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--box-shadow);
+        background-color: var(--card-bg);
+        position: relative;
+        cursor: zoom-in;
+    }
+    
+    .producto-imagen img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        min-height: 350px;
+        background-color: white;
+        transition: transform 0.3s ease;
+    }
+    
+    .producto-imagen:hover img {
+        transform: scale(1.1);
+    }
+    
+    .producto-categoria {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .producto-destacado {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background-color: var(--accent-color);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .producto-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .producto-titulo {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+    }
+    
+    .producto-precio {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--secondary-color);
+        margin-bottom: 20px;
+    }
+    
+    .precio-original {
+        text-decoration: line-through;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        margin-right: 15px;
+    }
+    
+    .descuento-badge {
+        background-color: var(--accent-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+    
+    .stock-badge {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        display: inline-block;
+    }
+    
+    .en-stock {
+        background-color: rgba(0, 200, 83, 0.1);
+        color: #00c853;
+    }
+    
+    .sin-stock {
+        background-color: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+    }
+    
+    .producto-descripcion {
+        color: var(--text-color);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+    
+    .producto-descripcion h4 {
+        margin-bottom: 10px;
+        color: var(--primary-color);
+    }
+    
+    .producto-especificaciones {
+        margin-bottom: 25px;
+    }
+    
+    .producto-especificaciones h4 {
+        margin-bottom: 15px;
+        color: var(--primary-color);
+    }
+    
+    .especificacion-item {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .especificacion-label {
+        font-weight: 600;
+        min-width: 150px;
+    }
+    
+    .producto-acciones {
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+    }
+    
+    .cantidad-control {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+        background: var(--card-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+    
+    .cantidad-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--text-color);
+    }
+    
+    .cantidad-input {
+        width: 60px;
+        height: 40px;
+        text-align: center;
+        font-size: 1.1rem;
+        border: none;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        background: var(--input-bg);
+        color: var(--text-color);
+    }
+    
+    .btn-agregar-carrito {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1rem;
+        font-weight: 600;
+        flex-grow: 1;
+        height: 50px;
+        max-width: 300px;
+    }
+    
+    .btn-agregar-carrito:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .btn-agregar-carrito:disabled {
+        background-color: var(--text-muted);
+        cursor: not-allowed;
+    }
+    
+    /* Productos relacionados */
+    .productos-relacionados {
+        margin-top: 50px;
+    }
+    
+    .productos-relacionados h2 {
+        font-size: 1.8rem;
+        color: var(--primary-color);
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    
+    .productos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 25px;
+    }
+    
+    .producto-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .producto-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .producto-img {
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .producto-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .producto-card:hover .producto-img img {
+        transform: scale(1.05);
+    }
+    
+    .producto-card .producto-categoria {
+        font-size: 0.75rem;
+        padding: 3px 10px;
+    }
+    
+    .producto-card .producto-info {
+        padding: 15px;
+        flex: 1;
+    }
+    
+    .producto-card .producto-titulo {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    .producto-card .producto-descripcion {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .producto-card .producto-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+    
+    .producto-card .producto-precio {
+        font-size: 1.2rem;
+        margin-bottom: 0;
+    }
+    
+    .producto-card .btn-agregar {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
+    
+    .producto-card .btn-agregar:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .breadcrumb a {
+        color: var(--text-muted);
+    }
+    
+    .breadcrumb .separator {
+        margin: 0 10px;
+        color: var(--text-muted);
+    }
+    
+    .breadcrumb .current {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .modal-zoom {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        overflow: auto;
+    }
+
+    .modal-zoom-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+        margin-top: 50px;
+    }
+
+    .modal-zoom-close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+    .modal-zoom-close:hover {
+        color: #bbb;
+    }
+
+    .cart-notification {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        overflow: auto;
+    }
+
+    .cart-notification-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 80%;
+        max-height: 80%;
+        overflow: auto;
+    }
+
+    .cart-notification-img {
+        float: left;
+        margin-right: 20px;
+    }
+
+    .cart-notification-img img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .cart-notification-info {
+        flex: 1;
+    }
+
+    .cart-notification-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+
+    .cart-notification-message {
+        font-size: 1rem;
+        color: var(--text-color);
+    }
+
+    .cart-notification-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Modal para zoom de imagen -->
+    <div id="imagenModal" class="modal-zoom">
+        <span class="modal-zoom-close">&times;</span>
+        <img class="modal-zoom-content" id="imgZoom">
+    </div>
+
+    <!-- Toast para notificación de producto agregado -->
+    <div id="cartNotification" class="cart-notification">
+        <div class="cart-notification-content">
+            <div class="cart-notification-img">
+                <img id="cartNotificationImg" src="" alt="Producto">
+            </div>
+            <div class="cart-notification-info">
+                <div class="cart-notification-title">Producto agregado al carrito</div>
+                <div id="cartNotificationMessage" class="cart-notification-message"></div>
+            </div>
+            <div class="cart-notification-close">&times;</div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Inicio</a>
+        <span class="separator">/</span>
+        <a href="{{ url_for('productos.catalogo') }}">Catálogo</a>
+        <span class="separator">/</span>
+        {% if producto.categoria_nombre %}
+        <a href="{{ url_for('productos.catalogo', categoria=producto.categoria_id) }}">{{ producto.categoria_nombre }}</a>
+        <span class="separator">/</span>
+        {% endif %}
+        <span class="current">{{ producto.nombre }}</span>
+    </div>
+
+    <div class="producto-container">
+        <!-- Imagen del producto -->
+        <div class="producto-imagen">
+            {% if producto.imagen %}
+            <img src="{{ url_for('static', filename='uploads/productos/' + producto.imagen) }}" alt="{{ producto.nombre }}">
+            {% else %}
+            <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ producto.nombre }}">
+            {% endif %}
+            
+            {% if producto.categoria_nombre %}
+            <div class="producto-categoria">{{ producto.categoria_nombre }}</div>
+            {% endif %}
+            
+            {% if producto.destacado %}
+            <div class="producto-destacado">Destacado</div>
+            {% endif %}
+        </div>
+        
+        <!-- Información del producto -->
+        <div class="producto-info">
+            <h1 class="producto-titulo">{{ producto.nombre }}</h1>
+            
+            <div class="producto-precio">
+                {% if producto.precio_anterior and producto.precio_anterior > producto.precio_venta %}
+                <span class="precio-original">${{ producto.precio_anterior }}</span>
+                {% endif %}
+                ${{ producto.precio_venta }}
+                
+                {% if producto.precio_anterior and producto.precio_anterior > producto.precio_venta %}
+                {% set descuento = ((producto.precio_anterior - producto.precio_venta) / producto.precio_anterior * 100)|round|int %}
+                <span class="descuento-badge">{{ descuento }}% OFF</span>
+                {% endif %}
+            </div>
+            
+            {% if producto.stock > 0 %}
+            <span class="stock-badge en-stock">
+                <i class="fas fa-check-circle"></i> En stock ({{ producto.stock }} unidades)
+            </span>
+            {% else %}
+            <span class="stock-badge sin-stock">
+                <i class="fas fa-times-circle"></i> Sin stock
+            </span>
+            {% endif %}
+            
+            <div class="producto-descripcion">
+                <h4>Descripción</h4>
+                {% if producto.descripcion %}
+                <p>{{ producto.descripcion }}</p>
+                {% else %}
+                <p>Producto de alta calidad disponible en nuestra ferretería.</p>
+                {% endif %}
+            </div>
+            
+            <div class="producto-especificaciones">
+                <h4>Especificaciones</h4>
+                <div class="especificacion-item">
+                    <div class="especificacion-label">Código:</div>
+                    <div>{{ producto.codigo_barras or 'N/A' }}</div>
+                </div>
+                <div class="especificacion-item">
+                    <div class="especificacion-label">Categoría:</div>
+                    <div>{{ producto.categoria_nombre or 'Sin categoría' }}</div>
+                </div>
+                {% if producto.marca %}
+                <div class="especificacion-item">
+                    <div class="especificacion-label">Marca:</div>
+                    <div>{{ producto.marca }}</div>
+                </div>
+                {% endif %}
+                {% if producto.dimensiones %}
+                <div class="especificacion-item">
+                    <div class="especificacion-label">Dimensiones:</div>
+                    <div>{{ producto.dimensiones }}</div>
+                </div>
+                {% endif %}
+                {% if producto.peso %}
+                <div class="especificacion-item">
+                    <div class="especificacion-label">Peso:</div>
+                    <div>{{ producto.peso }}</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="producto-acciones">
+                <div class="cantidad-control">
+                    <button class="cantidad-btn decrementar" id="decrementar">-</button>
+                    <input type="number" class="cantidad-input" id="cantidad" value="1" min="1" max="{{ producto.stock }}">
+                    <button class="cantidad-btn incrementar" id="incrementar">+</button>
+                </div>
+                
+                <button class="btn-agregar-carrito" id="btn-agregar-carrito" 
+                        data-id="{{ producto.id }}" 
+                        data-nombre="{{ producto.nombre }}" 
+                        data-precio="{{ producto.precio_venta|float }}"
+                        data-stock="{{ producto.stock }}"
+                        {% if producto.stock <= 0 %}disabled{% endif %}>
+                    <i class="fas fa-shopping-cart"></i> Agregar al carrito
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos relacionados -->
+    {% if relacionados %}
+    <div class="productos-relacionados">
+        <h2>Productos Relacionados</h2>
+        
+        <div class="productos-grid">
+            {% for rel in relacionados %}
+            <div class="producto-card">
+                <a href="{{ url_for('tienda.ver_producto', producto_id=rel.id) }}" class="producto-link">
+                    <div class="producto-img">
+                        {% if rel.imagen %}
+                        <img src="{{ url_for('static', filename='uploads/productos/' + rel.imagen) }}" alt="{{ rel.nombre }}">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ rel.nombre }}">
+                        {% endif %}
+                        
+                        {% if rel.categoria_nombre %}
+                        <div class="producto-categoria">{{ rel.categoria_nombre }}</div>
+                        {% endif %}
+                    </div>
+                </a>
+                
+                <div class="producto-info">
+                    <a href="{{ url_for('tienda.ver_producto', producto_id=rel.id) }}" class="producto-link">
+                        <h3 class="producto-titulo">{{ rel.nombre }}</h3>
+                    </a>
+                    
+                    {% if rel.stock > 0 %}
+                    <span class="stock-badge en-stock">En stock</span>
+                    {% else %}
+                    <span class="stock-badge sin-stock">Sin stock</span>
+                    {% endif %}
+                    
+                    <div class="producto-footer">
+                        <div class="producto-precio">${{ "%.2f"|format(rel.precio_venta|float) }}</div>
+                        
+                        {% if rel.stock > 0 %}
+                        <button class="btn-agregar btn-related-cart-add" 
+                                data-id="{{ rel.id }}" 
+                                data-nombre="{{ rel.nombre }}" 
+                                data-precio="{{ rel.precio_venta|float }}">
+                            <i class="fas fa-shopping-cart"></i> Agregar
+                        </button>
+                        {% else %}
+                        <button class="btn-agregar" disabled style="background-color: var(--secondary-color);">
+                            Sin stock
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnDecrementar = document.getElementById('decrementar');
+        const btnIncrementar = document.getElementById('incrementar');
+        const inputCantidad = document.getElementById('cantidad');
+        const btnAgregarCarrito = document.getElementById('btn-agregar-carrito');
+        const botonesRelacionados = document.querySelectorAll('.btn-related-cart-add');
+        const productoImagen = document.querySelector('.producto-imagen img');
+        const modal = document.getElementById('imagenModal');
+        const modalImg = document.getElementById('imgZoom');
+        const closeModal = document.querySelector('.modal-zoom-close');
+        
+        // Stock disponible
+        let stockDisponible = 0;
+        
+        // Usar JavaScript puro en lugar de mezclar con Jinja
+        if (btnAgregarCarrito) {
+            const stockAttr = btnAgregarCarrito.getAttribute('data-stock');
+            if (stockAttr) {
+                stockDisponible = parseInt(stockAttr);
+            } else {
+                // Obtener el stock del contenido del badge si está disponible
+                const stockBadge = document.querySelector('.stock-badge.en-stock');
+                if (stockBadge) {
+                    const stockText = stockBadge.textContent;
+                    const match = stockText.match(/\d+/);
+                    if (match) {
+                        stockDisponible = parseInt(match[0]);
+                    }
+                }
+            }
+        }
+        
+        // Evento para decrementar cantidad
+        btnDecrementar.addEventListener('click', function() {
+            let cantidad = parseInt(inputCantidad.value);
+            if (cantidad > 1) {
+                inputCantidad.value = cantidad - 1;
+            }
+        });
+        
+        // Evento para incrementar cantidad
+        btnIncrementar.addEventListener('click', function() {
+            let cantidad = parseInt(inputCantidad.value);
+            if (cantidad < stockDisponible) {
+                inputCantidad.value = cantidad + 1;
+            }
+        });
+        
+        // Validar entrada manual de cantidad
+        inputCantidad.addEventListener('change', function() {
+            let cantidad = parseInt(this.value);
+            
+            if (isNaN(cantidad) || cantidad < 1) {
+                this.value = 1;
+            } else if (cantidad > stockDisponible) {
+                this.value = stockDisponible;
+            }
+        });
+        
+        // Zoom de imagen
+        if (productoImagen) {
+            productoImagen.addEventListener('click', function() {
+                modal.style.display = "block";
+                modalImg.src = this.src;
+            });
+        }
+        
+        // Cerrar modal
+        if (closeModal) {
+            closeModal.addEventListener('click', function() {
+                modal.style.display = "none";
+            });
+        }
+        
+        // Agregar producto principal al carrito
+        btnAgregarCarrito.addEventListener('click', function() {
+            const productoId = this.dataset.id;
+            const nombre = this.dataset.nombre;
+            const precio = parseFloat(this.dataset.precio);
+            const cantidad = parseInt(inputCantidad.value);
+            
+            agregarAlCarrito(productoId, nombre, precio, cantidad);
+        });
+        
+        // Agregar productos relacionados al carrito
+        botonesRelacionados.forEach(function(boton) {
+            boton.addEventListener('click', function() {
+                const productoId = this.dataset.id;
+                const nombre = this.dataset.nombre;
+                const precio = parseFloat(this.dataset.precio);
+                
+                agregarAlCarrito(productoId, nombre, precio, 1);
+            });
+        });
+        
+        // Función para agregar al carrito
+        function agregarAlCarrito(productoId, nombre, precio, cantidad) {
+            // Obtener la URL del carrito del DOM para evitar usar Jinja en JavaScript
+            const carritoUrl = document.getElementById('carritoUrlData') 
+                ? document.getElementById('carritoUrlData').getAttribute('data-url') 
+                : '/carrito/agregar';
+                
+            fetch(carritoUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    producto_id: productoId,
+                    cantidad: cantidad
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar contador del carrito en la barra de navegación
+                    const cartCounter = document.querySelector('.cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    
+                    // Mostrar notificación
+                    const notification = document.getElementById('cartNotification');
+                    const notificationContent = notification.querySelector('.cart-notification-content');
+                    const notificationImg = notificationContent.querySelector('#cartNotificationImg');
+                    const notificationMessage = notificationContent.querySelector('#cartNotificationMessage');
+                    
+                    // Usar la URL de imagen que viene en la respuesta o construirla desde el DOM
+                    let imgSrc = '';
+                    if (data.product_image) {
+                        const baseUrl = document.getElementById('staticUrlBase') 
+                            ? document.getElementById('staticUrlBase').getAttribute('data-url') 
+                            : '/static/uploads/productos/';
+                        imgSrc = baseUrl + data.product_image;
+                    } else {
+                        imgSrc = document.getElementById('productoDefaultImg') 
+                            ? document.getElementById('productoDefaultImg').getAttribute('data-url') 
+                            : '/static/img/producto-default.jpg';
+                    }
+                    
+                    notificationImg.src = imgSrc;
+                    notificationMessage.textContent = data.message;
+                    
+                    notification.style.display = 'block';
+                    
+                    // Cerrar notificación después de 3 segundos
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert(data.message || 'Error al agregar al carrito');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al agregar al carrito');
+            });
+        }
+    });
+</script>
+
+<!-- Datos ocultos para usar en JavaScript en lugar de Jinja -->
+<div id="carritoUrlData" data-url="{{ url_for('carrito.agregar_al_carrito') }}" style="display:none;"></div>
+<div id="staticUrlBase" data-url="{{ url_for('static', filename='uploads/productos/') }}" style="display:none;"></div>
+<div id="productoDefaultImg" data-url="{{ url_for('static', filename='img/producto-default.jpg') }}" style="display:none;"></div>
+<div id="stockData" data-stock="{{ producto.stock }}" style="display:none;"></div>
+
+{% endblock %} 

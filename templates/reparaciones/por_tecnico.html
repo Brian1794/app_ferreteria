@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Reparaciones Asignadas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reparaciones-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .reparaciones-title {
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.85em;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        margin-right: 5px;
+    }
+    
+    .badge-recibido {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-diagnostico {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .badge-reparacion {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .badge-espera_repuestos {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .badge-listo {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .badge-entregado {
+        background-color: #343a40;
+        color: white;
+    }
+    
+    .badge-cancelado {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .reparacion-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 5px solid var(--primary-color);
+        transition: transform 0.2s;
+    }
+    
+    .reparacion-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .reparacion-card.estado-listo {
+        border-left-color: #28a745;
+    }
+    
+    .reparacion-card.estado-reparacion {
+        border-left-color: #007bff;
+    }
+    
+    .reparacion-card.estado-diagnostico {
+        border-left-color: #17a2b8;
+    }
+    
+    .reparacion-card.estado-recibido {
+        border-left-color: #ffc107;
+    }
+    
+    .reparacion-card.estado-espera_repuestos {
+        border-left-color: #6c757d;
+    }
+    
+    .reparacion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .reparacion-id {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--primary-color);
+    }
+    
+    .reparacion-electrodomestico {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .reparacion-detalles {
+        margin-bottom: 1rem;
+    }
+    
+    .reparacion-detalles p {
+        margin-bottom: 0.3rem;
+    }
+    
+    .reparacion-cliente {
+        color: var(--text-muted);
+    }
+    
+    .reparacion-problema {
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background-color: rgba(0,0,0,0.03);
+        border-radius: 0.25rem;
+    }
+    
+    .reparacion-acciones {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-detalle {
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        margin: 1rem 0;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h3 {
+        color: var(--text-color);
+        margin-bottom: 1rem;
+    }
+    
+    .prioridad-alta {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.5rem;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reparaciones-header">
+    <h1 class="reparaciones-title">Mis Reparaciones Asignadas</h1>
+    <span class="text-muted">Técnico: {{ current_user.nombre }}</span>
+</div>
+
+{% if reparaciones %}
+    <div class="row">
+        {% for reparacion in reparaciones %}
+        <div class="col-md-6 col-lg-6 mb-4">
+            <div class="reparacion-card estado-{{ reparacion.estado.lower() }}">
+                <div class="reparacion-header">
+                    <span class="reparacion-id">Reparación #{{ reparacion.id }}</span>
+                    <span class="badge badge-{{ reparacion.estado.lower() }}">{{ reparacion.estado_texto }}</span>
+                </div>
+                <h3 class="reparacion-electrodomestico">{{ reparacion.electrodomestico }}</h3>
+                <div class="reparacion-detalles">
+                    <p><strong>Marca:</strong> {{ reparacion.marca or 'No especificada' }}</p>
+                    <p><strong>Modelo:</strong> {{ reparacion.modelo or 'No especificado' }}</p>
+                    <p><strong>Fecha de recepción:</strong> {{ reparacion.fecha_recepcion }}</p>
+                    <p><strong>Entrega estimada:</strong> {{ reparacion.fecha_entrega_estimada or 'Por determinar' }}</p>
+                    <p class="reparacion-cliente"><strong>Cliente:</strong> {{ reparacion.cliente_nombre }}</p>
+                </div>
+                <div class="reparacion-problema">
+                    <p><strong>Problema reportado:</strong></p>
+                    <p>{{ reparacion.problema or reparacion.descripcion }}</p>
+                </div>
+                <div class="reparacion-acciones">
+                    <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn-detalle btn-primary">
+                        <i class="fas fa-tools"></i> Ver Detalles
+                    </a>
+                    {% if reparacion.estado == 'DIAGNOSTICO' or reparacion.estado == 'REPARACION' %}
+                    <a href="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}" class="btn-detalle btn-success">
+                        <i class="fas fa-sync-alt"></i> Actualizar Estado
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <i class="fas fa-tools"></i>
+        <h3>No tienes reparaciones asignadas actualmente</h3>
+        <p class="text-muted">Las reparaciones que te sean asignadas aparecerán aquí</p>
+    </div>
+{% endif %}
+{% endblock %} 

@@ -133,6 +133,7 @@
     {% include 'includes/messages.html' %}
     
     <form method="POST" action="{{ url_for('auth.registro') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="nombre">Nombre completo</label>
             <input type="text" id="nombre" name="nombre" placeholder="Ingrese su nombre completo" required>

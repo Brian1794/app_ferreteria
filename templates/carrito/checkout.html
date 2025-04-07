@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Finalizar Compra{% endblock %}
+
+{% block styles %}
+<style>
+    .btn-ubicacion {
+        display: flex;
+        align-items: center;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-ubicacion:hover {
+        background-color: #2980b9;
+    }
+
+    .btn-ubicacion i {
+        margin-right: 8px;
+    }
+
+    .estado-error {
+        color: #e74c3c;
+        font-weight: 500;
+        margin-top: 5px;
+        padding: 8px;
+        border-radius: 4px;
+        background-color: rgba(231, 76, 60, 0.1);
+    }
+
+    .estado-cargando {
+        color: #3498db;
+        font-weight: 500;
+        margin-top: 5px;
+    }
+
+    .estado-exito {
+        color: #2ecc71;
+        font-weight: 500;
+        margin-top: 5px;
+        padding: 8px;
+        border-radius: 4px;
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+    
+    .permisos-info {
+        margin-top: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 10px;
+        border-left: 4px solid #e74c3c;
+    }
+    
+    .permisos-info p {
+        margin-bottom: 5px;
+    }
+    
+    .permisos-info strong {
+        color: #e74c3c;
+    }
+    
+    .permisos-info ul {
+        padding-left: 20px;
+        margin-top: 8px;
+    }
+    
+    .btn-reintentar {
+        background-color: #e67e22;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .btn-reintentar i {
+        margin-right: 5px;
+    }
+    
+    .btn-reintentar:hover {
+        background-color: #d35400;
+    }
+
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    /* Estilos para mostrar el estado del guardado */
+    .estado-cargando {
+        color: #007bff;
+        padding: 8px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .estado-error {
+        color: #dc3545;
+        padding: 8px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .estado-exito {
+        color: #28a745;
+        padding: 8px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="text-primary">Finalizar Compra</h1>
+            <div class="progress mb-4">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">Paso 1 de 2</div>
+            </div>
+        </div>
+        
+        {% if not items %}
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h4 class="alert-heading">Tu carrito está vacío</h4>
+                    <p>No hay productos en tu carrito para completar la compra.</p>
+                    <hr>
+                    <a href="{{ url_for('productos.catalogo') }}" class="btn btn-primary">Ir a la tienda</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Información de Envío</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="checkout-form" method="POST" action="{{ url_for('carrito.procesar_pedido') }}">
+                            <!-- CSRF token -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Datos del Cliente</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Nombre:</strong> {{ cliente.nombre }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Email:</strong> {{ cliente.email }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Teléfono:</strong> <span id="telefono-texto">{{ cliente.telefono }}</span>
+                                            {% if not cliente.telefono %}
+                                            <span class="badge bg-warning text-dark">No registrado</span>
+                                            {% endif %}
+                                            </p>
+                                            <input type="text" class="form-control mt-2" name="telefono" value="{{ cliente.telefono }}" id="telefono-input" placeholder="Ingrese su teléfono">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Dirección:</strong> <span id="direccion-texto">{{ cliente.direccion }}</span>
+                                            {% if not cliente.direccion %}
+                                            <span class="badge bg-warning text-dark">No registrada</span>
+                                            {% endif %}
+                                            </p>
+                                            <input type="text" class="form-control mt-2" name="direccion" value="{{ cliente.direccion }}" id="direccion-input" placeholder="Ingrese su dirección">
+                                            <button type="button" id="usar-ubicacion-actual" class="btn-ubicacion mt-2">
+                                                <i class="fas fa-map-marker-alt"></i> Usar mi ubicación actual
+                                            </button>
+                                            <div id="estado-ubicacion" class="mt-1"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" id="guardar_datos" name="guardar_datos" checked>
+                                        <label class="form-check-label" for="guardar_datos">
+                                            Guardar estos datos en mi perfil para futuras compras
+                                        </label>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="button" id="guardar_datos_btn" class="btn btn-info">
+                                            <i class="fas fa-save"></i> Guardar datos en mi perfil
+                                        </button>
+                                        <div id="estado_guardado" class="mt-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notas">Notas adicionales (opcional)</label>
+                                <textarea class="form-control" id="notas" name="notas" rows="3"></textarea>
+                            </div>
+
+                            <button class="btn btn-primary btn-lg btn-block" type="submit">Continuar al pago</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Resumen del Pedido</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for item in items %}
+                            <li class="list-group-item d-flex justify-content-between lh-condensed">
+                                <div>
+                                    <h6 class="my-0">{{ item.nombre }}</h6>
+                                    <small class="text-muted">Cantidad: {{ item.cantidad }}</small>
+                                </div>
+                                <span class="text-muted">${{ item.subtotal|float|round(2) }}</span>
+                            </li>
+                            {% endfor %}
+                            
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Subtotal</span>
+                                <strong>${{ total|float|round(2) }}</strong>
+                            </li>
+                            
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Envío</span>
+                                <strong>Gratis</strong>
+                            </li>
+                            
+                            <li class="list-group-item d-flex justify-content-between bg-light">
+                                <span class="text-success"><strong>Total</strong></span>
+                                <strong class="text-success">${{ total }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Información Importante</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><i class="fas fa-shield-alt text-success"></i> Pago seguro garantizado</p>
+                        <p><i class="fas fa-truck text-primary"></i> Envío gratis en compras mayores a $500</p>
+                        <p><i class="fas fa-exchange-alt text-warning"></i> Política de devolución: 30 días</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usarUbicacionBtn = document.getElementById('usar-ubicacion-actual');
+    const estadoUbicacion = document.getElementById('estado-ubicacion');
+    const direccionInput = document.getElementById('direccion-input');
+    const direccionTexto = document.getElementById('direccion-texto');
+    
+    // Botón para guardar datos directamente
+    const guardarDatosBtn = document.getElementById('guardar_datos_btn');
+    const estadoGuardado = document.getElementById('estado_guardado');
+    const telefonoInput = document.getElementById('telefono-input');
+    const telefonoTexto = document.getElementById('telefono-texto');
+    
+    // Función para guardar datos del cliente
+    guardarDatosBtn.addEventListener('click', function() {
+        const telefono = telefonoInput.value.trim();
+        const direccion = direccionInput.value.trim();
+        
+        if (!telefono || !direccion) {
+            mostrarEstadoGuardado('error', 'Por favor complete los campos de teléfono y dirección');
+            return;
+        }
+        
+        mostrarEstadoGuardado('cargando', 'Guardando datos...');
+        
+        // Crear FormData para enviar los datos
+        const formData = new FormData();
+        formData.append('telefono', telefono);
+        formData.append('direccion', direccion);
+        
+        // Enviar datos al servidor
+        fetch('{{ url_for("carrito.actualizar_datos_cliente") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarEstadoGuardado('exito', data.message);
+                
+                // Actualizar textos mostrados
+                if (telefonoTexto) telefonoTexto.textContent = telefono;
+                if (direccionTexto) direccionTexto.textContent = direccion;
+                
+                // Ocultar badges de "No registrado" si existen
+                document.querySelectorAll('.badge.bg-warning').forEach(badge => {
+                    badge.style.display = 'none';
+                });
+            } else {
+                mostrarEstadoGuardado('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error al guardar datos:', error);
+            mostrarEstadoGuardado('error', 'Error al comunicarse con el servidor');
+        });
+    });
+    
+    // Función para mostrar estado del guardado
+    function mostrarEstadoGuardado(tipo, mensaje) {
+        estadoGuardado.innerHTML = '';
+        estadoGuardado.className = '';
+        
+        if (tipo === 'cargando') {
+            estadoGuardado.className = 'estado-cargando';
+            estadoGuardado.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${mensaje}`;
+        } else if (tipo === 'error') {
+            estadoGuardado.className = 'estado-error';
+            estadoGuardado.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${mensaje}`;
+        } else if (tipo === 'exito') {
+            estadoGuardado.className = 'estado-exito';
+            estadoGuardado.innerHTML = `<i class="fas fa-check-circle"></i> ${mensaje}`;
+            
+            // Ocultar mensaje después de 3 segundos
+            setTimeout(() => {
+                estadoGuardado.innerHTML = '';
+                estadoGuardado.className = '';
+            }, 3000);
+        }
+    }
+    
+    // Función para obtener la ubicación del usuario
+    usarUbicacionBtn.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            mostrarEstado('error', 'Tu navegador no soporta geolocalización');
+            return;
+        }
+        
+        mostrarEstado('cargando', 'Obteniendo tu ubicación...');
+        
+        navigator.geolocation.getCurrentPosition(
+            // Éxito
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                mostrarEstado('cargando', 'Obteniendo dirección desde coordenadas...');
+                
+                // Intentar obtener la dirección desde las coordenadas (geocodificación inversa)
+                obtenerDireccionDesdeCoords(lat, lng);
+            },
+            // Error
+            function(error) {
+                let mensaje;
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        mensaje = 'No se pudo acceder a tu ubicación. Revisa los permisos de tu navegador.';
+                        mostrarPermisos();
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        mensaje = 'La información de ubicación no está disponible.';
+                        break;
+                    case error.TIMEOUT:
+                        mensaje = 'Se agotó el tiempo de espera al solicitar la ubicación.';
+                        break;
+                    default:
+                        mensaje = 'Error desconocido al obtener ubicación.';
+                }
+                mostrarEstado('error', mensaje);
+            }
+        );
+    });
+    
+    // Función para mostrar el estado del proceso
+    function mostrarEstado(tipo, mensaje) {
+        estadoUbicacion.innerHTML = '';
+        estadoUbicacion.className = '';
+        
+        if (tipo === 'cargando') {
+            estadoUbicacion.className = 'estado-cargando';
+            estadoUbicacion.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${mensaje}`;
+        } else if (tipo === 'error') {
+            estadoUbicacion.className = 'estado-error';
+            estadoUbicacion.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${mensaje}`;
+        } else if (tipo === 'exito') {
+            estadoUbicacion.className = 'estado-exito';
+            estadoUbicacion.innerHTML = `<i class="fas fa-check-circle"></i> ${mensaje}`;
+        }
+    }
+    
+    // Función para mostrar información de permisos
+    function mostrarPermisos() {
+        estadoUbicacion.innerHTML += `
+            <div class="permisos-info mt-2">
+                <p><strong>¿Cómo permitir el acceso a tu ubicación?</strong></p>
+                <ul>
+                    <li>Haz clic en el icono de candado o información en la barra de direcciones</li>
+                    <li>Busca permisos de ubicación y selecciona "Permitir"</li>
+                    <li>Recarga la página después de cambiar la configuración</li>
+                </ul>
+                <button class="btn-reintentar" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>
+        `;
+    }
+    
+    // Función para obtener dirección desde coordenadas (geocodificación inversa)
+    function obtenerDireccionDesdeCoords(lat, lng) {
+        // Usamos la API de OpenStreetMap Nominatim para geocodificación inversa
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+                // Extraer información de dirección
+                const direccion = data.display_name;
+                
+                // Actualizar input y texto de dirección 
+                direccionInput.value = direccion;
+                if (direccionTexto) {
+                    direccionTexto.textContent = direccion;
+                }
+                
+                mostrarEstado('exito', 'Ubicación detectada correctamente');
+            })
+            .catch(error => {
+                console.error('Error al obtener dirección:', error);
+                mostrarEstado('error', 'No se pudo obtener la dirección. Por favor, ingrésela manualmente.');
+            });
+    }
+});
+</script>
+{% endblock %} 

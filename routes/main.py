@@ -19,6 +19,10 @@ def dashboard():
     if current_user.es_cliente:
         return redirect(url_for('main.mi_cuenta'))
     
+    # Si el usuario es administrador, redirigir al panel de administración
+    if current_user.es_admin:
+        return redirect(url_for('admin.index'))
+    
     # Para empleados, mostrar el dashboard adaptado a su rol
     cur = mysql.connection.cursor()
     

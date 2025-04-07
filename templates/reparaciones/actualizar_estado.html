@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar Estado de Reparación{% endblock %}
+
+{% block styles %}
+<style>
+    .estado-card {
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .estado-header {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .estado-badge {
+        font-size: 0.85rem;
+        padding: 5px 10px;
+    }
+    
+    .status-recibido { background-color: #cce5ff; color: #004085; }
+    .status-diagnostico { background-color: #fff3cd; color: #856404; }
+    .status-reparacion { background-color: #d1ecf1; color: #0c5460; }
+    .status-espera-repuestos { background-color: #f8d7da; color: #721c24; }
+    .status-listo { background-color: #d4edda; color: #155724; }
+    .status-entregado { background-color: #c3e6cb; color: #155724; }
+    .status-cancelado { background-color: #dcdcdc; color: #5a5a5a; }
+    
+    .reparacion-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .btn-estado {
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="estado-header">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="fas fa-sync-alt"></i> Actualizar Estado de Reparación</h2>
+            <a href="{{ url_for('reparaciones.por_tecnico') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a mis reparaciones
+            </a>
+        </div>
+        <div>
+            <h5>Estado actual: 
+                <span class="estado-badge badge 
+                    {% if reparacion.estado == 'RECIBIDO' %}status-recibido
+                    {% elif reparacion.estado == 'DIAGNOSTICO' %}status-diagnostico
+                    {% elif reparacion.estado == 'REPARACION' %}status-reparacion
+                    {% elif reparacion.estado == 'ESPERA_REPUESTOS' %}status-espera-repuestos
+                    {% elif reparacion.estado == 'LISTO' %}status-listo
+                    {% elif reparacion.estado == 'ENTREGADO' %}status-entregado
+                    {% elif reparacion.estado == 'CANCELADO' %}status-cancelado
+                    {% endif %}">
+                    {{ estado_actual }}
+                </span>
+            </h5>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Información de la Reparación</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Reparación #{{ reparacion.id }}</strong>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Aparato:</strong> {{ reparacion.tipo_aparato }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Marca:</strong> {{ reparacion.marca }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Modelo:</strong> {{ reparacion.modelo }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Cliente:</strong> {{ reparacion.cliente_nombre }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Problema reportado:</strong>
+                        <p class="mb-0">{{ reparacion.descripcion_problema }}</p>
+                    </div>
+                    {% if reparacion.diagnostico %}
+                    <div class="mb-3">
+                        <strong>Diagnóstico actual:</strong>
+                        <p class="mb-0">{{ reparacion.diagnostico }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Actualizar Estado</h5>
+                </div>
+                <div class="card-body">
+                    {% if estados|length > 0 %}
+                        <form method="POST" action="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}">
+                            <div class="form-group mb-3">
+                                <label for="estado"><strong>Seleccionar nuevo estado:</strong></label>
+                                <select class="form-control" id="estado" name="estado" required>
+                                    <option value="">-- Seleccionar estado --</option>
+                                    {% for estado in estados %}
+                                        <option value="{{ estado.valor }}">{{ estado.texto }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="diagnostico"><strong>Diagnóstico técnico:</strong></label>
+                                <textarea class="form-control" id="diagnostico" name="diagnostico" rows="4" placeholder="Escriba su diagnóstico técnico actualizado (opcional)">{{ reparacion.diagnostico }}</textarea>
+                                <small class="form-text text-muted">Si deja esto vacío, se mantendrá el diagnóstico actual</small>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="comentario"><strong>Comentario adicional:</strong></label>
+                                <textarea class="form-control" id="comentario" name="comentario" rows="3" placeholder="Escriba un comentario adicional para este cambio de estado (opcional)"></textarea>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No hay estados disponibles para actualizar desde el estado actual ({{ estado_actual }}).</p>
+                            {% if reparacion.estado == 'ENTREGADO' or reparacion.estado == 'CANCELADO' %}
+                                <p>Este es un estado final y no puede ser modificado.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

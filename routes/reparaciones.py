@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 reparaciones_bp = Blueprint('reparaciones', __name__)
 
+# Función para obtener conexión a la base de datos
+def get_db_connection():
+    return mysql.connection
+
+# Función para obtener un cursor de diccionario
+def get_dict_cursor():
+    return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
 def empleado_required(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
@@ -331,6 +339,10 @@ def agregar_repuesto(id):
     cursor = mysql.connection.cursor()
     
     try:
+        # Obtener el estado actual de la reparación
+        cursor.execute("SELECT estado FROM reparaciones WHERE id = %s", (id,))
+        estado_actual = cursor.fetchone()[0]
+        
         # Insertamos el repuesto
         cursor.execute("""
             INSERT INTO reparaciones_repuestos
@@ -357,9 +369,10 @@ def agregar_repuesto(id):
         # Registrar en historial
         cursor.execute("""
             INSERT INTO historial_reparaciones 
-            (reparacion_id, descripcion, usuario_id, fecha)
-            VALUES (%s, %s, %s, NOW())
-        """, (id, f"Repuesto agregado: {repuesto_descripcion} (Cantidad: {cantidad}, Subtotal: ${subtotal})", current_user.id))
+            (reparacion_id, estado, fecha, tecnico_id, comentario) 
+            VALUES (%s, %s, NOW(), %s, %s)
+        """, (id, estado_actual, current_user.id, 
+              f"Repuesto agregado: {repuesto_descripcion} (Cantidad: {cantidad}, Subtotal: ${subtotal})"))
         
         mysql.connection.commit()
         flash('Repuesto agregado con éxito', 'success')
@@ -380,6 +393,10 @@ def eliminar_repuesto(id, repuesto_id):
     cursor = mysql.connection.cursor()
     
     try:
+        # Obtener el estado actual de la reparación
+        cursor.execute("SELECT estado FROM reparaciones WHERE id = %s", (id,))
+        estado_actual = cursor.fetchone()[0]
+        
         # Obtener datos del repuesto
         cursor.execute("""
             SELECT producto_id, cantidad, subtotal, repuesto_descripcion
@@ -415,9 +432,9 @@ def eliminar_repuesto(id, repuesto_id):
         # Registrar en historial
         cursor.execute("""
             INSERT INTO historial_reparaciones 
-            (reparacion_id, descripcion, usuario_id, fecha)
-            VALUES (%s, %s, %s, NOW())
-        """, (id, f"Repuesto eliminado: {descripcion}", current_user.id))
+            (reparacion_id, estado, fecha, tecnico_id, comentario) 
+            VALUES (%s, %s, NOW(), %s, %s)
+        """, (id, estado_actual, current_user.id, f"Repuesto eliminado: {descripcion}"))
         
         mysql.connection.commit()
         flash('Repuesto eliminado con éxito', 'success')
@@ -766,66 +783,91 @@ def actualizar_reparacion(id):
     
     return redirect(url_for('reparaciones.admin'))
 
-@reparaciones_bp.route('/por-tecnico')
+@reparaciones_bp.route('/tecnico/reparaciones', methods=['GET'])
 @login_required
 def por_tecnico():
-    """Muestra las reparaciones asignadas al técnico actual"""
-    if not hasattr(current_user, 'cargo_id'):
-        flash('Acceso denegado', 'danger')
-        return redirect(url_for('main.index'))
+    # Verificar que es un técnico
+    if not hasattr(current_user, 'cargo_id') or current_user.cargo_nombre != 'Técnico':
+        flash('No tienes permiso para acceder a esta página', 'error')
+        return redirect(url_for('index'))
     
-    # Verificar si el usuario es técnico
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        SELECT c.nombre FROM cargos c
-        INNER JOIN empleados e ON c.id = e.cargo_id
-        WHERE e.id = %s
-    """, (current_user.id,))
-    result = cursor.fetchone()
-    
-    if not result or result[0] != 'Técnico':
-        flash('Esta página es solo para técnicos', 'danger')
-        return redirect(url_for('main.dashboard'))
+    conn = get_db_connection()
+    cursor = conn.cursor()
     
     # Obtener reparaciones asignadas al técnico
-    cursor = get_dict_cursor()
     cursor.execute('''
-        SELECT r.*, c.nombre as cliente_nombre,
-               DATE_FORMAT(r.fecha_recepcion, '%d/%m/%Y') as fecha_recepcion,
-               DATE_FORMAT(r.fecha_entrega_estimada, '%d/%m/%Y') as fecha_entrega_estimada
+        SELECT r.*, 
+            c.nombre as cliente_nombre, 
+            c.telefono as cliente_telefono,
+            e.nombre as tecnico_nombre,
+            CASE 
+                WHEN r.estado = 'RECIBIDO' THEN 'Recibido'
+                WHEN r.estado = 'DIAGNOSTICO' THEN 'En diagnóstico'
+                WHEN r.estado = 'ESPERA_REPUESTOS' THEN 'Esperando repuestos'
+                WHEN r.estado = 'REPARACION' THEN 'En reparación'
+                WHEN r.estado = 'LISTO' THEN 'Listo para entregar'
+                WHEN r.estado = 'ENTREGADO' THEN 'Entregado'
+                WHEN r.estado = 'CANCELADO' THEN 'Cancelado'
+                ELSE r.estado
+            END as estado_texto
         FROM reparaciones r
         LEFT JOIN clientes c ON r.cliente_id = c.id
-        WHERE r.tecnico_id = %s AND r.estado NOT IN ('ENTREGADO', 'CANCELADO')
+        LEFT JOIN empleados e ON r.tecnico_id = e.id
+        WHERE r.tecnico_id = ?
         ORDER BY 
             CASE 
-                WHEN r.estado = 'LISTO' THEN 1
-                WHEN r.estado = 'REPARACION' THEN 2
-                WHEN r.estado = 'DIAGNOSTICO' THEN 3
-                WHEN r.estado = 'RECIBIDO' THEN 4
-                WHEN r.estado = 'ESPERA_REPUESTOS' THEN 5
-                ELSE 6
+                WHEN r.estado = 'RECIBIDO' THEN 1
+                WHEN r.estado = 'DIAGNOSTICO' THEN 2
+                WHEN r.estado = 'ESPERA_REPUESTOS' THEN 3
+                WHEN r.estado = 'REPARACION' THEN 4
+                WHEN r.estado = 'LISTO' THEN 5
+                WHEN r.estado = 'ENTREGADO' THEN 6
+                WHEN r.estado = 'CANCELADO' THEN 7
+                ELSE 8
             END,
-            r.fecha_entrega_estimada ASC
+            r.fecha_recepcion DESC
     ''', (current_user.id,))
     reparaciones = cursor.fetchall()
-    cursor.close()
     
-    # Mapeo de estados para mostrar texto amigable
-    estados_texto = {
-        'RECIBIDO': 'Recibido',
-        'DIAGNOSTICO': 'En diagnóstico',
-        'REPARACION': 'En reparación',
-        'ESPERA_REPUESTOS': 'Esperando repuestos',
-        'LISTO': 'Listo para entrega',
-        'ENTREGADO': 'Entregado',
-        'CANCELADO': 'Cancelado'
-    }
+    # Estadísticas del técnico
+    # Total de reparaciones asignadas
+    cursor.execute('''
+        SELECT COUNT(*) as total FROM reparaciones
+        WHERE tecnico_id = ?
+    ''', (current_user.id,))
+    result = cursor.fetchone()
+    reparaciones_totales = result['total'] if result else 0
     
-    # Agregar el texto amigable a cada reparación
-    for reparacion in reparaciones:
-        reparacion['estado_texto'] = estados_texto.get(reparacion['estado'], reparacion['estado'])
+    # Reparaciones en progreso
+    cursor.execute('''
+        SELECT COUNT(*) as total FROM reparaciones
+        WHERE tecnico_id = ? AND estado IN ('DIAGNOSTICO', 'REPARACION', 'ESPERA_REPUESTOS')
+    ''', (current_user.id,))
+    result = cursor.fetchone()
+    reparaciones_progreso = result['total'] if result else 0
     
-    return render_template('reparaciones/por_tecnico.html', reparaciones=reparaciones)
+    # Reparaciones completadas
+    cursor.execute('''
+        SELECT COUNT(*) as total FROM reparaciones
+        WHERE tecnico_id = ? AND estado IN ('LISTO', 'ENTREGADO')
+    ''', (current_user.id,))
+    result = cursor.fetchone()
+    reparaciones_completadas = result['total'] if result else 0
+    
+    # Cálculo de eficiencia (% de reparaciones completadas)
+    eficiencia = 'N/A'
+    if reparaciones_totales > 0:
+        eficiencia = f"{(reparaciones_completadas / reparaciones_totales) * 100:.0f}%"
+    
+    conn.close()
+    
+    return render_template('reparaciones/reparaciones_tecnico.html', 
+        reparaciones=reparaciones,
+        reparaciones_totales=reparaciones_totales,
+        reparaciones_progreso=reparaciones_progreso,
+        reparaciones_completadas=reparaciones_completadas,
+        eficiencia=eficiencia
+    )
 
 def crear_reparacion():
     """Procesar el formulario de nueva reparación"""
@@ -885,4 +927,466 @@ def crear_reparacion():
     except Exception as e:
         current_app.logger.error(f"Error al crear reparación: {str(e)}")
         flash('Ocurrió un error al procesar la solicitud', 'error')
-        return redirect(url_for('reparaciones.admin')) 
+        return redirect(url_for('reparaciones.admin'))
+
+@reparaciones_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_reparacion_tecnico(id):
+    if not current_user.es_tecnico:
+        flash('No tienes permiso para editar reparaciones.', 'danger')
+        return redirect(url_for('reparaciones.lista'))
+
+    # Lógica para editar la reparación
+    # Obtener detalles de la reparación
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM reparaciones WHERE id = %s', (id,))
+    reparacion = cursor.fetchone()
+
+    if request.method == 'POST':
+        # Actualizar detalles de la reparación
+        estado = request.form.get('estado')
+        precio = request.form.get('precio')
+        cursor.execute('UPDATE reparaciones SET estado = %s, precio = %s WHERE id = %s', (estado, precio, id))
+        mysql.connection.commit()
+        flash('Reparación actualizada con éxito', 'success')
+        return redirect(url_for('reparaciones.lista'))
+
+    return render_template('reparaciones/editar.html', reparacion=reparacion)
+
+@reparaciones_bp.route('/actualizar-estado/<int:id>', methods=['GET', 'POST'])
+@login_required
+def actualizar_estado(id):
+    """Permite al técnico actualizar el estado de una reparación"""
+    # Verificar si el usuario es técnico
+    if not hasattr(current_user, 'cargo_id'):
+        flash('Acceso denegado: No se encontró información del cargo.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT c.nombre FROM cargos c
+        INNER JOIN empleados e ON c.id = e.cargo_id
+        WHERE e.id = %s
+    """, (current_user.id,))
+    result = cursor.fetchone()
+    
+    if not result:
+        flash('No se encontró información del cargo en la base de datos', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    print(f"Resultado de la consulta del cargo: {result}")
+    
+    if result[0] != 'Técnico':
+        flash('Esta página es solo para técnicos', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Obtener la reparación
+    cursor = get_dict_cursor()
+    cursor.execute('''
+        SELECT r.*, c.nombre as cliente_nombre,
+               r.electrodomestico as tipo_aparato,
+               r.problema as descripcion_problema,
+               r.diagnostico
+        FROM reparaciones r
+        LEFT JOIN clientes c ON r.cliente_id = c.id
+        WHERE r.id = %s AND r.tecnico_id = %s
+    ''', (id, current_user.id))
+    reparacion = cursor.fetchone()
+    
+    if not reparacion:
+        flash('Reparación no encontrada o no asignada a ti', 'danger')
+        return redirect(url_for('reparaciones.por_tecnico'))
+    
+    # Mapeo de estados para mostrar texto amigable
+    estados_texto = {
+        'RECIBIDO': 'Recibido',
+        'DIAGNOSTICO': 'En diagnóstico',
+        'REPARACION': 'En reparación',
+        'ESPERA_REPUESTOS': 'Esperando repuestos',
+        'LISTO': 'Listo para entrega',
+        'ENTREGADO': 'Entregado',
+        'CANCELADO': 'Cancelado'
+    }
+    
+    # Obtener estados posibles basados en el estado actual
+    estados_siguiente = {
+        'RECIBIDO': ['DIAGNOSTICO', 'CANCELADO'],
+        'DIAGNOSTICO': ['REPARACION', 'ESPERA_REPUESTOS', 'LISTO', 'CANCELADO'],
+        'REPARACION': ['ESPERA_REPUESTOS', 'LISTO', 'CANCELADO'],
+        'ESPERA_REPUESTOS': ['REPARACION', 'LISTO', 'CANCELADO'],
+        'LISTO': ['ENTREGADO']
+    }
+    
+    # Procesar actualización de estado si es POST
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        nuevo_estado = request.form.get('estado')
+        diagnostico = request.form.get('diagnostico', '')
+        comentario = request.form.get('comentario', '')
+        
+        # Validar que el nuevo estado sea válido
+        estados_permitidos = estados_siguiente.get(reparacion['estado'], [])
+        
+        if nuevo_estado not in estados_permitidos:
+            flash(f'El estado {nuevo_estado} no es válido para esta reparación', 'danger')
+            return redirect(url_for('reparaciones.actualizar_estado', id=id))
+        
+        try:
+            # Actualizar estado de la reparación
+            cursor.execute('''
+                UPDATE reparaciones 
+                SET estado = %s, 
+                    diagnostico = COALESCE(%s, diagnostico),
+                    fecha_actualizacion = NOW()
+                WHERE id = %s
+            ''', (nuevo_estado, diagnostico if diagnostico else None, id))
+            
+            # Registrar en el historial
+            cursor.execute('''
+                INSERT INTO historial_reparaciones 
+                (reparacion_id, estado, fecha, tecnico_id, comentario) 
+                VALUES (%s, %s, NOW(), %s, %s)
+            ''', (id, nuevo_estado, current_user.id, comentario))
+            
+            mysql.connection.commit()
+            
+            # Notificar al cliente si el estado es LISTO
+            if nuevo_estado == 'LISTO':
+                try:
+                    # Obtener datos del cliente
+                    cursor.execute('''
+                        SELECT c.nombre, c.telefono, r.electrodomestico
+                        FROM reparaciones r
+                        JOIN clientes c ON r.cliente_id = c.id
+                        WHERE r.id = %s
+                    ''', (id,))
+                    cliente_datos = cursor.fetchone()
+                    
+                    if cliente_datos and cliente_datos['telefono']:
+                        # Si existe la función de WhatsApp, enviar notificación
+                        if 'whatsapp_bp' in current_app.blueprints:
+                            from routes.whatsapp import enviar_mensaje_whatsapp
+                            mensaje = f"Hola {cliente_datos['nombre']}, tu reparación del {cliente_datos['electrodomestico']} está lista para recoger. Por favor, pasa por nuestra tienda. ¡Gracias!"
+                            try:
+                                enviar_mensaje_whatsapp(cliente_datos['telefono'], mensaje)
+                                print(f"Mensaje WhatsApp enviado a {cliente_datos['telefono']}")
+                            except Exception as e:
+                                print(f"Error al enviar WhatsApp: {e}")
+                except Exception as e:
+                    print(f"Error al notificar cliente: {e}")
+            
+            flash(f'Estado actualizado a {estados_texto.get(nuevo_estado, nuevo_estado)}', 'success')
+            return redirect(url_for('reparaciones.por_tecnico'))
+            
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error al actualizar estado: {e}', 'danger')
+            print(f"Error en actualización de estado: {e}")
+            return redirect(url_for('reparaciones.actualizar_estado', id=id))
+    
+    # Preparar lista de estados para la vista
+    estados_disponibles = []
+    for estado in estados_siguiente.get(reparacion['estado'], []):
+        estados_disponibles.append({
+            'valor': estado,
+            'texto': estados_texto.get(estado, estado)
+        })
+    
+    # Renderizar la plantilla con los datos
+    return render_template('reparaciones/actualizar_estado.html', 
+                           reparacion=reparacion,
+                           estado_actual=estados_texto.get(reparacion['estado'], reparacion['estado']),
+                           estados=estados_disponibles)
+
+@reparaciones_bp.route('/actualizar-diagnostico/<int:id>', methods=['POST'])
+@login_required
+def actualizar_diagnostico(id):
+    """Permite al técnico actualizar el diagnóstico y datos de la reparación"""
+    # Verificar si el usuario es técnico
+    if not hasattr(current_user, 'cargo_id'):
+        flash('Acceso denegado: No se encontró información del cargo.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT c.nombre FROM cargos c
+        INNER JOIN empleados e ON c.id = e.cargo_id
+        WHERE e.id = %s
+    """, (current_user.id,))
+    result = cursor.fetchone()
+    
+    if not result or result[0] != 'Técnico':
+        flash('Esta página es solo para técnicos', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Obtener datos del formulario
+    diagnostico = request.form.get('diagnostico', '')
+    estado = request.form.get('estado', '')
+    fecha_entrega_estimada = request.form.get('fecha_entrega_estimada', None)
+    costo_estimado = request.form.get('costo_estimado', 0)
+    costo_final = request.form.get('costo_final', 0)
+    notas = request.form.get('notas', '')
+    
+    try:
+        # Convertir a valores numéricos
+        if costo_estimado:
+            costo_estimado = float(costo_estimado)
+        else:
+            costo_estimado = 0
+            
+        if costo_final:
+            costo_final = float(costo_final)
+        else:
+            costo_final = 0
+            
+        # Obtener el estado actual para el historial
+        cursor = get_dict_cursor()
+        cursor.execute("SELECT estado FROM reparaciones WHERE id = %s", (id,))
+        reparacion = cursor.fetchone()
+        
+        if not reparacion:
+            flash('Reparación no encontrada', 'danger')
+            return redirect(url_for('reparaciones.por_tecnico'))
+        
+        estado_anterior = reparacion['estado']
+        
+        # Actualizar la reparación
+        cursor.execute("""
+            UPDATE reparaciones 
+            SET diagnostico = %s, 
+                estado = %s, 
+                fecha_entrega_estimada = %s,
+                costo_estimado = %s,
+                costo_final = %s,
+                notas = %s,
+                fecha_actualizacion = NOW()
+            WHERE id = %s
+        """, (diagnostico, estado, fecha_entrega_estimada, costo_estimado, costo_final, notas, id))
+        
+        # Si cambió el estado, registrar en el historial
+        if estado != estado_anterior:
+            cursor.execute("""
+                INSERT INTO historial_reparaciones 
+                (reparacion_id, estado, fecha, tecnico_id, comentario) 
+                VALUES (%s, %s, NOW(), %s, %s)
+            """, (id, estado, current_user.id, f"Actualización de diagnóstico y cambio de estado a {estado}"))
+        else:
+            # Si solo se actualizó el diagnóstico
+            cursor.execute("""
+                INSERT INTO historial_reparaciones 
+                (reparacion_id, estado, fecha, tecnico_id, comentario) 
+                VALUES (%s, %s, NOW(), %s, %s)
+            """, (id, estado, current_user.id, "Actualización de diagnóstico"))
+        
+        mysql.connection.commit()
+        flash('Diagnóstico actualizado correctamente', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error al actualizar diagnóstico: {e}', 'danger')
+        print(f"Error en actualización de diagnóstico: {e}")
+    
+    return redirect(url_for('reparaciones.ver', id=id))
+
+@reparaciones_bp.route('/enviar-mensaje/<int:id>', methods=['POST'])
+@login_required
+def enviar_mensaje(id):
+    """Envía un mensaje por WhatsApp al cliente sobre el estado de la reparación"""
+    # Verificar permisos
+    if not hasattr(current_user, 'cargo_id'):
+        flash('Acceso denegado', 'danger')
+        return redirect(url_for('main.index'))
+    
+    # Obtener datos de la reparación y el cliente
+    cursor = get_dict_cursor()
+    cursor.execute("""
+        SELECT r.*, c.nombre as cliente_nombre, c.telefono as cliente_telefono
+        FROM reparaciones r
+        JOIN clientes c ON r.cliente_id = c.id
+        WHERE r.id = %s
+    """, (id,))
+    reparacion = cursor.fetchone()
+    
+    if not reparacion:
+        flash('Reparación no encontrada', 'danger')
+        return redirect(url_for('reparaciones.por_tecnico'))
+    
+    # Verificar que haya un número de teléfono
+    if not reparacion['cliente_telefono']:
+        flash('El cliente no tiene un número de teléfono registrado', 'danger')
+        return redirect(url_for('reparaciones.ver', id=id))
+    
+    # Obtener tipo de mensaje y texto
+    tipo_mensaje = request.form.get('tipo_mensaje', 'actualizacion')
+    mensaje_final = ""
+    
+    if tipo_mensaje == 'personalizado':
+        mensaje_final = request.form.get('mensaje_personalizado', '')
+    else:
+        # Construir mensaje según el tipo
+        if tipo_mensaje == 'actualizacion':
+            mensaje_final = f"Hola {reparacion['cliente_nombre']}, le informamos que su {reparacion['electrodomestico']} " \
+                           f"está en estado {reparacion['estado']}. Gracias por confiar en nosotros."
+        elif tipo_mensaje == 'presupuesto':
+            mensaje_final = f"Hola {reparacion['cliente_nombre']}, hemos diagnosticado su {reparacion['electrodomestico']}. " \
+                           f"El presupuesto estimado es de ${reparacion['costo_estimado'] or '0'}. " \
+                           f"Por favor, confírmenos si desea proceder con la reparación."
+        elif tipo_mensaje == 'listo':
+            mensaje_final = f"Hola {reparacion['cliente_nombre']}, su {reparacion['electrodomestico']} " \
+                           f"ya está reparado y listo para recoger. El costo final es de ${reparacion['costo_final'] or '0'}. " \
+                           f"Le esperamos en nuestra tienda. ¡Gracias por su confianza!"
+    
+    try:
+        # Verificar si el servicio de WhatsApp está configurado
+        if 'whatsapp_bp' in current_app.blueprints:
+            from routes.whatsapp import enviar_mensaje_whatsapp
+            
+            # Intentar enviar el mensaje
+            resultado = enviar_mensaje_whatsapp(reparacion['cliente_telefono'], mensaje_final)
+            
+            # Registrar el mensaje en la base de datos
+            cursor.execute("""
+                INSERT INTO whatsapp_mensajes 
+                (telefono, mensaje, tipo_mensaje, objeto_tipo, objeto_id, fecha_envio) 
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (reparacion['cliente_telefono'], mensaje_final, tipo_mensaje, 'reparacion', id))
+            
+            # Registrar en el historial
+            cursor.execute("""
+                INSERT INTO historial_reparaciones 
+                (reparacion_id, estado, fecha, tecnico_id, comentario) 
+                VALUES (%s, %s, NOW(), %s, %s)
+            """, (id, reparacion['estado'], current_user.id, f"Mensaje enviado al cliente: {tipo_mensaje}"))
+            
+            mysql.connection.commit()
+            flash('Mensaje enviado con éxito', 'success')
+        else:
+            flash('El sistema de WhatsApp no está configurado', 'warning')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error al enviar mensaje: {e}', 'danger')
+        print(f"Error al enviar mensaje WhatsApp: {e}")
+    
+    return redirect(url_for('reparaciones.ver', id=id))
+
+@reparaciones_bp.route('/detalle/<int:id>', methods=['GET'])
+@login_required
+def detalle(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Obtener información de la reparación
+    cursor.execute('''
+        SELECT r.*, 
+            c.nombre as cliente_nombre, 
+            c.telefono as cliente_telefono,
+            e.nombre as tecnico_nombre
+        FROM reparaciones r
+        LEFT JOIN clientes c ON r.cliente_id = c.id
+        LEFT JOIN empleados e ON r.tecnico_id = e.id
+        WHERE r.id = ?
+    ''', (id,))
+    reparacion = cursor.fetchone()
+    
+    if not reparacion:
+        conn.close()
+        flash('Reparación no encontrada', 'error')
+        return redirect(url_for('reparaciones.lista'))
+    
+    # Verificar permisos
+    if current_user.es_cliente and current_user.id != reparacion['cliente_id']:
+        conn.close()
+        flash('No tienes permiso para ver esta reparación', 'error')
+        return redirect(url_for('reparaciones.mis_reparaciones'))
+    
+    # Obtener historial
+    cursor.execute('''
+        SELECT * FROM historial_reparaciones
+        WHERE reparacion_id = ?
+        ORDER BY fecha DESC
+    ''', (id,))
+    historial = cursor.fetchall()
+    
+    # Obtener repuestos
+    cursor.execute('''
+        SELECT rr.*, p.nombre as producto_nombre
+        FROM reparaciones_repuestos rr
+        LEFT JOIN productos p ON rr.producto_id = p.id
+        WHERE rr.reparacion_id = ?
+    ''', (id,))
+    repuestos = cursor.fetchall()
+    
+    # Obtener mensajes
+    cursor.execute('''
+        SELECT * FROM whatsapp_mensajes
+        WHERE reparacion_id = ?
+        ORDER BY fecha DESC
+    ''', (id,))
+    mensajes = cursor.fetchall()
+    
+    # Obtener lista de técnicos para asignación
+    cursor.execute('''
+        SELECT id, nombre FROM empleados 
+        WHERE cargo_id = (SELECT id FROM cargos WHERE nombre = 'Técnico')
+    ''')
+    tecnicos = cursor.fetchall()
+    
+    # Si el usuario es técnico, obtener estadísticas
+    reparaciones_totales = 0
+    reparaciones_progreso = 0
+    reparaciones_completadas = 0
+    eficiencia = 'N/A'
+    
+    if hasattr(current_user, 'cargo_id') and current_user.cargo_nombre == 'Técnico':
+        # Total de reparaciones asignadas al técnico
+        cursor.execute('''
+            SELECT COUNT(*) as total FROM reparaciones
+            WHERE tecnico_id = ?
+        ''', (current_user.id,))
+        result = cursor.fetchone()
+        reparaciones_totales = result['total'] if result else 0
+        
+        # Reparaciones en progreso
+        cursor.execute('''
+            SELECT COUNT(*) as total FROM reparaciones
+            WHERE tecnico_id = ? AND estado IN ('DIAGNOSTICO', 'REPARACION', 'ESPERA_REPUESTOS')
+        ''', (current_user.id,))
+        result = cursor.fetchone()
+        reparaciones_progreso = result['total'] if result else 0
+        
+        # Reparaciones completadas
+        cursor.execute('''
+            SELECT COUNT(*) as total FROM reparaciones
+            WHERE tecnico_id = ? AND estado IN ('LISTO', 'ENTREGADO')
+        ''', (current_user.id,))
+        result = cursor.fetchone()
+        reparaciones_completadas = result['total'] if result else 0
+        
+        # Cálculo de eficiencia (% de reparaciones completadas)
+        if reparaciones_totales > 0:
+            eficiencia = f"{(reparaciones_completadas / reparaciones_totales) * 100:.0f}%"
+    
+    conn.close()
+    
+    # Estados disponibles para la reparación
+    estados = {
+        'RECIBIDO': 'Recibido',
+        'DIAGNOSTICO': 'En diagnóstico',
+        'ESPERA_REPUESTOS': 'Esperando repuestos',
+        'REPARACION': 'En reparación',
+        'LISTO': 'Listo para entregar',
+        'ENTREGADO': 'Entregado',
+        'CANCELADO': 'Cancelado'
+    }
+    
+    return render_template('reparaciones/detalle.html', 
+        reparacion=reparacion,
+        historial=historial,
+        repuestos=repuestos,
+        mensajes=mensajes,
+        tecnicos=tecnicos,
+        estados=estados,
+        reparaciones_totales=reparaciones_totales,
+        reparaciones_progreso=reparaciones_progreso,
+        reparaciones_completadas=reparaciones_completadas,
+        eficiencia=eficiencia
+    ) 

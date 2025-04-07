@@ -160,29 +160,7 @@
             text-decoration: underline !important;
         }
 
-        /* Estilos del selector de tema */
-        .theme-selector {
-            margin: 8px 16px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .theme-selector .theme-label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .theme-selector .theme-checkbox {
-            margin-left: 8px;
-            position: relative;
-            width: 50px;
-            height: 26px;
-            margin: 0;
-            opacity: 0;
-        }
+        /* Estilos del selector de tema - movidos a theme.css */
 
         .theme-slider {
             position: absolute;
@@ -198,9 +176,6 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 5px;
-            width: 50px;
-            height: 26px;
-            margin-left: 10px;
         }
 
         .theme-slider:before {
@@ -223,8 +198,8 @@
         .theme-checkbox:checked + .theme-slider:before {
             transform: translateX(22px);
         }
-        
-        /* Estilo del icono del carrito */
+
+        /* Estilos para el icono del carrito */
         .cart-icon {
             display: inline-flex;
             position: relative;
@@ -269,14 +244,15 @@
                 </a>
 
                 <div class="nav-links">
-                    {% if current_user.is_authenticated and current_user.es_cliente %}
-                    <a href="{{ url_for('carrito.ver_carrito') }}" class="cart-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                        {% if session.get('cart') and session['cart']|length > 0 %}
-                        <span class="cart-counter">{{ session['cart']|length }}</span>
-                        {% endif %}
-                    </a>
-                    {% endif %}
+                    <div class="theme-selector">
+                        <label for="theme-toggle" class="theme-label">
+                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
+                            <span class="theme-slider">
+                                <i class="fa-solid fa-sun light-icon"></i>
+                                <i class="fa-solid fa-moon dark-icon"></i>
+                            </span>
+                        </label>
+                    </div>
 
                     <button class="mobile-menu-btn" id="mobile-menu-toggle">
                         <i class="fas fa-bars"></i>
@@ -296,6 +272,17 @@
                         {% endif %}
 
                         <li><a href="{{ url_for('main.contacto') }}">Contacto</a></li>
+                        
+                        {% if current_user.is_authenticated and current_user.es_cliente %}
+                        <li>
+                            <a href="{{ url_for('carrito.ver_carrito') }}" class="cart-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                                {% if session.get('cart') and session['cart']|length > 0 %}
+                                <span class="cart-counter">{{ session['cart']|length }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
 
                         {% if current_user.is_authenticated %}
                             <li class="user-profile-dropdown" id="userProfileDropdown">
@@ -318,18 +305,6 @@
                                     {% endif %}
                                     <a href="{{ url_for('auth.cambiar_password') }}"><i class="fas fa-key"></i> Cambiar Contraseña</a>
                                     <a href="#" id="editarFotoPerfil"><i class="fas fa-camera"></i> Cambiar Foto</a>
-                                    
-                                    <div class="theme-selector">
-                                        <label for="theme-toggle" class="theme-label">
-                                            <i class="fas fa-moon dark-icon"></i> Modo Oscuro
-                                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
-                                            <span class="theme-slider">
-                                                <i class="fa-solid fa-sun light-icon"></i>
-                                                <i class="fa-solid fa-moon dark-icon"></i>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    
                                     <div class="dropdown-divider"></div>
                                     <a href="{{ url_for('auth.logout', _external=True) }}" id="cerrarSesionLink" onclick="this.href += '?t=' + Date.now()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
                                 </div>

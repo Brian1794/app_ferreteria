@@ -22,7 +22,7 @@ def index():
     
     # Construir consulta SQL
     query = '''
-        SELECT v.*, c.nombre as cliente_nombre, c.apellido as cliente_apellido,
+        SELECT v.*, c.nombre as cliente_nombre,
                e.nombre as vendedor_nombre
         FROM ventas v
         LEFT JOIN clientes c ON v.cliente_id = c.id
@@ -45,8 +45,8 @@ def index():
         params.append(hasta)
     
     if cliente:
-        query += ' AND (c.nombre LIKE %s OR c.apellido LIKE %s)'
-        params.extend([f'%{cliente}%', f'%{cliente}%'])
+        query += ' AND c.nombre LIKE %s'
+        params.append(f'%{cliente}%')
     
     query += ' ORDER BY v.fecha DESC'
     
@@ -175,7 +175,7 @@ def ver(venta_id):
     # Obtener datos de la venta
     cur = mysql.connection.cursor()
     cur.execute('''
-        SELECT v.*, c.nombre as cliente_nombre, c.apellido as cliente_apellido, 
+        SELECT v.*, c.nombre as cliente_nombre, 
                c.telefono as cliente_telefono, c.email as cliente_email,
                e.nombre as vendedor_nombre
         FROM ventas v

@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Venta - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    .producto-seleccionado {
+        background-color: rgba(var(--primary-rgb), 0.1);
+    }
+    
+    #productosTabla th, #productosTabla td {
+        vertical-align: middle;
+    }
+    
+    .search-results {
+        position: absolute;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0 0 4px 4px;
+        z-index: 1000;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .search-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+    }
+    
+    .search-item:hover {
+        background-color: rgba(var(--primary-rgb), 0.1);
+    }
+    
+    .search-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Nueva Venta</h1>
+        <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+    
+    <form id="ventaForm" method="post" action="{{ url_for('ventas.nueva') }}">
+        <!-- Información de la venta -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Información de la Venta</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="clienteSearch" class="form-label">Cliente <span class="text-danger">*</span></label>
+                                <div class="position-relative">
+                                    <input type="text" id="clienteSearch" class="form-control" placeholder="Buscar cliente por nombre o documento" autocomplete="off" required>
+                                    <input type="hidden" id="cliente_id" name="cliente_id" required>
+                                    <div id="clienteSearchResults" class="search-results d-none"></div>
+                                </div>
+                                <div id="clienteInfo" class="mt-2 d-none">
+                                    <div class="alert alert-info mb-0">
+                                        <strong>Cliente seleccionado:</strong> <span id="clienteNombre"></span>
+                                        <button type="button" class="btn-close float-end" aria-label="Close" onclick="limpiarCliente()"></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="metodo_pago" class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                <select class="form-select" id="metodo_pago" name="metodo_pago" required>
+                                    <option value="">Seleccionar método de pago</option>
+                                    {% for metodo in metodos_pago %}
+                                        <option value="{{ metodo }}">{{ metodo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="descuento" class="form-label">Descuento ($)</label>
+                                <input type="number" class="form-control" id="descuento" name="descuento" min="0" step="0.01" value="0">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="notas" class="form-label">Notas</label>
+                                <textarea class="form-control" id="notas" name="notas" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Resumen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <span class="fw-bold">Subtotal:</span>
+                            </div>
+                            <div class="col-6 text-end">
+                                $<span id="subtotalResumen">0.00</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <span class="fw-bold">Descuento:</span>
+                            </div>
+                            <div class="col-6 text-end">
+                                -$<span id="descuentoResumen">0.00</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <span class="fw-bold">Total:</span>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span class="fs-5 fw-bold text-success">$<span id="totalResumen">0.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success w-100" id="completarVenta">
+                            <i class="fas fa-check-circle"></i> Completar Venta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Búsqueda y selección de productos -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Productos</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="productoSearch" class="form-label">Buscar Producto</label>
+                        <div class="position-relative">
+                            <input type="text" id="productoSearch" class="form-control" placeholder="Buscar por nombre, código o categoría" autocomplete="off">
+                            <div id="productoSearchResults" class="search-results d-none"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label d-block">Acciones</label>
+                        <button type="button" class="btn btn-outline-primary" onclick="buscarPorCodigo()">
+                            <i class="fas fa-barcode"></i> Escanear Código
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="productosTabla">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Disponible</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productosSeleccionados">
+                            <tr id="emptyRow">
+                                <td colspan="6" class="text-center">No hay productos seleccionados</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                <td><strong>$<span id="totalProductos">0.00</span></strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <input type="hidden" id="productos_json" name="productos_json" value="[]">
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let productos = [];
+    let clientes = [];
+    let totalVenta = 0;
+    
+    // Evento DOM cargado
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar eventos
+        document.getElementById('clienteSearch').addEventListener('input', buscarClientes);
+        document.getElementById('productoSearch').addEventListener('input', buscarProductos);
+        document.getElementById('descuento').addEventListener('input', actualizarResumen);
+        document.getElementById('ventaForm').addEventListener('submit', validarFormulario);
+        
+        // Cerrar resultados de búsqueda al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#clienteSearch') && !e.target.closest('#clienteSearchResults')) {
+                document.getElementById('clienteSearchResults').classList.add('d-none');
+            }
+            if (!e.target.closest('#productoSearch') && !e.target.closest('#productoSearchResults')) {
+                document.getElementById('productoSearchResults').classList.add('d-none');
+            }
+        });
+    });
+    
+    // Función para buscar clientes
+    function buscarClientes() {
+        const query = document.getElementById('clienteSearch').value.trim();
+        const resultsDiv = document.getElementById('clienteSearchResults');
+        
+        if (query.length < 3) {
+            resultsDiv.classList.add('d-none');
+            return;
+        }
+        
+        // Simular búsqueda (en producción, esto sería una llamada AJAX)
+        fetch(`/api/clientes/buscar?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                clientes = data;
+                
+                if (clientes.length === 0) {
+                    resultsDiv.innerHTML = '<div class="p-3 text-center">No se encontraron clientes</div>';
+                } else {
+                    let html = '';
+                    clientes.forEach(cliente => {
+                        html += `
+                            <div class="search-item" onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre}')">
+                                <strong>${cliente.nombre}</strong>
+                                <small class="d-block text-muted">${cliente.email || ''}</small>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                }
+                
+                resultsDiv.classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error al buscar clientes:', error);
+                resultsDiv.innerHTML = '<div class="p-3 text-center text-danger">Error al buscar clientes</div>';
+                resultsDiv.classList.remove('d-none');
+            });
+    }
+    
+    // Función para seleccionar un cliente
+    function seleccionarCliente(id, nombre) {
+        document.getElementById('cliente_id').value = id;
+        document.getElementById('clienteNombre').textContent = nombre;
+        document.getElementById('clienteInfo').classList.remove('d-none');
+        document.getElementById('clienteSearch').value = '';
+        document.getElementById('clienteSearchResults').classList.add('d-none');
+    }
+    
+    // Función para limpiar cliente seleccionado
+    function limpiarCliente() {
+        document.getElementById('cliente_id').value = '';
+        document.getElementById('clienteNombre').textContent = '';
+        document.getElementById('clienteInfo').classList.add('d-none');
+    }
+    
+    // Función para buscar productos
+    function buscarProductos() {
+        const query = document.getElementById('productoSearch').value.trim();
+        const resultsDiv = document.getElementById('productoSearchResults');
+        
+        if (query.length < 3) {
+            resultsDiv.classList.add('d-none');
+            return;
+        }
+        
+        // Simular búsqueda (en producción, esto sería una llamada AJAX)
+        fetch(`/api/productos/buscar?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="p-3 text-center">No se encontraron productos</div>';
+                } else {
+                    let html = '';
+                    data.forEach(producto => {
+                        // Verificar si el producto ya está en la venta
+                        const yaSeleccionado = productos.some(p => p.id === producto.id);
+                        
+                        html += `
+                            <div class="search-item d-flex align-items-center ${yaSeleccionado ? 'bg-light' : ''}" 
+                                 ${!yaSeleccionado ? `onclick="agregarProducto(${JSON.stringify(producto).replace(/"/g, '&quot;')})"` : ''}>
+                                ${producto.imagen ? 
+                                  `<img src="/static/uploads/productos/${producto.imagen}" alt="${producto.nombre}">` : 
+                                  '<div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;"><i class="fas fa-box"></i></div>'}
+                                <div>
+                                    <strong>${producto.nombre}</strong>
+                                    <small class="d-block text-muted">Código: ${producto.codigo_barras || 'N/A'} | Stock: ${producto.stock} | Precio: $${producto.precio_venta}</small>
+                                </div>
+                                ${yaSeleccionado ? '<span class="ms-auto badge bg-info">Ya agregado</span>' : ''}
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                }
+                
+                resultsDiv.classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error al buscar productos:', error);
+                resultsDiv.innerHTML = '<div class="p-3 text-center text-danger">Error al buscar productos</div>';
+                resultsDiv.classList.remove('d-none');
+            });
+    }
+    
+    // Función para buscar por código de barras
+    function buscarPorCodigo() {
+        const codigo = prompt('Ingrese o escanee el código de barras:');
+        if (!codigo) return;
+        
+        // Simular búsqueda (en producción, esto sería una llamada AJAX)
+        fetch(`/api/productos/codigo/${encodeURIComponent(codigo)}`)
+            .then(response => response.json())
+            .then(producto => {
+                if (producto && producto.id) {
+                    agregarProducto(producto);
+                } else {
+                    alert('Producto no encontrado');
+                }
+            })
+            .catch(error => {
+                console.error('Error al buscar por código:', error);
+                alert('Error al buscar producto por código');
+            });
+    }
+    
+    // Función para agregar un producto a la venta
+    function agregarProducto(producto) {
+        // Verificar si el producto ya está en la lista
+        const productoExistente = productos.find(p => p.id === producto.id);
+        
+        if (productoExistente) {
+            // Si ya existe, incrementar cantidad
+            if (productoExistente.cantidad < producto.stock) {
+                productoExistente.cantidad++;
+                productoExistente.subtotal = (productoExistente.cantidad * productoExistente.precio).toFixed(2);
+                
+                // Actualizar la fila existente
+                const cantidadInput = document.querySelector(`#cantidad_${producto.id}`);
+                cantidadInput.value = productoExistente.cantidad;
+                
+                const subtotalCell = document.querySelector(`#subtotal_${producto.id}`);
+                subtotalCell.textContent = productoExistente.subtotal;
+            } else {
+                alert('No hay suficiente stock disponible');
+            }
+        } else {
+            // Si no existe, agregar nuevo producto
+            const nuevoProducto = {
+                id: producto.id,
+                nombre: producto.nombre,
+                imagen: producto.imagen,
+                codigo_barras: producto.codigo_barras,
+                precio: parseFloat(producto.precio_venta),
+                stock: producto.stock,
+                cantidad: 1,
+                subtotal: parseFloat(producto.precio_venta).toFixed(2)
+            };
+            
+            productos.push(nuevoProducto);
+            
+            // Eliminar la fila "No hay productos seleccionados"
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) {
+                emptyRow.remove();
+            }
+            
+            // Crear nueva fila en la tabla
+            const tbody = document.getElementById('productosSeleccionados');
+            const tr = document.createElement('tr');
+            tr.id = `producto_${producto.id}`;
+            
+            tr.innerHTML = `
+                <td>
+                    ${producto.imagen ? 
+                      `<img src="/static/uploads/productos/${producto.imagen}" alt="${producto.nombre}" class="product-image me-2">` : 
+                      ''}
+                    <strong>${producto.nombre}</strong>
+                    ${producto.codigo_barras ? `<small class="d-block text-muted">Código: ${producto.codigo_barras}</small>` : ''}
+                </td>
+                <td>$${parseFloat(producto.precio_venta).toFixed(2)}</td>
+                <td>${producto.stock}</td>
+                <td>
+                    <div class="input-group input-group-sm" style="width: 120px;">
+                        <button type="button" class="btn btn-outline-secondary" onclick="cambiarCantidad(${producto.id}, -1)">-</button>
+                        <input type="number" id="cantidad_${producto.id}" class="form-control text-center" value="1" min="1" max="${producto.stock}" 
+                               onchange="actualizarCantidad(${producto.id}, this.value)">
+                        <button type="button" class="btn btn-outline-secondary" onclick="cambiarCantidad(${producto.id}, 1)">+</button>
+                    </div>
+                </td>
+                <td>$<span id="subtotal_${producto.id}">${parseFloat(producto.precio_venta).toFixed(2)}</span></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+        }
+        
+        // Ocultar resultados de búsqueda
+        document.getElementById('productoSearchResults').classList.add('d-none');
+        document.getElementById('productoSearch').value = '';
+        
+        // Actualizar JSON y totales
+        actualizarProductosJSON();
+        actualizarTotales();
+        actualizarResumen();
+    }
+    
+    // Función para cambiar la cantidad de un producto (+/-)
+    function cambiarCantidad(productoId, delta) {
+        const producto = productos.find(p => p.id === productoId);
+        if (!producto) return;
+        
+        const cantidadInput = document.getElementById(`cantidad_${productoId}`);
+        let nuevaCantidad = parseInt(cantidadInput.value) + delta;
+        
+        if (nuevaCantidad < 1) {
+            nuevaCantidad = 1;
+        } else if (nuevaCantidad > producto.stock) {
+            nuevaCantidad = producto.stock;
+            alert('No hay suficiente stock disponible');
+        }
+        
+        cantidadInput.value = nuevaCantidad;
+        actualizarCantidad(productoId, nuevaCantidad);
+    }
+    
+    // Función para actualizar la cantidad de un producto (desde input)
+    function actualizarCantidad(productoId, nuevaCantidad) {
+        const producto = productos.find(p => p.id === productoId);
+        if (!producto) return;
+        
+        nuevaCantidad = parseInt(nuevaCantidad);
+        
+        if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
+            nuevaCantidad = 1;
+        } else if (nuevaCantidad > producto.stock) {
+            nuevaCantidad = producto.stock;
+            alert('No hay suficiente stock disponible');
+        }
+        
+        producto.cantidad = nuevaCantidad;
+        producto.subtotal = (producto.cantidad * producto.precio).toFixed(2);
+        
+        // Actualizar cantidad en el input y subtotal en la celda
+        document.getElementById(`cantidad_${productoId}`).value = nuevaCantidad;
+        document.getElementById(`subtotal_${productoId}`).textContent = producto.subtotal;
+        
+        // Actualizar JSON y totales
+        actualizarProductosJSON();
+        actualizarTotales();
+        actualizarResumen();
+    }
+    
+    // Función para eliminar un producto
+    function eliminarProducto(productoId) {
+        productos = productos.filter(p => p.id !== productoId);
+        
+        // Eliminar fila de la tabla
+        document.getElementById(`producto_${productoId}`).remove();
+        
+        // Si no quedan productos, mostrar fila vacía
+        if (productos.length === 0) {
+            const tbody = document.getElementById('productosSeleccionados');
+            tbody.innerHTML = `
+                <tr id="emptyRow">
+                    <td colspan="6" class="text-center">No hay productos seleccionados</td>
+                </tr>
+            `;
+        }
+        
+        // Actualizar JSON y totales
+        actualizarProductosJSON();
+        actualizarTotales();
+        actualizarResumen();
+    }
+    
+    // Función para actualizar el campo JSON con los productos
+    function actualizarProductosJSON() {
+        document.getElementById('productos_json').value = JSON.stringify(productos);
+    }
+    
+    // Función para actualizar el total de los productos
+    function actualizarTotales() {
+        totalVenta = productos.reduce((total, producto) => {
+            return total + parseFloat(producto.subtotal);
+        }, 0);
+        
+        document.getElementById('totalProductos').textContent = totalVenta.toFixed(2);
+    }
+    
+    // Función para actualizar el resumen de la venta
+    function actualizarResumen() {
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0;
+        const total = Math.max(0, totalVenta - descuento);
+        
+        document.getElementById('subtotalResumen').textContent = totalVenta.toFixed(2);
+        document.getElementById('descuentoResumen').textContent = descuento.toFixed(2);
+        document.getElementById('totalResumen').textContent = total.toFixed(2);
+    }
+    
+    // Función para validar el formulario antes de enviar
+    function validarFormulario(e) {
+        if (productos.length === 0) {
+            e.preventDefault();
+            alert('Debe agregar al menos un producto a la venta');
+            return false;
+        }
+        
+        const clienteId = document.getElementById('cliente_id').value;
+        if (!clienteId) {
+            e.preventDefault();
+            alert('Debe seleccionar un cliente');
+            return false;
+        }
+        
+        return true;
+    }
+</script>
+{% endblock %} 

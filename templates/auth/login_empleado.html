@@ -147,6 +147,7 @@
     {% include 'includes/messages.html' %}
     
     <form method="POST" action="{{ url_for('auth.login_empleado') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="tipo_usuario" value="empleado">
         <div class="form-group">
             <label for="username">Email o Usuario</label>

@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Pedido #{{ pedido.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('carrito.mis_pedidos') }}">Mis Pedidos</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Pedido #{{ pedido.id }}</li>
+                </ol>
+            </nav>
+            <h1 class="text-primary">Detalle del Pedido #{{ pedido.id }}</h1>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Información del Pedido</h5>
+                        <span class="badge badge-{{ 'success' if pedido.estado_pago == 'PAGADO' else 'warning' }} p-2">
+                            {% if pedido.estado_pago == 'PAGADO' %}
+                                <i class="fas fa-check-circle"></i> Pagado
+                            {% else %}
+                                <i class="fas fa-clock"></i> Pendiente
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Detalles del Pedido</h6>
+                            <p><strong>Número de Pedido:</strong> #{{ pedido.id }}</p>
+                            <p><strong>Fecha:</strong> {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                            <p><strong>Estado:</strong> 
+                                {% if pedido.estado == 'Pagado' %}
+                                <span class="badge bg-success">Pagado</span>
+                                {% else %}
+                                <span class="badge bg-warning">{{ pedido.estado }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Estado del Pago:</strong> {{ pedido.estado_pago }}</p>
+                            <p>
+                                <strong>Método de Pago:</strong>
+                                {% if pedido.metodo_pago == 'transferencia' %}
+                                    <i class="fas fa-university"></i> Transferencia Bancaria
+                                    {% if pedido.referencia_pago %}
+                                    <br><small class="text-muted">Referencia: {{ pedido.referencia_pago }}</small>
+                                    {% endif %}
+                                {% elif pedido.metodo_pago == 'efectivo' %}
+                                    <i class="fas fa-money-bill-wave"></i> Pago en Efectivo al recoger
+                                {% elif pedido.metodo_pago == 'oxxo' %}
+                                    <i class="fas fa-store"></i> Pago en OXXO
+                                {% else %}
+                                    {{ pedido.metodo_pago }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Información de Contacto</h6>
+                            <address>
+                                <strong>{{ pedido.nombre }} {{ pedido.apellido }}</strong><br>
+                                <abbr title="Email">Email:</abbr> {{ pedido.email }}<br>
+                                <abbr title="Teléfono">Tel:</abbr> {{ pedido.telefono }}
+                            </address>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6>Dirección de Envío</h6>
+                            <address>
+                                {{ pedido.direccion }}<br>
+                                {{ pedido.ciudad }}, {{ pedido.estado }} {{ pedido.codigo_postal }}
+                            </address>
+                        </div>
+                    </div>
+                    
+                    {% if pedido.notas %}
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6>Notas adicionales</h6>
+                            <p>{{ pedido.notas }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Productos</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-right">Precio</th>
+                                    <th class="text-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in detalles %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.imagen %}
+                                            <img src="{{ url_for('static', filename='uploads/' + item.imagen) }}" class="img-thumbnail mr-3" style="width: 50px; height: 50px; object-fit: contain;">
+                                            {% endif %}
+                                            <div>
+                                                {{ item.nombre }}
+                                                {% if item.categoria %}
+                                                <br><small class="text-muted">{{ item.categoria }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">{{ item.cantidad }}</td>
+                                    <td class="text-right">${{ item.precio_unitario|float|round(2) }}</td>
+                                    <td class="text-right">${{ item.subtotal|float|round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Subtotal</strong></td>
+                                    <td class="text-right">${{ "{:,.0f}".format(pedido.total|float) }} COP</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Envío</strong></td>
+                                    <td class="text-right">Gratis</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Total</strong></td>
+                                    <td class="text-right"><strong>${{ "{:,.0f}".format(pedido.total|float) }} COP</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Estado del pedido y acciones -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Estado del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            {% if pedido.estado_pago == 'PAGADO' %}
+                                <span class="fa-stack fa-lg">
+                                    <i class="fas fa-circle fa-stack-2x text-success"></i>
+                                    <i class="fas fa-check fa-stack-1x fa-inverse"></i>
+                                </span>
+                            {% else %}
+                                <span class="fa-stack fa-lg">
+                                    <i class="fas fa-circle fa-stack-2x text-warning"></i>
+                                    <i class="fas fa-clock fa-stack-1x fa-inverse"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Estado actual</h6>
+                            <p class="mb-0">
+                                {% if pedido.estado_pago == 'PAGADO' %}
+                                    Pedido pagado y en procesamiento
+                                {% else %}
+                                    Pendiente de pago
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if pedido.estado_pago != 'PAGADO' %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> Tu pedido está pendiente de pago.
+                        </div>
+                        <a href="{{ url_for('carrito.pago', pedido_id=pedido.id) }}" class="btn btn-success btn-block">
+                            <i class="fas fa-credit-card mr-2"></i> Realizar pago
+                        </a>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle mr-2"></i> Tu pedido ha sido confirmado.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Soporte al cliente -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">¿Necesitas ayuda?</h5>
+                </div>
+                <div class="card-body">
+                    <p><i class="fas fa-envelope mr-2"></i> Escríbenos a: <a href="mailto:soporte@ferreterialu.com">soporte@ferreterialu.com</a></p>
+                    <p><i class="fas fa-phone mr-2"></i> Llámanos: 01-800-123-4567</p>
+                    <p><i class="fas fa-comment mr-2"></i> Chat en línea disponible de Lunes a Viernes de 9am a 6pm</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

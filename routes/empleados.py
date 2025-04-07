@@ -372,4 +372,45 @@ def mi_perfil():
     return render_template('empleados/perfil.html', 
                           empleado=empleado,
                           stats_ventas=stats_ventas,
-                          stats_reparaciones=stats_reparaciones) 
+                          stats_reparaciones=stats_reparaciones)
+
+@empleados_bp.route('/debug-usuario')
+@login_required
+def debug_usuario():
+    """Ruta para depurar los datos del usuario actual"""
+    try:
+        from flask import jsonify
+        # Información general del usuario
+        user_info = {
+            'id': current_user.id,
+            'nombre': current_user.nombre,
+            'email': current_user.email,
+            'es_admin': current_user.es_admin,
+            'es_cliente': current_user.es_cliente,
+            'cargo_id': current_user.cargo_id,
+            'cargo_nombre': current_user.cargo_nombre
+        }
+        
+        # Verificaciones de roles
+        role_checks = {
+            'es_tecnico': current_user.es_tecnico() if hasattr(current_user, 'es_tecnico') else None,
+            'es_vendedor': current_user.es_vendedor() if hasattr(current_user, 'es_vendedor') else None,
+            'es_almacenista': current_user.es_almacenista() if hasattr(current_user, 'es_almacenista') else None,
+            'is_empleado': current_user.is_empleado if hasattr(current_user, 'is_empleado') else None
+        }
+        
+        # Obtener cargo de la base de datos para verificar
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT c.nombre FROM empleados e JOIN cargos c ON e.cargo_id = c.id WHERE e.id = %s", (current_user.id,))
+        cargo_db = cursor.fetchone()
+        cursor.close()
+        
+        result = {
+            'user_info': user_info,
+            'role_checks': role_checks,
+            'cargo_from_db': cargo_db
+        }
+        
+        return render_template('empleados/debug_usuario.html', user_data=result)
+    except Exception as e:
+        return f"Error al depurar usuario: {str(e)}" 

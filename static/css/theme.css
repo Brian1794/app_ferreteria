@@ -1,0 +1,230 @@
+/* 
+ * theme.css
+ * Sistema de temas claro y oscuro para la aplicación
+ */
+
+/* Variables globales para temas */
+:root {
+    /* Variables para tema claro (default) */
+    --primary-color: #0056b3;
+    --primary-light: #4d8cce;
+    --primary-dark: #003f8f;
+    --primary-rgb: 0, 86, 179;
+    
+    --secondary-color: #6c757d;
+    --secondary-light: #9da3a8;
+    --secondary-dark: #4b5056;
+    
+    --accent-color: #ff9800;
+    --accent-light: #ffb74d;
+    --accent-dark: #c66900;
+    
+    --success-color: 40, 167, 69;
+    --danger-color: 220, 53, 69;
+    --warning-color: 255, 193, 7;
+    --info-color: 23, 162, 184;
+    
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --text-light: #f8f9fa;
+    
+    --bg-color: #f4f7fa;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+    
+    /* Bordes redondeados modernos */
+    --border-radius-sm: 0.25rem;
+    --border-radius: 0.5rem;
+    --border-radius-lg: 0.75rem;
+    --border-radius-xl: 1rem;
+    
+    /* Espaciado */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    
+    /* Transición global */
+    --theme-transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Variables específicas para tema claro */
+html, 
+html[data-theme="light"], 
+body[data-theme="light"], 
+.theme-light {
+    /* Colores principales */
+    --primary-color: #0056b3;
+    --primary-light: #4d8cce;
+    --primary-dark: #003f8f;
+    --primary-rgb: 0, 86, 179;
+    
+    --secondary-color: #6c757d;
+    --secondary-light: #9da3a8;
+    --secondary-dark: #4b5056;
+    
+    --accent-color: #ff9800;
+    --accent-light: #ffb74d;
+    --accent-dark: #c66900;
+    
+    /* Colores de estado */
+    --success-color: 40, 167, 69;
+    --danger-color: 220, 53, 69;
+    --warning-color: 255, 193, 7;
+    --info-color: 23, 162, 184;
+    
+    /* Colores de texto */
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --text-light: #f8f9fa;
+    
+    /* Colores de fondo */
+    --bg-color: #f4f7fa;
+    --bg-light: #ffffff;
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    
+    /* Colores de borde */
+    --border-color: #dee2e6;
+    --input-border: #ced4da;
+    
+    /* Colores de elementos interactivos */
+    --hover-bg: #f8f9fa;
+    --active-bg: #e9ecef;
+    
+    /* Efectos */
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    
+    /* Enlaces */
+    --link-color: #007bff;
+    --link-hover: #0056b3;
+    
+    /* Configuración del sistema */
+    color-scheme: light;
+}
+
+/* Variables específicas para tema oscuro */
+html[data-theme="dark"], 
+body[data-theme="dark"], 
+.theme-dark {
+    /* Colores principales */
+    --primary-color: #4d8cce;
+    --primary-light: #7aaddd;
+    --primary-dark: #0056b3;
+    --primary-rgb: 77, 140, 206;
+    
+    --secondary-color: #9da3a8;
+    --secondary-light: #c1c6cb;
+    --secondary-dark: #6c757d;
+    
+    --accent-color: #ffb74d;
+    --accent-light: #ffd180;
+    --accent-dark: #ff9800;
+    
+    /* Colores de estado */
+    --success-color: 72, 199, 116;
+    --danger-color: 241, 70, 104;
+    --warning-color: 255, 221, 87;
+    --info-color: 50, 152, 220;
+    
+    /* Colores de texto */
+    --text-color: #e0e0e0;
+    --text-muted: #9e9e9e;
+    --text-light: #f8f9fa;
+    
+    /* Colores de fondo */
+    --bg-color: #121212;
+    --bg-light: #1e1e1e;
+    --card-bg: #2d2d2d;
+    --input-bg: #1e1e1e;
+    
+    /* Colores de borde */
+    --border-color: #424242;
+    --input-border: #424242;
+    
+    /* Colores de elementos interactivos */
+    --hover-bg: #333333;
+    --active-bg: #424242;
+    
+    /* Efectos */
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    
+    /* Enlaces */
+    --link-color: #4285f4;
+    --link-hover: #90caf9;
+    
+    /* Configuración del sistema */
+    color-scheme: dark;
+}
+
+/* Selectores de tema */
+.theme-selector {
+    display: flex;
+    align-items: center;
+    margin-left: var(--spacing-md);
+}
+
+.theme-label {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin: 0 var(--spacing-xs);
+}
+
+.light-icon, .dark-icon {
+    font-size: 1.2rem;
+}
+
+.light-icon {
+    color: var(--warning-color);
+    margin-right: var(--spacing-xs);
+}
+
+.dark-icon {
+    color: var(--text-muted);
+    margin-left: var(--spacing-xs);
+}
+
+html[data-theme="dark"] .light-icon,
+html[data-theme="light"] .dark-icon {
+    opacity: 0.5;
+}
+
+html[data-theme="dark"] .dark-icon,
+html[data-theme="light"] .light-icon {
+    opacity: 1;
+}
+
+.theme-checkbox {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* Transición global para el cambio de tema */
+body, 
+.navbar, 
+.footer, 
+.card, 
+.dropdown-menu, 
+.alert,
+.modal-content,
+input, 
+select, 
+textarea, 
+button {
+    transition: var(--theme-transition);
+}
+
+/* Media queries específicas para los controles de tema en móvil */
+@media (max-width: 768px) {
+    .theme-selector {
+        margin: var(--spacing-md) 0;
+    }
+} 
