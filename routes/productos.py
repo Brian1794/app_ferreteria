@@ -48,51 +48,80 @@ def catalogo():
     """Muestra el catálogo de productos para clientes"""
     cursor = mysql.connection.cursor()
     
-    # Obtener categorías para filtrado
-    cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
-    categorias_raw = cursor.fetchall()
-    
-    # Obtener productos destacados o todos si no hay destacados
-    categoria_id = request.args.get('categoria')
-    
-    if categoria_id:
+    try:
+        # Obtener categorías activas para filtrado
         cursor.execute("""
-            SELECT p.id, p.nombre, p.descripcion, p.precio_compra, p.precio_venta, 
-                   p.stock, p.stock_minimo, p.destacado, p.activo, p.imagen, 
-                   p.categoria_id, c.nombre as categoria_nombre 
-            FROM productos p
-            LEFT JOIN categorias c ON p.categoria_id = c.id
-            WHERE p.activo = TRUE AND p.categoria_id = %s
-            ORDER BY p.nombre
-        """, (categoria_id,))
-    else:
-        cursor.execute("""
-            SELECT p.id, p.nombre, p.descripcion, p.precio_compra, p.precio_venta, 
-                   p.stock, p.stock_minimo, p.destacado, p.activo, p.imagen, 
-                   p.categoria_id, c.nombre as categoria_nombre 
-            FROM productos p
-            LEFT JOIN categorias c ON p.categoria_id = c.id
-            WHERE p.activo = TRUE
-            ORDER BY p.destacado DESC, p.nombre
+            SELECT DISTINCT c.id, c.nombre 
+            FROM categorias c 
+            WHERE c.activo = TRUE
+            ORDER BY c.nombre
         """)
-    
-    productos_raw = cursor.fetchall()
-    cursor.close()
-    
-    # Definir claves según la consulta
-    claves_producto = ['id', 'nombre', 'descripcion', 'precio_compra', 'precio_venta', 
-                       'stock', 'stock_minimo', 'destacado', 'activo', 'imagen', 
-                       'categoria_id', 'categoria_nombre']
-    productos = convertir_a_dict(productos_raw, claves_producto)
-    
-    # Convertir categorías a diccionarios
-    claves_categoria = ['id', 'nombre']
-    categorias = convertir_a_dict(categorias_raw, claves_categoria)
-    
-    return render_template('productos/catalogo.html', 
-                           productos=productos, 
-                           categorias=categorias,
-                           categoria_actual=categoria_id)
+        categorias_raw = cursor.fetchall()
+        
+        # Obtener el ID de categoría del querystring
+        categoria_id = request.args.get('categoria')
+        
+        # Construir la consulta base - Ya no filtramos por activo = TRUE
+        query = """
+            SELECT p.*, c.nombre as categoria_nombre
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE 1=1
+        """
+        params = []
+        
+        # Agregar filtro por categoría si se especifica
+        if categoria_id:
+            query += " AND p.categoria_id = %s"
+            params.append(categoria_id)
+        
+        # Ordenar productos
+        query += " ORDER BY p.destacado DESC, p.nombre"
+        
+        # Ejecutar la consulta
+        cursor.execute(query, params)
+        productos_raw = cursor.fetchall()
+        
+        # Convertir resultados a diccionarios
+        productos = []
+        for producto in productos_raw:
+            if isinstance(producto, dict):
+                productos.append(producto)
+            else:
+                productos.append({
+                    'id': producto[0],
+                    'nombre': producto[1],
+                    'descripcion': producto[2],
+                    'precio_venta': producto[5],
+                    'stock': producto[6],
+                    'imagen': producto[9],
+                    'categoria_id': producto[10],
+                    'categoria_nombre': producto[-1],
+                    'destacado': producto[7],
+                    'activo': producto[8]
+                })
+        
+        # Convertir categorías a diccionarios
+        categorias = []
+        for cat in categorias_raw:
+            if isinstance(cat, dict):
+                categorias.append(cat)
+            else:
+                categorias.append({
+                    'id': cat[0],
+                    'nombre': cat[1]
+                })
+        
+        return render_template('productos/catalogo.html',
+                             productos=productos,
+                             categorias=categorias,
+                             categoria_actual=categoria_id)
+                             
+    except Exception as e:
+        flash(f'Error al cargar el catálogo: {str(e)}', 'danger')
+        return redirect(url_for('main.index'))
+    finally:
+        cursor.close()
 
 @productos_bp.route('/')
 @login_required
@@ -160,12 +189,33 @@ def agregar():
     
     # Obtener categorías para el formulario
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
-    categorias_raw = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
+        categorias_raw = cursor.fetchall()
+        print(f"Categorías obtenidas: {categorias_raw}")  # Imprimir para debugging
+        
+        # Verificar si hay categorías
+        if not categorias_raw:
+            print("¡No se encontraron categorías activas!")
+            # Si no hay categorías activas, buscar todas
+            cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
+            categorias_raw = cursor.fetchall()
+            print(f"Categorías totales: {categorias_raw}")
+    except Exception as e:
+        print(f"Error al consultar categorías: {str(e)}")
+        categorias_raw = []
+    finally:
+        cursor.close()
     
-    claves = ['id', 'nombre']
-    categorias = convertir_a_dict(categorias_raw, claves)
+    # Convertir a formato compatible con la plantilla
+    if categorias_raw and isinstance(categorias_raw[0], dict):
+        # Si ya son diccionarios, usarlos directamente
+        categorias = categorias_raw
+    else:
+        # Si son tuplas, convertirlos
+        categorias = []
+        for cat in categorias_raw:
+            categorias.append([cat[0], cat[1]])
     
     return render_template('productos/agregar.html', categorias=categorias)
 
@@ -275,12 +325,35 @@ def editar(id):
     
     # Obtener categorías para el formulario
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
-    categorias_raw = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
+        categorias_raw = cursor.fetchall()
+        print(f"Categorías obtenidas: {categorias_raw}")
+        
+        # Verificar si hay categorías
+        if not categorias_raw:
+            print("¡No se encontraron categorías activas!")
+            # Si no hay categorías activas, buscar todas
+            cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
+            categorias_raw = cursor.fetchall()
+            print(f"Categorías totales: {categorias_raw}")
+    except Exception as e:
+        print(f"Error al consultar categorías: {str(e)}")
+        categorias_raw = []
+    finally:
+        cursor.close()
     
-    claves = ['id', 'nombre']
-    categorias = convertir_a_dict(categorias_raw, claves)
+    # Convertir a formato compatible con la plantilla
+    categorias = []
+    for cat in categorias_raw:
+        if isinstance(cat, dict):
+            categorias.append(cat)
+        else:
+            # Crear diccionario con claves 'id' y 'nombre'
+            categorias.append({
+                'id': cat[0],
+                'nombre': cat[1]
+            })
     
     return render_template('productos/editar.html', producto=producto, categorias=categorias)
 
@@ -347,3 +420,52 @@ def eliminar(id):
         cursor.close()
     
     return redirect(url_for('productos.listar_productos'))
+
+@productos_bp.route('/buscar')
+def buscar():
+    """Permite buscar productos por nombre, descripción o categoría"""
+    query = request.args.get('q', '')
+    
+    if not query or len(query) < 2:
+        flash('Por favor ingresa al menos 2 caracteres para realizar la búsqueda', 'info')
+        return redirect(url_for('productos.catalogo'))
+    
+    cursor = mysql.connection.cursor()
+    
+    # Consulta para buscar productos que coincidan con la búsqueda
+    cursor.execute("""
+        SELECT p.id, p.nombre, p.descripcion, p.precio_compra, p.precio_venta, 
+               p.stock, p.stock_minimo, p.destacado, p.activo, p.imagen, 
+               p.categoria_id, c.nombre as categoria_nombre 
+        FROM productos p
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        WHERE p.activo = TRUE AND (
+            p.nombre LIKE %s OR 
+            p.descripcion LIKE %s OR
+            c.nombre LIKE %s
+        )
+        ORDER BY p.destacado DESC, p.nombre
+    """, (f'%{query}%', f'%{query}%', f'%{query}%'))
+    
+    productos_raw = cursor.fetchall()
+    
+    # Obtener categorías para el filtro lateral
+    cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
+    categorias_raw = cursor.fetchall()
+    cursor.close()
+    
+    # Definir claves según la consulta
+    claves_producto = ['id', 'nombre', 'descripcion', 'precio_compra', 'precio_venta', 
+                       'stock', 'stock_minimo', 'destacado', 'activo', 'imagen', 
+                       'categoria_id', 'categoria_nombre']
+    productos = convertir_a_dict(productos_raw, claves_producto)
+    
+    # Convertir categorías a diccionarios
+    claves_categoria = ['id', 'nombre']
+    categorias = convertir_a_dict(categorias_raw, claves_categoria)
+    
+    return render_template('productos/catalogo.html', 
+                          productos=productos, 
+                          categorias=categorias,
+                          busqueda=query,
+                          titulo=f'Resultados para: {query}')

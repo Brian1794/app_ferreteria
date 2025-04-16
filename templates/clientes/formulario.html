@@ -14,6 +14,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{% if cliente %}{{ url_for('clientes.editar', cliente_id=cliente.id) }}{% else %}{{ url_for('clientes.nuevo') }}{% endif %}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
@@ -59,7 +60,7 @@
                             <input type="text" class="form-control" id="identificacion" name="identificacion" value="{{ cliente.identificacion if cliente else '' }}">
                         </div>
 
-                        {% if not cliente or current_user.is_admin %}
+                        {% if (not cliente or current_user.is_admin) and false %}
                         <div class="mb-3">
                             <label for="tipo_cliente" class="form-label">Tipo de Cliente</label>
                             <select class="form-select" id="tipo_cliente" name="tipo_cliente">
@@ -71,10 +72,13 @@
                         {% endif %}
 
                         {% if not cliente or current_user.is_admin %}
+                        <!-- Ocultamos el campo notas temporalmente -->
+                        <!--
                         <div class="mb-3">
                             <label for="notas" class="form-label">Notas</label>
                             <textarea class="form-control" id="notas" name="notas" rows="3">{{ cliente.notas if cliente else '' }}</textarea>
                         </div>
+                        -->
                         {% endif %}
 
                         {% if not cliente %}
@@ -95,11 +99,6 @@
                             <label class="form-check-label" for="activo">Cuenta Activa</label>
                         </div>
                         {% endif %}
-
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="puede_comprar_online" name="puede_comprar_online" {% if cliente and cliente.puede_comprar_online %}checked{% endif %}>
-                            <label class="form-check-label" for="puede_comprar_online">Puede Comprar Online</label>
-                        </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             {% if current_user.es_cliente %}

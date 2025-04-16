@@ -214,28 +214,35 @@
     <div class="row">
         {% for reparacion in reparaciones %}
         <div class="col-md-6 col-lg-6 mb-4">
-            <div class="reparacion-card estado-{{ reparacion.estado.lower() }}">
+            <div class="reparacion-card estado-{{ reparacion.estado.lower() if reparacion.estado else 'pendiente' }}">
                 <div class="reparacion-header">
                     <span class="reparacion-id">Reparación #{{ reparacion.id }}</span>
-                    <span class="badge badge-{{ reparacion.estado.lower() }}">{{ reparacion.estado_texto }}</span>
+                    <span class="badge" data-color="{{ reparacion.estado_color if reparacion.estado_color else 'ffc107' }}">
+                        {{ reparacion.estado_nombre or 'Pendiente' }}
+                    </span>
                 </div>
-                <h3 class="reparacion-electrodomestico">{{ reparacion.electrodomestico }}</h3>
+                <h3 class="reparacion-electrodomestico">
+                    {{ reparacion.electrodomestico or reparacion.aparato or 'Equipo en reparación' }}
+                </h3>
                 <div class="reparacion-detalles">
                     <p><strong>Marca:</strong> {{ reparacion.marca or 'No especificada' }}</p>
                     <p><strong>Modelo:</strong> {{ reparacion.modelo or 'No especificado' }}</p>
                     <p><strong>Fecha de recepción:</strong> {{ reparacion.fecha_recepcion }}</p>
                     <p><strong>Entrega estimada:</strong> {{ reparacion.fecha_entrega_estimada or 'Por determinar' }}</p>
-                    <p class="reparacion-cliente"><strong>Cliente:</strong> {{ reparacion.cliente_nombre }}</p>
+                    <p class="reparacion-cliente"><strong>Cliente:</strong> {{ reparacion.nombre_cliente }}</p>
+                    {% if reparacion.telefono_cliente %}
+                    <p class="reparacion-cliente"><strong>Teléfono:</strong> {{ reparacion.telefono_cliente }}</p>
+                    {% endif %}
                 </div>
                 <div class="reparacion-problema">
                     <p><strong>Problema reportado:</strong></p>
-                    <p>{{ reparacion.problema or reparacion.descripcion }}</p>
+                    <p>{{ reparacion.problema or reparacion.descripcion or 'No especificado' }}</p>
                 </div>
                 <div class="reparacion-acciones">
                     <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn-detalle btn-primary">
                         <i class="fas fa-tools"></i> Ver Detalles
                     </a>
-                    {% if reparacion.estado == 'DIAGNOSTICO' or reparacion.estado == 'REPARACION' %}
+                    {% if reparacion.estado_id != 4 and reparacion.estado_id != 5 %} <!-- No mostrar si está entregado o cancelado -->
                     <a href="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}" class="btn-detalle btn-success">
                         <i class="fas fa-sync-alt"></i> Actualizar Estado
                     </a>
@@ -252,4 +259,16 @@
         <p class="text-muted">Las reparaciones que te sean asignadas aparecerán aquí</p>
     </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aplicar colores de fondo a los badges desde los data-attributes
+        document.querySelectorAll('.badge[data-color]').forEach(function(badge) {
+            const color = badge.getAttribute('data-color');
+            badge.style.backgroundColor = '#' + color;
+        });
+    });
+</script>
 {% endblock %} 

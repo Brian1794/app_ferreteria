@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 900px;
+        margin: 2rem auto;
+    }
+    
+    .profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-title {
+        color: var(--primary-color);
+        margin-bottom: 0;
+        font-weight: 700;
+    }
+    
+    .profile-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-avatar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--primary-color);
+        background-color: #f0f0f0;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-form-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+    
+    .profile-form-column {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--input-border);
+        border-radius: 5px;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+        outline: none;
+    }
+    
+    .form-control[readonly] {
+        background-color: var(--input-bg-disabled);
+        cursor: not-allowed;
+    }
+    
+    .btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .upload-btn-container {
+        position: absolute;
+        bottom: 50px;
+        right: calc(50% - 75px);
+    }
+    
+    .upload-btn {
+        background-color: var(--primary-color);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid white;
+    }
+    
+    .upload-btn:hover {
+        background-color: var(--primary-dark);
+        transform: scale(1.1);
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .stats-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-card {
+        flex: 1;
+        min-width: 200px;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: var(--box-shadow);
+        text-align: center;
+        border-top: 4px solid var(--primary-color);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .stat-card.in-progress {
+        border-top-color: #17a2b8;
+    }
+    
+    .stat-card.in-progress .stat-value {
+        color: #17a2b8;
+    }
+    
+    .stat-card.completed {
+        border-top-color: #28a745;
+    }
+    
+    .stat-card.completed .stat-value {
+        color: #28a745;
+    }
+    
+    .section-title {
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1 class="profile-title">Mi Perfil de Técnico</h1>
+    </div>
+    
+    {% include 'includes/messages.html' %}
+    
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_reparaciones|default(0) }}</div>
+            <div class="stat-label">Reparaciones totales</div>
+        </div>
+        <div class="stat-card in-progress">
+            <div class="stat-value">{{ stats.en_proceso|default(0) }}</div>
+            <div class="stat-label">En proceso</div>
+        </div>
+        <div class="stat-card completed">
+            <div class="stat-value">{{ stats.completadas|default(0) }}</div>
+            <div class="stat-label">Completadas</div>
+        </div>
+    </div>
+    
+    <div class="profile-card">
+        <h2 class="section-title">Información Personal</h2>
+        
+        <div class="profile-avatar-container">
+            {% if current_user.foto_perfil %}
+                <img src="{{ url_for('static', filename='uploads/perfiles/' + current_user.foto_perfil) }}" alt="Foto de perfil" class="profile-avatar">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/default-avatar.png') }}" alt="Foto de perfil" class="profile-avatar">
+            {% endif %}
+            
+            <form action="{{ url_for('auth.actualizar_foto_perfil') }}" method="POST" enctype="multipart/form-data" id="foto-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="upload-btn-container">
+                    <label for="foto-input" class="upload-btn">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" name="foto" id="foto-input" class="file-input" accept="image/*" onchange="document.getElementById('foto-form').submit()">
+                </div>
+            </form>
+        </div>
+        
+        <div class="profile-form-container">
+            <div class="profile-form-column">
+                <form method="POST" action="{{ url_for('auth.actualizar_perfil') }}">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control" value="{{ current_user.nombre }}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cargo">Cargo</label>
+                        <input type="text" id="cargo" class="form-control" value="{{ current_user.cargo_nombre }}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="text" id="telefono" name="telefono" class="form-control" value="{{ current_user.telefono|default('') }}">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Actualizar información</button>
+                </form>
+            </div>
+            
+            <div class="profile-form-column">
+                <form method="POST" action="{{ url_for('auth.cambiar_password') }}">
+                    <div class="form-group">
+                        <label for="password_actual">Contraseña actual</label>
+                        <input type="password" id="password_actual" name="password_actual" class="form-control" placeholder="Ingrese su contraseña actual" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_nuevo">Nueva contraseña</label>
+                        <input type="password" id="password_nuevo" name="password_nuevo" class="form-control" placeholder="Ingrese su nueva contraseña" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmar_password">Confirmar nueva contraseña</label>
+                        <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" placeholder="Confirme su nueva contraseña" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-secondary">Cambiar contraseña</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Mostrar imagen seleccionada antes de enviar el formulario
+    document.getElementById('foto-input').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                document.querySelector('.profile-avatar').src = e.target.result;
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
+{% endblock %} 

@@ -25,25 +25,26 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ url_for('productos.editar', id=producto[0]) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ url_for('productos.editar', id=producto.id) }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="nombre">Nombre del Producto <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto[1] }}" required>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="codigo_barras">Código de Barras</label>
-                            <input type="text" class="form-control" id="codigo_barras" name="codigo_barras" value="{{ producto[3] }}">
+                            <input type="text" class="form-control" id="codigo_barras" name="codigo_barras" value="{{ producto.codigo_barras }}">
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="descripcion">Descripción</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ producto[2] }}</textarea>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ producto.descripcion }}</textarea>
                 </div>
 
                 <div class="row">
@@ -52,7 +53,7 @@
                             <label for="precio_compra">Precio de Compra <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="precio_compra" name="precio_compra" step="0.01" min="0" value="{{ producto[4] }}" required>
+                                <input type="number" class="form-control" id="precio_compra" name="precio_compra" step="0.01" min="0" value="{{ producto.precio_compra }}" required>
                             </div>
                         </div>
                     </div>
@@ -61,17 +62,17 @@
                             <label for="precio_venta">Precio de Venta <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="precio_venta" name="precio_venta" step="0.01" min="0" value="{{ producto[5] }}" required>
+                                <input type="number" class="form-control" id="precio_venta" name="precio_venta" step="0.01" min="0" value="{{ producto.precio_venta }}" required>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group mb-3">
                             <label for="categoria_id">Categoría</label>
-                            <select class="form-control" id="categoria_id" name="categoria_id">
+                            <select class="form-control" id="categoria_id" name="categoria_id" style="background-color: white !important; color: black !important;">
                                 <option value="">-- Seleccionar Categoría --</option>
                                 {% for categoria in categorias %}
-                                    <option value="{{ categoria[0] }}" {% if categoria[0] == producto[8] %}selected{% endif %}>{{ categoria[1] }}</option>
+                                    <option value="{{ categoria.id }}" {% if categoria.id == producto.categoria_id %}selected{% endif %} style="background-color: white !important; color: black !important; padding: 8px !important;">{{ categoria.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -82,23 +83,23 @@
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="stock">Stock</label>
-                            <input type="number" class="form-control" id="stock" name="stock" value="{{ producto[6] }}" min="0" step="1">
+                            <input type="number" class="form-control" id="stock" name="stock" value="{{ producto.stock }}" min="0" step="1">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="stock_minimo">Stock Mínimo</label>
-                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="{{ producto[7] }}" min="0" step="1">
+                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="{{ producto.stock_minimo }}" min="0" step="1">
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="imagen">Imagen del Producto</label>
-                    {% if producto[9] %}
+                    {% if producto.imagen %}
                         <div class="mb-2">
-                            <img src="{{ url_for('static', filename='uploads/productos/' + producto[9]) }}" alt="{{ producto[1] }}" style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
-                            <p class="text-muted small">Imagen actual: {{ producto[9] }}</p>
+                            <img src="{{ url_for('static', filename='uploads/productos/' + producto.imagen) }}" alt="{{ producto.nombre }}" style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
+                            <p class="text-muted small">Imagen actual: {{ producto.imagen }}</p>
                         </div>
                     {% endif %}
                     <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">

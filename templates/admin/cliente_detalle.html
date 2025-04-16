@@ -1,467 +1,436 @@
 {% extends "base.html" %}
 
-{% block title %}Detalles del Cliente - {{ cliente.nombre }} - Ferretería "La U"{% endblock %}
+{% block title %}Detalles del Cliente - Ferretería "La U"{% endblock %}
 
 {% block extra_css %}
 <style>
-    .client-container {
+    .cliente-container {
         max-width: 1200px;
         margin: 30px auto;
     }
     
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-    
-    .back-btn {
+    .cliente-header {
         display: flex;
         align-items: center;
-        text-decoration: none;
-        color: var(--text-color);
-        transition: color 0.3s;
-    }
-    
-    .back-btn:hover {
-        color: var(--primary-color);
-    }
-    
-    .client-profile {
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        box-shadow: var(--box-shadow);
-        padding: 25px;
         margin-bottom: 30px;
     }
     
-    .profile-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .profile-avatar {
-        width: 100px;
-        height: 100px;
+    .cliente-avatar {
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
-        background-color: var(--bg-secondary);
+        background-color: #1e2a3a;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 20px;
-        font-size: 2.5rem;
-        color: var(--text-muted);
+        font-size: 30px;
+        color: #bbb;
+        overflow: hidden;
     }
     
-    .profile-avatar img {
+    .cliente-avatar img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: 50%;
     }
     
-    .profile-info {
-        flex: 1;
-    }
-    
-    .profile-name {
-        font-size: 1.8rem;
+    .cliente-info h1 {
+        font-size: 2rem;
         font-weight: 700;
+        margin-bottom: 8px;
         color: var(--heading-color);
-        margin-bottom: 5px;
     }
     
-    .profile-since {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-bottom: 10px;
-    }
-    
-    .details-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    .cliente-meta {
+        display: flex;
+        flex-wrap: wrap;
         gap: 15px;
-        margin-top: 15px;
-    }
-    
-    .detail-item {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .detail-label {
-        font-size: 0.9rem;
         color: var(--text-muted);
-        margin-bottom: 5px;
     }
     
-    .detail-value {
-        font-size: 1.1rem;
-        color: var(--text-color);
-    }
-    
-    .statistics-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .statistic-card {
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: var(--box-shadow);
-    }
-    
-    .statistic-title {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-bottom: 10px;
-    }
-    
-    .statistic-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: var(--heading-color);
-    }
-    
-    .data-section {
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        box-shadow: var(--box-shadow);
-        margin-bottom: 30px;
-    }
-    
-    .section-header {
-        padding: 20px;
-        border-bottom: 1px solid var(--border-color);
+    .cliente-meta-item {
         display: flex;
-        justify-content: space-between;
         align-items: center;
     }
     
-    .section-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: var(--heading-color);
-        margin: 0;
+    .cliente-meta-item i {
+        margin-right: 5px;
     }
     
-    .data-table {
+    .stats-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-card {
+        background-color: #1e2a3a;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 20px;
+    }
+    
+    .icon-compras {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .icon-gastado {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .icon-promedio {
+        background-color: rgba(155, 89, 182, 0.1);
+        color: #9b59b6;
+    }
+    
+    .icon-ultima {
+        background-color: rgba(241, 196, 15, 0.1);
+        color: #f1c40f;
+    }
+    
+    .stat-content h3 {
+        font-size: 1rem;
+        margin-bottom: 5px;
+        color: var(--text-muted);
+    }
+    
+    .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--heading-color);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--heading-color);
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 10px;
+    }
+    
+    .section-title i {
+        margin-right: 10px;
+    }
+    
+    .table-container {
+        background-color: #1e2a3a;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    
+    .cliente-table {
         width: 100%;
         border-collapse: collapse;
     }
     
-    .data-table th {
-        background-color: var(--bg-secondary);
+    .cliente-table th {
+        background-color: rgba(255,255,255,0.05);
         color: var(--heading-color);
         font-weight: 600;
         text-align: left;
         padding: 15px;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
-    .data-table td {
+    .cliente-table td {
         padding: 15px;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
         color: var(--text-color);
     }
     
-    .data-table tr:last-child td {
+    .cliente-table tr:hover {
+        background-color: rgba(255,255,255,0.02);
+    }
+    
+    .cliente-table tr:last-child td {
         border-bottom: none;
     }
     
-    .repair-status {
+    .estado {
         display: inline-block;
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 0.85rem;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
         font-weight: 500;
     }
     
-    .status-pendiente {
-        background-color: rgba(var(--warning-rgb), 0.1);
-        color: rgba(var(--warning-rgb), 1);
+    .estado-pendiente {
+        background-color: rgba(241, 196, 15, 0.2);
+        color: #f1c40f;
     }
     
-    .status-recibido {
-        background-color: rgba(var(--info-rgb), 0.1);
-        color: rgba(var(--info-rgb), 1);
+    .estado-completado {
+        background-color: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
     }
     
-    .status-en_proceso {
-        background-color: rgba(var(--primary-rgb), 0.1);
-        color: var(--primary-color);
+    .estado-cancelado {
+        background-color: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
     }
     
-    .status-finalizado {
-        background-color: rgba(var(--success-rgb), 0.1);
-        color: rgba(var(--success-rgb), 1);
-    }
-    
-    .status-entregado {
-        background-color: rgba(var(--secondary-rgb), 0.1);
-        color: rgba(var(--secondary-rgb), 1);
-    }
-    
-    .empty-section {
-        padding: 40px 20px;
+    .empty-state {
+        padding: 30px;
         text-align: center;
+        color: var(--text-muted);
     }
     
-    .empty-icon {
-        font-size: 2.5rem;
-        color: var(--text-muted);
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    .empty-state p {
+        font-size: 1.1rem;
         margin-bottom: 15px;
     }
     
-    .empty-title {
-        font-size: 1.3rem;
-        color: var(--heading-color);
-        margin-bottom: 5px;
+    .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 50px;
+        background-color: #1e2a3a;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    .empty-text {
+    .error-icon {
+        font-size: 3rem;
+        color: #e74c3c;
+        margin-bottom: 20px;
+    }
+    
+    .error-title {
+        font-size: 1.8rem;
+        color: var(--heading-color);
+        margin-bottom: 15px;
+    }
+    
+    .error-message {
         color: var(--text-muted);
-        max-width: 500px;
-        margin: 0 auto;
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+        max-width: 600px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container client-container">
-    <div class="page-header">
-        <a href="{{ url_for('admin.clientes') }}" class="back-btn">
-            <i class="fas fa-arrow-left me-2"></i> Volver a la lista de clientes
-        </a>
-        <div class="action-buttons">
-            <a href="#" class="btn btn-outline-primary">
-                <i class="fas fa-edit me-1"></i> Editar
-            </a>
-            <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteClientModal">
-                <i class="fas fa-trash-alt me-1"></i> Eliminar
-            </button>
+<div class="container cliente-container">
+    <div class="cliente-header">
+        <div class="cliente-avatar">
+            {% if cliente.foto_perfil %}
+                <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="{{ cliente.nombre }}">
+            {% else %}
+                <i class="fas fa-user"></i>
+            {% endif %}
+        </div>
+        <div class="cliente-info">
+            <h1>{{ cliente.nombre }}</h1>
+            <div class="cliente-meta">
+                <div class="cliente-meta-item">
+                    <i class="fas fa-envelope"></i>
+                    {{ cliente.email }}
+                </div>
+                <div class="cliente-meta-item">
+                    <i class="fas fa-phone"></i>
+                    {{ cliente.telefono|default('No disponible') }}
+                </div>
+                <div class="cliente-meta-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ cliente.ciudad|default('No disponible') }}
+                </div>
+                <div class="cliente-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Registrado: {{ cliente.fecha_registro.strftime('%d/%m/%Y') if cliente.fecha_registro else 'No disponible' }}
+                </div>
+            </div>
         </div>
     </div>
     
-    <!-- Perfil del cliente -->
-    <div class="client-profile">
-        <div class="profile-header">
-            <div class="profile-avatar">
-                {% if cliente.foto_perfil %}
-                    <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="{{ cliente.nombre }}">
-                {% else %}
-                    <i class="fas fa-user"></i>
-                {% endif %}
+    <!-- Estadísticas rápidas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon icon-compras">
+                <i class="fas fa-shopping-cart"></i>
             </div>
-            <div class="profile-info">
-                <h1 class="profile-name">{{ cliente.nombre }}</h1>
-                <div class="profile-since">
-                    Cliente desde {{ cliente.fecha_registro.strftime('%d de %B, %Y') if cliente.fecha_registro else 'fecha desconocida' }}
-                </div>
-                <div class="profile-badges">
-                    {% if metricas and metricas.total_compras > 10 %}
-                        <span class="badge bg-primary">Cliente Frecuente</span>
-                    {% endif %}
-                    {% if metricas and metricas.total_gastado > 1000000 %}
-                        <span class="badge bg-success">Cliente Premium</span>
-                    {% endif %}
-                </div>
+            <div class="stat-content">
+                <h3>Total de Compras</h3>
+                <div class="stat-value">{{ metricas.total_compras|default(0) }}</div>
             </div>
         </div>
         
-        <div class="details-row">
-            <div class="detail-item">
-                <div class="detail-label">Email</div>
-                <div class="detail-value">{{ cliente.email }}</div>
+        <div class="stat-card">
+            <div class="stat-icon icon-gastado">
+                <i class="fas fa-dollar-sign"></i>
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Teléfono</div>
-                <div class="detail-value">{{ cliente.telefono if cliente.telefono else 'No registrado' }}</div>
+            <div class="stat-content">
+                <h3>Total Gastado</h3>
+                <div class="stat-value">${{ '%.0f'|format(metricas.total_gastado|default(0)) }}</div>
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Dirección</div>
-                <div class="detail-value">{{ cliente.direccion if cliente.direccion else 'No registrada' }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon icon-promedio">
+                <i class="fas fa-chart-line"></i>
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Ciudad</div>
-                <div class="detail-value">{{ cliente.ciudad if cliente.ciudad else 'No registrada' }}</div>
+            <div class="stat-content">
+                <h3>Promedio por Compra</h3>
+                <div class="stat-value">${{ '%.0f'|format(metricas.promedio_compra|default(0)) }}</div>
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Último acceso</div>
-                <div class="detail-value">
-                    {% if cliente.ultimo_login %}
-                        {{ cliente.ultimo_login.strftime('%d/%m/%Y %H:%M') }}
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon icon-ultima">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Última Compra</h3>
+                <div class="stat-value">
+                    {% if metricas.ultima_compra %}
+                        {{ metricas.ultima_compra.strftime('%d/%m/%Y') }}
                     {% else %}
-                        Nunca
+                        Sin compras
                     {% endif %}
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Estadísticas del cliente -->
-    <div class="statistics-row">
-        <div class="statistic-card">
-            <div class="statistic-title">Total de Compras</div>
-            <div class="statistic-value">{{ metricas.total_compras|default(0) }}</div>
-        </div>
-        <div class="statistic-card">
-            <div class="statistic-title">Total Gastado</div>
-            <div class="statistic-value">${{ metricas.total_gastado|default(0)|float|round(2) }}</div>
-        </div>
-        <div class="statistic-card">
-            <div class="statistic-title">Promedio por Compra</div>
-            <div class="statistic-value">${{ metricas.promedio_compra|default(0)|float|round(2) }}</div>
-        </div>
-        <div class="statistic-card">
-            <div class="statistic-title">Última Compra</div>
-            <div class="statistic-value">
-                {% if metricas.ultima_compra %}
-                    {{ metricas.ultima_compra.strftime('%d/%m/%Y') }}
-                {% else %}
-                    --
-                {% endif %}
             </div>
         </div>
     </div>
     
     <!-- Historial de compras -->
-    <div class="data-section">
-        <div class="section-header">
-            <h2 class="section-title">Historial de Compras</h2>
-        </div>
-        
-        {% if compras %}
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
+    <h2 class="section-title"><i class="fas fa-receipt"></i> Historial de Compras</h2>
+    <div class="table-container">
+        {% if compras and compras|length > 0 %}
+            <table class="cliente-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Orden #</th>
+                        <th>Vendedor</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in compras %}
                         <tr>
-                            <th>ID</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                            <th>Items</th>
-                            <th>Vendedor</th>
-                            <th>Acciones</th>
+                            <td>{{ compra.fecha.strftime('%d/%m/%Y') if compra.fecha else '--' }}</td>
+                            <td>#{{ compra.id }}</td>
+                            <td>{{ compra.empleado if compra.empleado else 'Online' }}</td>
+                            <td>${{ '%.0f'|format(compra.total) }}</td>
+                            <td>
+                                <span class="estado estado-completado">Completado</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.ver_venta', venta_id=compra.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for compra in compras %}
-                            <tr>
-                                <td>#{{ compra.id }}</td>
-                                <td>{{ compra.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>${{ compra.total|float|round(2) }}</td>
-                                <td>{{ compra.items|default(0) }}</td>
-                                <td>{{ compra.empleado|default('--') }}</td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
-            <div class="empty-section">
-                <div class="empty-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <h3 class="empty-title">No hay compras registradas</h3>
-                <p class="empty-text">Este cliente aún no ha realizado ninguna compra en la tienda.</p>
+            <div class="empty-state">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Este cliente no ha realizado compras todavía.</p>
             </div>
         {% endif %}
     </div>
     
-    <!-- Reparaciones solicitadas -->
-    <div class="data-section">
-        <div class="section-header">
-            <h2 class="section-title">Reparaciones Solicitadas</h2>
-        </div>
-        
-        {% if reparaciones %}
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
+    <!-- Historial de reparaciones -->
+    <h2 class="section-title"><i class="fas fa-tools"></i> Historial de Reparaciones</h2>
+    <div class="table-container">
+        {% if reparaciones and reparaciones|length > 0 %}
+            <table class="cliente-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Dispositivo</th>
+                        <th>Problema</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reparacion in reparaciones %}
                         <tr>
-                            <th>ID</th>
-                            <th>Electrodoméstico</th>
-                            <th>Problema</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <td>{{ reparacion.fecha_recepcion.strftime('%d/%m/%Y') if reparacion.fecha_recepcion else '--' }}</td>
+                            <td>{{ reparacion.electrodomestico }} {{ reparacion.marca }} {{ reparacion.modelo }}</td>
+                            <td>{{ reparacion.problema }}</td>
+                            <td>
+                                <span class="estado estado-pendiente">{{ reparacion.estado }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for reparacion in reparaciones %}
-                            <tr>
-                                <td>#{{ reparacion.id }}</td>
-                                <td>{{ reparacion.tipo_electrodomestico }} {{ reparacion.marca }}</td>
-                                <td>{{ reparacion.problema|truncate(30) }}</td>
-                                <td>{{ reparacion.fecha_recepcion.strftime('%d/%m/%Y') }}</td>
-                                <td>
-                                    <span class="repair-status status-{{ reparacion.estado }}">
-                                        {% if reparacion.estado == 'pendiente' %}
-                                            Pendiente
-                                        {% elif reparacion.estado == 'recibido' %}
-                                            Recibido
-                                        {% elif reparacion.estado == 'en_proceso' %}
-                                            En proceso
-                                        {% elif reparacion.estado == 'finalizado' %}
-                                            Finalizado
-                                        {% elif reparacion.estado == 'entregado' %}
-                                            Entregado
-                                        {% else %}
-                                            {{ reparacion.estado|capitalize }}
-                                        {% endif %}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
-            <div class="empty-section">
-                <div class="empty-icon">
-                    <i class="fas fa-tools"></i>
-                </div>
-                <h3 class="empty-title">No hay reparaciones solicitadas</h3>
-                <p class="empty-text">Este cliente aún no ha solicitado ningún servicio de reparación.</p>
+            <div class="empty-state">
+                <i class="fas fa-tools"></i>
+                <p>Este cliente no ha solicitado servicios de reparación.</p>
             </div>
         {% endif %}
     </div>
-</div>
-
-<!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteClientModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar al cliente <strong>{{ cliente.nombre }}</strong>?</p>
-                <p class="text-danger">Esta acción no se puede deshacer y eliminará todos los datos asociados al cliente, incluyendo su historial de compras y reparaciones.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="{{ url_for('admin.eliminar_cliente', cliente_id=cliente.id_cliente) }}">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
-        </div>
+    
+    <!-- Botones de acción -->
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a href="{{ url_for('admin.clientes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+        <a href="{{ url_for('admin.editar_cliente', cliente_id=cliente.id) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Editar Cliente
+        </a>
+        <form action="{{ url_for('admin.eliminar_cliente', cliente_id=cliente.id) }}" method="POST" style="display: inline-block;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(this.form)">
+                <i class="fas fa-trash-alt"></i> Eliminar Cliente
+            </button>
+        </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmarEliminacion(form) {
+        if (confirm('¿Estás seguro que deseas eliminar a este cliente? Esta acción no se puede deshacer.')) {
+            form.submit();
+        }
+    }
+</script>
 {% endblock %} 

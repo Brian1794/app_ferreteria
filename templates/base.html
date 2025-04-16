@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="es" data-theme="light">
+﻿<!DOCTYPE html>
+<html lang="es" data-theme="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,20 +7,31 @@
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
     
-    <!-- Script de forzado de tema temprano para evitar parpadeo -->
-    <script defer>
+    <!-- Script de inicialización de tema mejorado -->
+    <script>
         (function() {
             try {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                const theme = (savedTheme === 'dark') ? 'dark' : 'light';
+                const savedTheme = localStorage.getItem('theme');
+                let theme;
                 
-                // Aplicar tema directamente al root
+                if (savedTheme) {
+                    // Usar explícitamente el tema guardado
+                    theme = savedTheme;
+                } else {
+                    // Si no hay tema guardado, usar preferencia del sistema
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    theme = prefersDark ? 'dark' : 'light';
+                }
+                
+                // Aplicar tema directamente
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.className = 'theme-' + theme;
-                
-                // Prevenir FOUC (Flash of Unstyled Content)
                 document.documentElement.style.backgroundColor = (theme === 'dark') ? '#121212' : '#f4f7fa';
                 document.documentElement.style.color = (theme === 'dark') ? '#e0e0e0' : '#212529';
+                
+                // También guardar este tema inicial
+                localStorage.setItem('theme', theme);
+                console.log('Tema inicial aplicado:', theme);
             } catch (e) {
                 console.error('Error al inicializar tema:', e);
             }
@@ -43,6 +54,46 @@
     <!-- Estilos específicos de cada página -->
     {% block extra_css %}{% endblock %}
     <style>
+        /* Fix para la imagen de perfil del administrador */
+        .admin-user-avatar {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent !important;
+        }
+        
+        .admin-user-avatar::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            z-index: 1;
+        }
+        
+        .admin-user-avatar img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+            z-index: 3;
+            border-radius: 50%;
+        }
+        
+        .admin-user-avatar i {
+            font-size: 24px;
+            z-index: 1;
+        }
+        
         .user-profile-dropdown {
             position: relative;
             display: inline-block;
@@ -131,8 +182,6 @@
                 margin-top: 8px;
             }
         }
-
-        /* Variables de tema - eliminadas y movidas a theme.css */
         
         .empleado-link {
             background-color: var(--primary-dark);
@@ -160,189 +209,540 @@
             text-decoration: underline !important;
         }
 
-        /* Estilos del selector de tema */
-        .theme-selector {
-            margin: 8px 16px;
+        /* Logo personalizado para Ferretería La U */
+        .navbar-brand {
             display: flex;
             align-items: center;
         }
         
-        .theme-selector .theme-label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .theme-selector .theme-checkbox {
-            margin-left: 8px;
-            position: relative;
-            width: 50px;
-            height: 26px;
-            margin: 0;
-            opacity: 0;
-        }
-
-        .theme-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 5px;
-            width: 50px;
-            height: 26px;
-            margin-left: 10px;
-        }
-
-        .theme-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-            z-index: 2;
-        }
-
-        .theme-checkbox:checked + .theme-slider {
-            background-color: #2196F3;
-        }
-
-        .theme-checkbox:checked + .theme-slider:before {
-            transform: translateX(22px);
-        }
-        
-        /* Estilo del icono del carrito */
-        .cart-icon {
-            display: inline-flex;
-            position: relative;
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            margin-right: 10px;
-            transition: color 0.3s;
-        }
-        
-        .cart-icon:hover {
-            color: var(--primary-color);
-        }
-        
-        .cart-counter {
-            position: absolute;
-            top: 0;
-            right: -5px;
-            font-size: 0.65rem;
-            padding: 0.25rem 0.45rem;
-            background-color: var(--danger-color);
+        .navbar-brand .logo-text {
             color: white;
-            border-radius: 50%;
-            border: 2px solid var(--body-bg);
-            transform: scale(0.8);
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1;
+            text-transform: uppercase;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .navbar-brand .logo-text::before {
+            content: "";
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background-color: var(--amazon-orange);
+            margin-right: 8px;
+            clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
+            transform: rotate(45deg);
+        }
+        
+        .navbar-brand .logo-icon {
+            position: relative;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 36px;
+            height: 36px;
+            margin-right: 10px;
+            background-color: var(--amazon-orange);
+            border-radius: 6px;
+            transform: rotate(45deg);
+        }
+        
+        .navbar-brand .logo-icon::before {
+            content: "U";
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--amazon-dark);
+            transform: rotate(-45deg);
+        }
+        
+        .navbar-brand .ferreteria-text {
+            font-size: 1.2rem;
+            margin-right: 5px;
+            position: relative;
+            top: -2px;
+        }
+        
+        .navbar-brand .la-u-text {
+            font-weight: 800;
+            position: relative;
+            font-size: 1.6rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .location-dropdown {
+            display: flex;
+            align-items: flex-start;
+            color: white;
+            padding: 5px;
+            border: 1px solid transparent;
+            border-radius: 2px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .location-dropdown:hover {
+            border-color: white;
+        }
+        
+        .location-dropdown i {
+            margin-right: 5px;
+            margin-top: 3px;
+        }
+        
+        .location-dropdown .deliver-to {
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1;
+        }
+        
+        .location-dropdown .location {
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* Estilos para el dropdown de categorías */
+        .category-dropdown {
+            display: flex;
+            background-color: var(--amazon-button);
+            border-radius: 4px 0 0 4px;
+            position: relative;
+            align-items: center;
+            cursor: pointer;
+            padding: 0 10px;
+            color: #111;
+            min-width: 60px;
+            justify-content: center;
+        }
+        
+        .category-dropdown select {
+            border: none;
+            background: transparent;
+            appearance: none;
+            padding: 0 15px 0 5px;
+            cursor: pointer;
+            color: #111;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Estilos para notificaciones */
+        .notification-dropdown {
+            position: relative;
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .notification-btn {
+            color: white;
+            font-size: 1.2rem;
+            padding: 5px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+        }
+
+        .notification-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            padding: 0;
+        }
+
+        .notification-dropdown:hover .notification-menu {
+            display: block;
+        }
+
+        .dropdown-header {
+            padding: 10px 15px;
+            font-weight: 600;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .notification-item {
+            padding: 10px 15px;
+            display: block;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: rgba(0, 123, 255, 0.05);
+            border-left: 3px solid #007bff;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .notification-icon {
+            flex: 0 0 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 50%;
+            background-color: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .notification-text {
+            flex: 1;
+        }
+
+        .notification-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .notification-message {
+            margin: 5px 0 0;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .notification-time {
+            display: block;
+            margin-top: 3px;
+            color: #6c757d;
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
     <header>
-        <nav class="navbar">
-            <div class="container">
+        <div class="navbar main-navbar">
+            <div class="container-fluid">
+                <!-- Logo mejorado -->
                 <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ferretería La U">
-                    <span>Ferretería "La U"</span>
+                    <div class="logo-icon"></div>
+                    <div class="logo-text">
+                        <span class="ferreteria-text">FERRETERÍA</span>
+                        <span class="la-u-text">LA U</span>
+                    </div>
                 </a>
-
-                <div class="nav-links">
-                    {% if current_user.is_authenticated and current_user.es_cliente %}
+                
+                {% if current_user.is_authenticated and current_user.es_admin %}
+                <!-- HEADER ESPECIAL PARA ADMINISTRADOR -->
+                <header class="admin-header">
+                    <!-- Barra principal de administración -->
+                    <div class="admin-main-navbar">
+                        <div class="container-fluid">
+                            <!-- Logo -->
+                            <a class="admin-brand" href="{{ url_for('admin.index') }}">
+                                <div class="admin-logo-icon">
+                                    <i class="fas fa-toolbox"></i>
+                                </div>
+                                <div class="admin-logo-text">Panel Administrativo</div>
+                            </a>
+                            
+                            <!-- Accesos rápidos de administración -->
+                            <div class="admin-actions">
+                                <a href="{{ url_for('admin.index') }}" class="admin-action-btn">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                                <a href="{{ url_for('main.dashboard') }}" class="admin-action-btn">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Ventas</span>
+                                </a>
+                                <a href="{{ url_for('productos.agregar') }}" class="admin-action-btn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Nuevo Producto</span>
+                                </a>
+                            </div>
+                            
+                            <!-- Elementos de la derecha -->
+                            <div class="admin-right">
+                                <!-- Notificaciones -->
+                                <div class="admin-notification-dropdown">
+                                    <a href="{{ url_for('admin.index') }}" class="admin-icon-btn">
+                                        <i class="fas fa-bell"></i>
+                                        {% if notificaciones_no_leidas is defined and notificaciones_no_leidas > 0 %}
+                                        <span class="admin-badge">{{ notificaciones_no_leidas }}</span>
+                                        {% endif %}
+                                    </a>
+                                    <div class="admin-dropdown-content">
+                                        <h6 class="admin-dropdown-header">Notificaciones</h6>
+                                        {% if notificaciones_recientes is defined and notificaciones_recientes %}
+                                            {% for notificacion in notificaciones_recientes %}
+                                            <a href="{{ url_for('admin.index') }}">
+                                                <div class="admin-notification-item">
+                                                    <div class="admin-notification-icon">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </div>
+                                                    <div class="admin-notification-text">
+                                                        <div class="admin-notification-title">{{ notificacion.titulo }}</div>
+                                                        <div class="admin-notification-time">{{ notificacion.fecha_creacion.strftime('%d/%m/%Y %H:%M') if notificacion.fecha_creacion else 'Fecha no disponible' }}</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="admin-notification-empty">
+                                                No tienes notificaciones
+                                            </div>
+                                        {% endif %}
+                                        <div class="admin-dropdown-footer">
+                                            <a href="{{ url_for('admin.index') }}">Ver todas</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Menú de usuario -->
+                                <div class="admin-user-dropdown" id="adminUserDropdown">
+                                    <button class="admin-user-btn">
+                                        <!-- Nuevo enfoque para el avatar -->
+                                        <div class="admin-user-avatar" aria-label="Foto de perfil">
+                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 5;"></div>
+                                            {% if current_user.foto_perfil %}
+                                            <img src="{{ url_for('static', filename='uploads/perfiles/' + current_user.foto_perfil) }}" alt="Foto de perfil" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; z-index: 15;">
+                                            {% else %}
+                                            <i class="fas fa-user-shield" style="position: relative; z-index: 15; color: #fff; font-size: 24px;"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="admin-user-info">
+                                            <span class="admin-user-name">{{ current_user.nombre }}</span>
+                                            <span class="admin-user-role">Administrador</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="admin-dropdown-content admin-user-menu">
+                                        <a href="{{ url_for('admin.index') }}">
+                                            <i class="fas fa-tachometer-alt"></i> Panel Principal
+                                        </a>
+                                        <a href="{{ url_for('empleados.mi_perfil') }}">
+                                            <i class="fas fa-user"></i> Mi Perfil
+                                        </a>
+                                        <a href="{{ url_for('auth.cambiar_password') }}">
+                                            <i class="fas fa-key"></i> Cambiar Contraseña
+                                        </a>
+                                        <a href="#" id="editarFotoPerfil">
+                                            <i class="fas fa-camera"></i> Cambiar Foto
+                                        </a>
+                                        <div class="admin-dropdown-divider"></div>
+                                        <a href="{{ url_for('auth.logout', _external=True) }}" id="cerrarSesionLink" class="admin-logout" onclick="this.href += '?t=' + Date.now()">
+                                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                {% else %}
+                <!-- Ubicación para usuarios no admin -->
+                <div class="location-dropdown d-none d-md-flex">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <span class="deliver-to">Entregar a</span>
+                        <span class="location">Colombia</span>
+                    </div>
+                </div>
+                
+                <!-- Buscador central para usuarios no admin -->
+                <div class="search-container">
+                    <form action="{{ url_for('productos.buscar') }}" method="GET" class="search-form">
+                        <div class="category-dropdown d-none d-lg-flex">
+                            <select name="categoria" aria-label="Buscar en">
+                                <option value="todos">Todos</option>
+                                <option value="herramientas">Herramientas</option>
+                                <option value="construccion">Construcción</option>
+                                <option value="electricidad">Electricidad</option>
+                                <option value="plomeria">Plomería</option>
+                            </select>
+                        </div>
+                        <input type="text" name="q" placeholder="Buscar productos, marcas y más..." class="search-input" value="{{ request.args.get('q', '') }}">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Elementos de la derecha para no admin -->
+                <div class="navbar-right">
+                    <!-- Selección de idioma -->
+                    <div class="language-selector d-none d-lg-flex" style="color: white; font-size: 14px; margin-right: 15px; border: 1px solid transparent; padding: 5px; border-radius: 2px;">
+                        <span>ES</span>
+                        <i class="fas fa-caret-down ml-1"></i>
+                    </div>
+                    
+                    {% if current_user.is_authenticated %}
+                    <!-- Notificaciones para clientes y técnicos -->
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <a href="#" class="notification-btn position-relative">
+                            <i class="fas fa-bell"></i>
+                            <span id="notification-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger{% if not session.get('notificaciones_total', 0) > 0 %} d-none{% endif %}" style="font-size: 0.6rem;">
+                                {{ session.get('notificaciones_total', 0) }}
+                            </span>
+                        </a>
+                        <div class="dropdown-menu notification-menu">
+                            <h6 class="dropdown-header">Notificaciones</h6>
+                            <div id="notification-container">
+                                {% if session.get('notificaciones', []) %}
+                                    {% for notificacion in session.get('notificaciones', []) %}
+                                        <a href="{{ notificacion.url }}" class="dropdown-item notification-item {% if not notificacion.leida %}unread{% endif %}">
+                                            <div class="notification-content">
+                                                <div class="notification-icon">
+                                                    <i class="fas fa-{{ notificacion.icono|default('bell') }}"></i>
+                                                </div>
+                                                <div class="notification-text">
+                                                    <div class="notification-title">{{ notificacion.titulo }}</div>
+                                                    <div class="notification-message">{{ notificacion.mensaje }}</div>
+                                                    <div class="notification-time">{{ notificacion.fecha_creacion }}</div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="dropdown-item text-center">
+                                        <p class="text-muted mb-0">No tienes notificaciones</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('notificaciones.ver_todas') }}" class="dropdown-item text-center">Ver todas</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Menú de usuario -->
+                    <div class="user-profile-dropdown" id="userProfileDropdown">
+                        <button class="dropdown-btn" id="userDropdownBtn">
+                            <div class="admin-user-avatar">
+                                {% if current_user.foto_perfil %}
+                                    <img src="{{ url_for('static', filename='uploads/empleados/' + current_user.foto_perfil) }}" alt="{{ current_user.nombre }}">
+                                {% else %}
+                                    <i class="fas fa-user-circle"></i>
+                                {% endif %}
+                            </div>
+                            <span>{{ current_user.nombre }}</span>
+                            <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            {% if current_user.es_cliente %}
+                            <a href="{{ url_for('main.mi_cuenta') }}">
+                                <i class="fas fa-user"></i> Mi Cuenta
+                            </a>
+                            <a href="{{ url_for('reparaciones.mis_reparaciones_cliente') }}">
+                                <i class="fas fa-tools"></i> Mis Reparaciones
+                            </a>
+                            <a href="{{ url_for('tienda.mis_compras') }}">
+                                <i class="fas fa-shopping-bag"></i> Mis Compras
+                            </a>
+                            {% elif hasattr(current_user, 'cargo_nombre') and current_user.cargo_nombre == 'Técnico' %}
+                            <a href="{{ url_for('empleados.mi_perfil') }}">
+                                <i class="fas fa-user"></i> Mi Perfil
+                            </a>
+                            <a href="{{ url_for('reparaciones.mis_reparaciones') }}">
+                                <i class="fas fa-tools"></i> Mis Reparaciones
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('empleados.mi_perfil') }}">
+                                <i class="fas fa-user"></i> Mi Perfil
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('auth.logout') }}" class="cerrar-sesion-link">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Pedidos -->
+                    <div class="orders-link d-none d-md-block" style="color: white; border: 1px solid transparent; padding: 5px; border-radius: 2px; margin: 0 10px;">
+                        <div style="text-align: left; line-height: 1.1;">
+                            <span style="font-size: 12px;">Devoluciones</span>
+                            <span style="font-weight: bold; display: block;">y Pedidos</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Carrito -->
                     <a href="{{ url_for('carrito.ver_carrito') }}" class="cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                         {% if session.get('cart') and session['cart']|length > 0 %}
                         <span class="cart-counter">{{ session['cart']|length }}</span>
+                        {% else %}
+                        <span style="font-weight: bold; margin-left: 5px;">Carrito</span>
                         {% endif %}
                     </a>
+                    {% else %}
+                    <div class="auth-links">
+                        <a href="{{ url_for('auth.login') }}" class="login-link">Iniciar Sesión</a>
+                        <a href="{{ url_for('auth.registro') }}" class="register-link">Registrarse</a>
+                    </div>
                     {% endif %}
-
-                    <button class="mobile-menu-btn" id="mobile-menu-toggle">
+                    
+                    <!-- Menú móvil -->
+                    <button class="mobile-menu-btn d-md-none" id="mobile-menu-toggle">
                         <i class="fas fa-bars"></i>
                     </button>
-
-                    <ul class="nav-menu">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Navegación secundaria para usuarios que no son administradores -->
+        {% if not current_user.is_authenticated or not current_user.es_admin %}
+        <div class="navbar secondary-navbar">
+            <div class="container-fluid">
+                <!-- Botón hamburguesa móvil -->
+                <div class="d-flex align-items-center" style="color: white; margin-right: 15px;">
+                    <i class="fas fa-bars mr-2"></i>
+                    <span class="d-none d-md-inline">Todos</span>
+                </div>
+                
+                <!-- Menú principal -->
+                <ul class="nav-menu">
+                    {% if current_user.is_authenticated and not current_user.es_cliente %}
+                        <!-- Menú para empleados -->
+                    <li><a href="{{ url_for('productos.catalogo') }}">Productos</a></li>
+                    <li><a href="{{ url_for('reparaciones.index') }}">Reparaciones</a></li>
+                    <li><a href="{{ url_for('categorias.listar') }}">Categorías</a></li>
+                        <li><a href="#" class="d-none d-lg-block">Ofertas del Día</a></li>
+                        <li><a href="#" class="d-none d-lg-block">Servicio al Cliente</a></li>
+                        <li><a href="{{ url_for('main.dashboard') }}" class="admin-link">Panel Empleado</a></li>
+                    {% else %}
+                        <!-- Menú para clientes y visitantes -->
                         <li><a href="{{ url_for('main.index') }}">Inicio</a></li>
                         <li><a href="{{ url_for('productos.catalogo') }}">Productos</a></li>
                         <li><a href="{{ url_for('reparaciones.index') }}">Reparaciones</a></li>
-
-                        {% if current_user.is_authenticated %}
-                            {% if current_user.es_admin %}
-                                <li><a href="{{ url_for('admin.index') }}">Panel Admin</a></li>
-                            {% elif not current_user.es_cliente %}
-                                <li><a href="{{ url_for('main.dashboard') }}">Panel Empleado</a></li>
-                            {% endif %}
-                        {% endif %}
-
+                        <li><a href="{{ url_for('categorias.categoria_catalogo') }}">Categorías</a></li>
                         <li><a href="{{ url_for('main.contacto') }}">Contacto</a></li>
-
-                        {% if current_user.is_authenticated %}
-                            <li class="user-profile-dropdown" id="userProfileDropdown">
-                                <button class="dropdown-btn">
-                                    {% if current_user.foto_perfil %}
-                                        <img src="{{ url_for('static', filename='uploads/perfiles/' ~ current_user.foto_perfil) }}" alt="Perfil">
-                                    {% else %}
-                                        <i class="fas fa-user-circle"></i>
-                                    {% endif %}
-                                    {{ current_user.nombre }}
-                                    <i class="fas fa-chevron-down ml-2"></i>
-                                </button>
-                                <div class="dropdown-menu">
-                                    {% if current_user.es_cliente %}
-                                        <a href="{{ url_for('main.mi_cuenta') }}"><i class="fas fa-user"></i> Mi Perfil</a>
-                                        <a href="{{ url_for('reparaciones.mis_reparaciones') }}"><i class="fas fa-tools"></i> Mis Reparaciones</a>
-                                        <a href="{{ url_for('carrito.ver_carrito') }}"><i class="fas fa-shopping-cart"></i> Mi Carrito</a>
-                                    {% else %}
-                                        <a href="{{ url_for('empleados.mi_perfil') }}"><i class="fas fa-user"></i> Mi Perfil</a>
-                                    {% endif %}
-                                    <a href="{{ url_for('auth.cambiar_password') }}"><i class="fas fa-key"></i> Cambiar Contraseña</a>
-                                    <a href="#" id="editarFotoPerfil"><i class="fas fa-camera"></i> Cambiar Foto</a>
-                                    
-                                    <div class="theme-selector">
-                                        <label for="theme-toggle" class="theme-label">
-                                            <i class="fas fa-moon dark-icon"></i> Modo Oscuro
-                                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
-                                            <span class="theme-slider">
-                                                <i class="fa-solid fa-sun light-icon"></i>
-                                                <i class="fa-solid fa-moon dark-icon"></i>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="dropdown-divider"></div>
-                                    <a href="{{ url_for('auth.logout', _external=True) }}" id="cerrarSesionLink" onclick="this.href += '?t=' + Date.now()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-                                </div>
-                            </li>
-                        {% else %}
-                            <li><a href="{{ url_for('auth.login') }}">Iniciar Sesión</a></li>
-                            <li><a href="{{ url_for('auth.registro') }}">Registrarse</a></li>
-                            <li><a href="{{ url_for('auth.login_empleado') }}" class="empleado-link">Acceso Empleados</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
+                        <li><a href="#" class="d-none d-lg-block">Ofertas del Día</a></li>
+                        <li><a href="#" class="d-none d-lg-block">Servicio al Cliente</a></li>
+                    {% endif %}
+                </ul>
             </div>
-        </nav>
+        </div>
+        {% endif %}
     </header>
 
     <!-- Modal para cambiar foto de perfil -->
@@ -354,6 +754,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ url_for('auth.actualizar_foto_perfil') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="fotoPerfil" class="form-label">Selecciona una imagen</label> 
@@ -369,15 +770,23 @@
         </div>
     </div>
 
-    <main>
-        <div class="container mt-4 mb-4">
-            {% include 'includes/messages.html' %}
-            {% if content is defined %}
-                {{ content|safe }}
-            {% else %}
-                {% block content %}{% endblock %}
-            {% endif %}
+    <main class="container-fluid py-4">
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Contenido específico de la página -->
+        {% block content %}{% endblock %}
     </main>
 
     <footer class="footer mt-auto py-4">
@@ -479,7 +888,6 @@
 
                     // Guardar en localStorage
                     localStorage.setItem('theme', theme);
-
                     // Actualizar checkbox
                     const themeToggle = document.getElementById('theme-toggle');
                     if (themeToggle) {
@@ -511,8 +919,6 @@
                     console.log('Cambiando tema mediante toggle a:', newTheme);
                     applyTheme(newTheme);
                 });
-            } else {
-                console.warn('No se encontró el toggle de tema');
             }
 
             // Código para el menú móvil
@@ -530,6 +936,7 @@
             const userProfileDropdown = document.getElementById('userProfileDropdown');
             if (userProfileDropdown) {
                 const dropdownBtn = userProfileDropdown.querySelector('.dropdown-btn');
+                let closeTimeout;
 
                 dropdownBtn.addEventListener('click', function(e) {
                     // Solo detenemos la propagación para evitar que se cierre inmediatamente
@@ -537,10 +944,64 @@
                     userProfileDropdown.classList.toggle('show');
                 });
 
+                // Agregar evento de mouseenter para cancelar el cierre
+                userProfileDropdown.addEventListener('mouseenter', function() {
+                    if (closeTimeout) {
+                        clearTimeout(closeTimeout);
+                        closeTimeout = null;
+                    }
+                });
+
+                // Agregar evento de mouseleave para retrasar el cierre
+                userProfileDropdown.addEventListener('mouseleave', function() {
+                    if (userProfileDropdown.classList.contains('show')) {
+                        closeTimeout = setTimeout(function() {
+                            userProfileDropdown.classList.remove('show');
+                        }, 800); // 800ms de retraso antes de cerrar
+                    }
+                });
+
                 // Cerrar el dropdown al hacer clic fuera
                 document.addEventListener('click', function(e) {
                     if (!userProfileDropdown.contains(e.target)) {
                         userProfileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Dropdown de perfil del administrador
+            const adminUserDropdown = document.getElementById('adminUserDropdown');
+            if (adminUserDropdown) {
+                const adminUserBtn = adminUserDropdown.querySelector('.admin-user-btn');
+                const adminDropdownContent = adminUserDropdown.querySelector('.admin-dropdown-content');
+                let adminCloseTimeout;
+
+                adminUserBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    adminDropdownContent.classList.toggle('show');
+                });
+
+                // Agregar evento de mouseenter para cancelar el cierre
+                adminUserDropdown.addEventListener('mouseenter', function() {
+                    if (adminCloseTimeout) {
+                        clearTimeout(adminCloseTimeout);
+                        adminCloseTimeout = null;
+                    }
+                });
+
+                // Agregar evento de mouseleave para retrasar el cierre
+                adminUserDropdown.addEventListener('mouseleave', function() {
+                    if (adminDropdownContent.classList.contains('show')) {
+                        adminCloseTimeout = setTimeout(function() {
+                            adminDropdownContent.classList.remove('show');
+                        }, 800); // 800ms de retraso antes de cerrar
+                    }
+                });
+
+                // Cerrar al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!adminUserDropdown.contains(e.target)) {
+                        adminDropdownContent.classList.remove('show');
                     }
                 });
             }
@@ -576,5 +1037,319 @@
 
     <!-- Scripts específicos de cada página -->
     {% block scripts %}{% endblock %}
+
+    <!-- Bootstrap y JavaScript de la aplicación -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/carrito.js') }}"></script>
+    
+    <!-- Script para formatear precios -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Formatear precios que tengan valores como $48.0
+            document.querySelectorAll('span, strong, div, td').forEach(function(el) {
+                if (el.textContent && el.textContent.trim().startsWith('$') && !el.textContent.includes('.000')) {
+                    const text = el.textContent.trim();
+                    const match = text.match(/\$(\d+(\.\d+)?)/);
+                    if (match) {
+                        const valor = parseFloat(match[1]);
+                        if (!isNaN(valor)) {
+                            // Formatear como $XX.000
+                            const formateado = '$' + (valor * 1000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            el.textContent = el.textContent.replace(match[0], formateado);
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <!-- JavaScript específico de cada página -->
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        // Sistema de notificaciones mejorado con detección robusta de páginas de perfil
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si estamos en una página de perfil - detección mejorada
+            const currentPath = window.location.pathname;
+            const profilePatterns = [
+                '/perfil', 
+                '/mi-cuenta', 
+                '/mi_cuenta', 
+                '/mi-perfil',
+                '/empleados/mi_perfil',
+                '/empleados/perfil',
+                '/admin',
+                '/admin/',
+                '/dashboard'
+            ];
+            
+            // Comprobar si la URL actual contiene alguno de los patrones de perfil
+            const isProfilePage = profilePatterns.some(pattern => 
+                currentPath.includes(pattern) || 
+                currentPath.startsWith('/admin/') || 
+                currentPath.includes('/dashboard')
+            );
+            
+            console.log('Ruta actual:', currentPath, 'Es página protegida:', isProfilePage);
+            
+            // Evitar parpadeos en componentes de la interfaz
+            if (isProfilePage) {
+                // Aplicar estilos para evitar parpadeos en las páginas de perfil y admin
+                const styleElement = document.createElement('style');
+                styleElement.textContent = `
+                    /* Estilos forzados para tarjetas de estadísticas */
+                    .perfil-empleado-stat-card, 
+                    div[class*="stat-card"],
+                    div[class*="stats"] > div,
+                    .dashboard-card,
+                    .admin-card,
+                    .stat-box,
+                    .card {
+                        background-color: #1a2a3a !important;
+                        color: white !important;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+                        border: 1px solid #2c3e50 !important;
+                        transition: none !important;
+                    }
+                    
+                    /* Estilos para contenido de tarjetas */
+                    .perfil-empleado-stat-titulo, 
+                    .perfil-empleado-stat-desc,
+                    div[class*="stat-titulo"], 
+                    div[class*="stat-desc"],
+                    div[class*="stats"] .titulo,
+                    div[class*="stats"] .descripcion,
+                    .card-title,
+                    .stat-title,
+                    .stats-value {
+                        color: #ecf0f1 !important;
+                    }
+                    
+                    /* Valores destacados */
+                    .perfil-empleado-stat-valor,
+                    div[class*="stat-valor"],
+                    div[class*="stats"] .valor,
+                    .stats-number,
+                    .stat-value,
+                    .value,
+                    .card h3 {
+                        color: white !important;
+                    }
+                    
+                    /* Iconos */
+                    .perfil-empleado-stat-icono,
+                    div[class*="stat-icono"],
+                    div[class*="stats"] .icono,
+                    .stats-icon,
+                    .icon-container,
+                    .card-icon {
+                        background-color: rgba(52, 152, 219, 0.2) !important;
+                        color: #3498db !important;
+                    }
+                    
+                    /* Panel de administración específico */
+                    .Panel-admin h1,
+                    .panel-title,
+                    .panel-admin-title,
+                    .admin-title {
+                        color: white !important;
+                    }
+                `;
+                document.head.appendChild(styleElement);
+                
+                // Función para aplicar estilos específicos a elementos relevantes
+                function aplicarEstilosConsistentes() {
+                    // Tarjetas y cajas de estadísticas
+                    const elementosEstadisticas = document.querySelectorAll(`
+                        .perfil-empleado-stat-card, 
+                        div[class*="stat-card"],
+                        div[class*="stats"] > div,
+                        .dashboard-card,
+                        .admin-card,
+                        .stat-box,
+                        .card
+                    `);
+                    
+                    elementosEstadisticas.forEach(elemento => {
+                        elemento.style.backgroundColor = '#1a2a3a';
+                        elemento.style.color = 'white';
+                        elemento.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        elemento.style.border = '1px solid #2c3e50';
+                        
+                        // Deshabilitar transiciones para prevenir cambios visuales
+                        elemento.style.transition = 'none';
+                    });
+                    
+                    // Aplicar a elementos internos
+                    const titulosValores = document.querySelectorAll(`
+                        .card-title,
+                        .stat-title,
+                        .stat-value,
+                        .stats-value,
+                        .stats-number,
+                        .value
+                    `);
+                    
+                    titulosValores.forEach(elemento => {
+                        if (elemento.classList.contains('stats-number') || 
+                            elemento.classList.contains('stat-value') ||
+                            elemento.classList.contains('value')) {
+                            elemento.style.color = 'white';
+                        } else {
+                            elemento.style.color = '#ecf0f1';
+                        }
+                    });
+                }
+                
+                // Aplicar estilos inmediatamente
+                aplicarEstilosConsistentes();
+                
+                // Volver a aplicar después de una pequeña demora para capturar elementos cargados dinámicamente
+                setTimeout(aplicarEstilosConsistentes, 100);
+                
+                // Y de nuevo después de un segundo para asegurar consistencia completa
+                setTimeout(aplicarEstilosConsistentes, 1000);
+                
+                // Configurar MutationObserver para mantener estilos cuando el DOM cambie
+                const observer = new MutationObserver(function(mutations) {
+                    aplicarEstilosConsistentes();
+                });
+                
+                // Observar cambios en todo el documento
+                observer.observe(document.body, { 
+                    childList: true, 
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['class', 'style']
+                });
+                
+                console.log('Página protegida detectada. Sistema de notificaciones automáticas desactivado.');
+                return; // Salir completamente, no configurar sistema de notificaciones
+            }
+            
+            // Función para actualizar notificaciones - solo se ejecuta en páginas que no son de perfil
+            function cargarNotificaciones() {
+                console.log('Cargando notificaciones...');
+                fetch('/notificaciones/obtener')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const container = document.getElementById('notification-container');
+                            const counter = document.getElementById('notification-counter');
+                            
+                            if (container && counter) {
+                                // Limpiar contenedor
+                                container.innerHTML = '';
+                                
+                                // Actualizar contador
+                                if (data.total_no_leidas > 0) {
+                                    counter.textContent = data.total_no_leidas;
+                                    counter.style.display = 'inline-block';
+                                } else {
+                                    counter.style.display = 'none';
+                                }
+                                
+                                // Mostrar notificaciones
+                                if (data.notificaciones && data.notificaciones.length > 0) {
+                                    data.notificaciones.forEach(notif => {
+                                        const item = document.createElement('a');
+                                        item.href = notif.url;
+                                        item.className = `dropdown-item notification-item ${!notif.leida ? 'unread' : ''}`;
+                                        
+                                        item.innerHTML = `
+                                            <div class="notification-content">
+                                                <div class="notification-icon">
+                                                    <i class="fas fa-${notif.icono || 'bell'}"></i>
+                                                </div>
+                                                <div class="notification-text">
+                                                    <div class="notification-title">${notif.titulo}</div>
+                                                    <div class="notification-message">${notif.mensaje}</div>
+                                                    <div class="notification-time">${notif.fecha_creacion}</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                        
+                                        // Marcar notificación como leída al hacer clic
+                                        item.addEventListener('click', function(e) {
+                                            // Solo llamar a la API si no está leída
+                                            if (!notif.leida) {
+                                                fetch(`/notificaciones/marcar-leida/${notif.id}`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    }
+                                                });
+                                            }
+                                        });
+                                        
+                                        container.appendChild(item);
+                                    });
+                                } else {
+                                    container.innerHTML = `
+                                        <div class="dropdown-item text-center">
+                                            <p class="text-muted mb-0">No tienes notificaciones</p>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error al cargar notificaciones:', error));
+            }
+            
+            // Cargar notificaciones una vez al inicio
+            cargarNotificaciones();
+            
+            // Configurar intervalo para páginas que NO son de perfil
+            console.log('Configurando intervalo de notificaciones cada 60 segundos');
+            const notificationInterval = setInterval(cargarNotificaciones, 60000);
+            
+            // Limpiar el intervalo si el usuario navega a otra página
+            window.addEventListener('beforeunload', function() {
+                clearInterval(notificationInterval);
+            });
+            
+            // Manejar dropdown de notificaciones
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            if (notificationDropdown) {
+                const btn = notificationDropdown.querySelector('.notification-btn');
+                const menu = notificationDropdown.querySelector('.notification-menu');
+                
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                // Cerrar al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!notificationDropdown.contains(e.target)) {
+                        menu.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Script para formatear precios en miles (pesos colombianos)
+            function formatearPreciosColombianos() {
+                document.querySelectorAll('span, strong, div, td').forEach(function(el) {
+                    if (el.textContent && el.textContent.trim().match(/\$\s*\d+(\.\d+)?/) && !el.textContent.includes('.000')) {
+                        const text = el.textContent.trim();
+                        const match = text.match(/\$\s*(\d+(\.\d+)?)/);
+                        if (match) {
+                            const valor = parseFloat(match[1]);
+                            if (!isNaN(valor)) {
+                                // Formatear como $XX.000
+                                const formateado = '$' + (valor * 1000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                el.textContent = el.textContent.replace(match[0], formateado);
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Ejecutar la función para formatear precios
+            formatearPreciosColombianos();
+        });
+    </script>
 </body>
 </html> 

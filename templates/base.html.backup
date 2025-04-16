@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
+    
+    <!-- Script de forzado de tema temprano para evitar parpadeo -->
+    <script defer>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                const theme = (savedTheme === 'dark') ? 'dark' : 'light';
+                
+                // Aplicar tema directamente al root
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.className = 'theme-' + theme;
+                
+                // Prevenir FOUC (Flash of Unstyled Content)
+                document.documentElement.style.backgroundColor = (theme === 'dark') ? '#121212' : '#f4f7fa';
+                document.documentElement.style.color = (theme === 'dark') ? '#e0e0e0' : '#212529';
+            } catch (e) {
+                console.error('Error al inicializar tema:', e);
+            }
+        })();
+    </script>
+    
+    <title>{% block title %}Ferretería "La U"{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Estilos de tema claro/oscuro -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    
+    <!-- Estilos específicos de cada página -->
+    {% block extra_css %}{% endblock %}
+    <style>
+        .user-profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-profile-dropdown .dropdown-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            color: var(--text-color);
+            font-weight: 500;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .user-profile-dropdown .dropdown-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .user-profile-dropdown .dropdown-btn img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 8px;
+        }
+
+        .user-profile-dropdown .dropdown-btn i.fa-user-circle {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+
+        .user-profile-dropdown .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            box-shadow: var(--box-shadow);
+            border-radius: 8px;
+            min-width: 200px;
+            z-index: 1000;
+            padding: 8px 0;
+            display: none;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-dropdown.show .dropdown-menu {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-profile-dropdown .dropdown-menu a {
+            display: block;
+            padding: 10px 16px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .user-profile-dropdown .dropdown-menu a:hover {
+            background-color: var(--hover-bg);
+            transform: translateX(5px);
+        }
+
+        .user-profile-dropdown .dropdown-menu i {
+            width: 20px;
+            margin-right: 8px;
+            text-align: center;
+        }
+
+        .user-profile-dropdown .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 8px 0;
+        }
+
+        @media (max-width: 768px) {
+            .user-profile-dropdown .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                width: 100%;
+                margin-top: 8px;
+            }
+        }
+
+        /* Variables de tema - eliminadas y movidas a theme.css */
+        
+        .empleado-link {
+            background-color: var(--primary-dark);
+            color: white !important;
+            border-radius: 4px;
+            padding: 0.4rem 0.8rem !important;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .empleado-link:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cerrar-sesion-link {
+            color: var(--danger-color) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .cerrar-sesion-link:hover {
+            transform: translateY(-2px);
+            text-decoration: underline !important;
+        }
+
+        /* Estilos del selector de tema */
+        .theme-selector {
+            margin: 8px 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .theme-selector .theme-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .theme-selector .theme-checkbox {
+            margin-left: 8px;
+            position: relative;
+            width: 50px;
+            height: 26px;
+            margin: 0;
+            opacity: 0;
+        }
+
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+            width: 50px;
+            height: 26px;
+            margin-left: 10px;
+        }
+
+        .theme-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .theme-checkbox:checked + .theme-slider {
+            background-color: #2196F3;
+        }
+
+        .theme-checkbox:checked + .theme-slider:before {
+            transform: translateX(22px);
+        }
+        
+        /* Estilo del icono del carrito */
+        .cart-icon {
+            display: inline-flex;
+            position: relative;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+        
+        .cart-icon:hover {
+            color: var(--primary-color);
+        }
+        
+        .cart-counter {
+            position: absolute;
+            top: 0;
+            right: -5px;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.45rem;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            border: 2px solid var(--body-bg);
+            transform: scale(0.8);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ferretería La U">
+                    <span>Ferretería "La U"</span>
+                </a>
+
+                <div class="nav-links">
+                    {% if current_user.is_authenticated and current_user.es_cliente %}
+                    <a href="{{ url_for('carrito.ver_carrito') }}" class="cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if session.get('cart') and session['cart']|length > 0 %}
+                        <span class="cart-counter">{{ session['cart']|length }}</span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+
+                    <button class="mobile-menu-btn" id="mobile-menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <ul class="nav-menu">
+                        <li><a href="{{ url_for('main.index') }}">Inicio</a></li>
+                        <li><a href="{{ url_for('productos.catalogo') }}">Productos</a></li>
+                        <li><a href="{{ url_for('reparaciones.index') }}">Reparaciones</a></li>
+
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.es_admin %}
+                                <li><a href="{{ url_for('admin.index') }}">Panel Admin</a></li>
+                            {% elif not current_user.es_cliente %}
+                                <li><a href="{{ url_for('main.dashboard') }}">Panel Empleado</a></li>
+                            {% endif %}
+                        {% endif %}
+
+                        <li><a href="{{ url_for('main.contacto') }}">Contacto</a></li>
+
+                        {% if current_user.is_authenticated %}
+                            <li class="user-profile-dropdown" id="userProfileDropdown">
+                                <button class="dropdown-btn">
+                                    {% if current_user.foto_perfil %}
+                                        <img src="{{ url_for('static', filename='uploads/perfiles/' ~ current_user.foto_perfil) }}" alt="Perfil">
+                                    {% else %}
+                                        <i class="fas fa-user-circle"></i>
+                                    {% endif %}
+                                    {{ current_user.nombre }}
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    {% if current_user.es_cliente %}
+                                        <a href="{{ url_for('main.mi_cuenta') }}"><i class="fas fa-user"></i> Mi Perfil</a>
+                                        <a href="{{ url_for('reparaciones.mis_reparaciones') }}"><i class="fas fa-tools"></i> Mis Reparaciones</a>
+                                        <a href="{{ url_for('carrito.ver_carrito') }}"><i class="fas fa-shopping-cart"></i> Mi Carrito</a>
+                                    {% else %}
+                                        <a href="{{ url_for('empleados.mi_perfil') }}"><i class="fas fa-user"></i> Mi Perfil</a>
+                                    {% endif %}
+                                    <a href="{{ url_for('auth.cambiar_password') }}"><i class="fas fa-key"></i> Cambiar Contraseña</a>
+                                    <a href="#" id="editarFotoPerfil"><i class="fas fa-camera"></i> Cambiar Foto</a>
+                                    
+                                    <div class="theme-selector">
+                                        <label for="theme-toggle" class="theme-label">
+                                            <i class="fas fa-moon dark-icon"></i> Modo Oscuro
+                                            <input type="checkbox" id="theme-toggle" class="theme-checkbox">
+                                            <span class="theme-slider">
+                                                <i class="fa-solid fa-sun light-icon"></i>
+                                                <i class="fa-solid fa-moon dark-icon"></i>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="dropdown-divider"></div>
+                                    <a href="{{ url_for('auth.logout', _external=True) }}" id="cerrarSesionLink" onclick="this.href += '?t=' + Date.now()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li><a href="{{ url_for('auth.login') }}">Iniciar Sesión</a></li>
+                            <li><a href="{{ url_for('auth.registro') }}">Registrarse</a></li>
+                            <li><a href="{{ url_for('auth.login_empleado') }}" class="empleado-link">Acceso Empleados</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Modal para cambiar foto de perfil -->
+    <div class="modal fade" id="modalCambiarFoto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Foto de Perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('auth.actualizar_foto_perfil') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="fotoPerfil" class="form-label">Selecciona una imagen</label> 
+                            <input type="file" class="form-control" id="fotoPerfil" name="foto" accept="image/*" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <div class="container mt-4 mb-4">
+            {% include 'includes/messages.html' %}
+            {% if content is defined %}
+                {{ content|safe }}
+            {% else %}
+                {% block content %}{% endblock %}
+            {% endif %}
+        </div>
+    </main>
+
+    <footer class="footer mt-auto py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">{{ empresa_nombre }}</h5>
+                    <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> {{ empresa_direccion }}</p>
+                    <p class="mb-2"><i class="fas fa-phone me-2"></i> {{ empresa_telefono }}</p>
+                    <p class="mb-2"><i class="fas fa-envelope me-2"></i> {{ empresa_email }}</p>
+                    <div class="mt-3">
+                        <a href="https://wa.me/57{{ empresa_whatsapp }}" class="text-decoration-none me-3" target="_blank">
+                            <i class="fab fa-whatsapp fa-2x"></i>
+                        </a>
+                        <a href="mailto:{{ empresa_email }}" class="text-decoration-none me-3">
+                            <i class="fas fa-envelope fa-2x"></i>
+                        </a>
+                        <a href="https://goo.gl/maps/Vz1SRvP5s8eJkXwv5" class="text-decoration-none" target="_blank">
+                            <i class="fas fa-map-marked-alt fa-2x"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Enlaces rápidos</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.index') }}" class="text-decoration-none">Inicio</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('productos.catalogo') }}" class="text-decoration-none">Productos</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('reparaciones.index') }}" class="text-decoration-none">Servicios de reparación</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.contacto') }}" class="text-decoration-none">Contacto</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <h5 class="text-uppercase">Horario de atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes - Viernes: 8:00 AM - 6:00 PM</li>
+                        <li class="mb-2">Sábados: 8:00 AM - 4:00 PM</li>
+                        <li class="mb-2">Domingos: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                    <p class="mt-3">
+                        <a href="https://wa.me/57{{ empresa_whatsapp }}?text=Hola,%20estoy%20interesado%20en%20obtener%20información%20sobre%20sus%20productos." class="btn btn-success">
+                            <i class="fab fa-whatsapp me-2"></i> Contáctanos vía WhatsApp
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">© {{ current_year }} {{ empresa_nombre }}. Todos los derechos reservados.</p>
+                    <p class="mb-0 small">Desarrollado por <a href="https://www.linkedin.com/in/brian-rodriguez-4bb893250/" target="_blank" class="text-decoration-none font-weight-bold">{{ empresa_desarrollador }}</a> - Derechos Reservados</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- Script para cambiar tema y manejar el dropdown de perfil -->
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado - Iniciando sistema de temas');
+
+            // Función simplificada para aplicar tema
+            function applyTheme(theme) {
+                try {
+                    // Garantizar que el tema sea válido
+                    theme = (theme === 'dark') ? 'dark' : 'light';
+                    console.log('Aplicando tema:', theme);
+
+                    // Limpiar cualquier clase de tema existente
+                    document.documentElement.classList.remove('theme-dark', 'theme-light');
+                    document.body.classList.remove('theme-dark', 'theme-light');
+
+                    // Aplicar el nuevo tema
+                    document.documentElement.setAttribute('data-theme', theme);
+                    document.documentElement.className = 'theme-' + theme;
+                    document.body.setAttribute('data-theme', theme);
+                    document.body.classList.add('theme-' + theme);
+
+                    // Aplicar color de fondo de inmediato para prevenir parpadeos
+                    document.body.style.backgroundColor = (theme === 'dark') ? '#121212' : '#f4f7fa';
+                    document.body.style.color = (theme === 'dark') ? '#e0e0e0' : '#212529';
+
+                    // Forzar el tema en formularios y elementos específicos
+                    const authContainers = document.querySelectorAll('.auth-container');
+                    authContainers.forEach(container => {
+                        container.style.backgroundColor = (theme === 'dark') ? '#2d2d2d' : '#ffffff';
+                        container.style.color = (theme === 'dark') ? '#e0e0e0' : '#212529';
+                    });
+
+                    // Guardar en localStorage
+                    localStorage.setItem('theme', theme);
+                    // Actualizar checkbox
+                    const themeToggle = document.getElementById('theme-toggle');
+                    if (themeToggle) {
+                        themeToggle.checked = (theme === 'dark');
+                    }
+
+                    console.log('Tema aplicado correctamente:', theme);
+                } catch (error) {
+                    console.error('Error al aplicar el tema:', error);
+                }
+            }
+
+            // Inicializar con el tema guardado o predeterminado a light
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                console.log('Inicializando tema desde localStorage:', savedTheme);
+                applyTheme(savedTheme);
+            } catch (error) {
+                console.error('Error al inicializar el tema:', error);
+                // Fallback a tema claro en caso de error
+                applyTheme('light');
+            }
+
+            // Manejar cambio de tema con el interruptor
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'dark' : 'light';
+                    console.log('Cambiando tema mediante toggle a:', newTheme);
+                    applyTheme(newTheme);
+                });
+            } else {
+                console.warn('No se encontró el toggle de tema');
+            }
+
+            // Código para el menú móvil
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+
+            if (mobileMenuToggle && navMenu) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    navMenu.classList.toggle('active');
+                    this.classList.toggle('active');
+                });
+            }
+
+            // Dropdown de perfil de usuario
+            const userProfileDropdown = document.getElementById('userProfileDropdown');
+            if (userProfileDropdown) {
+                const dropdownBtn = userProfileDropdown.querySelector('.dropdown-btn');
+
+                dropdownBtn.addEventListener('click', function(e) {
+                    // Solo detenemos la propagación para evitar que se cierre inmediatamente
+                    e.stopPropagation();
+                    userProfileDropdown.classList.toggle('show');
+                });
+
+                // Cerrar el dropdown al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!userProfileDropdown.contains(e.target)) {
+                        userProfileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Manejar específicamente el enlace de cierre de sesión
+            const cerrarSesionLink = document.getElementById('cerrarSesionLink');
+            if (cerrarSesionLink) {
+                cerrarSesionLink.addEventListener('click', function(e) {
+                    // Prevenir comportamiento predeterminado
+                    e.preventDefault();
+
+                    // Obtener URL de cierre de sesión
+                    const logoutUrl = this.getAttribute('href');
+
+                    // Hacer una solicitud fetch para cerrar sesión
+                    fetch(logoutUrl, {
+                        method: 'GET',
+                        credentials: 'same-origin'
+                    }).then(() => {
+                        // Limpiar localStorage si es necesario
+                        localStorage.removeItem('user_data');
+                        
+                        // Redirigir a la página principal con forzado de recarga
+                        window.location.href = '/?fresh=' + Date.now();
+                    }).catch(() => {
+                        // En caso de error, intentar redirigir directamente
+                        window.location.href = '/?fresh=' + Date.now();
+                    });
+                });
+            }
+        });
+    </script>
+
+    <!-- Scripts específicos de cada página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

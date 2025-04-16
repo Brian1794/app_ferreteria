@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models.models import mysql
 from routes.auth import admin_required
+from models.carousel import Carousel
 import json
 
 admin_bp = Blueprint('admin', __name__)
@@ -11,73 +12,86 @@ admin_bp = Blueprint('admin', __name__)
 @admin_required
 def index():
     """Panel de administración"""
+    # Inicializar estadísticas con valores por defecto
+    stats = {
+        'ventas': {'total': 0, 'hoy': 0},
+        'productos': {'total': 0, 'bajo_stock': 0},
+        'clientes': {'total': 0, 'nuevos': 0},
+        'reparaciones': {'total': 0, 'pendientes': 0}
+    }
+    
     try:
         # Obtener estadísticas del sistema
         cur = mysql.connection.cursor()
         
-        # Estadísticas de ventas
-        cur.execute("""
-            SELECT COUNT(*) as total,
-                   SUM(CASE WHEN DATE(fecha) = CURDATE() THEN 1 ELSE 0 END) as hoy
-            FROM ventas
-        """)
-        ventas = cur.fetchone()
+        try:
+            # Estadísticas de ventas
+            cur.execute("""
+                SELECT COUNT(*) as total,
+                    SUM(CASE WHEN DATE(fecha) = CURDATE() THEN 1 ELSE 0 END) as hoy
+                FROM ventas
+            """)
+            ventas = cur.fetchone()
+            if ventas:
+                stats['ventas'] = {
+                    'total': ventas['total'] if ventas['total'] is not None else 0,
+                    'hoy': ventas['hoy'] if ventas['hoy'] is not None else 0
+                }
+        except Exception as e:
+            print(f"Error al obtener estadísticas de ventas: {str(e)}")
         
-        # Estadísticas de productos
-        cur.execute("""
-            SELECT COUNT(*) as total,
-                   SUM(CASE WHEN stock <= stock_minimo THEN 1 ELSE 0 END) as bajo_stock
-            FROM productos
-        """)
-        productos = cur.fetchone()
+        try:
+            # Estadísticas de productos
+            cur.execute("""
+                SELECT COUNT(*) as total,
+                    SUM(CASE WHEN stock <= stock_minimo THEN 1 ELSE 0 END) as bajo_stock
+                FROM productos
+            """)
+            productos = cur.fetchone()
+            if productos:
+                stats['productos'] = {
+                    'total': productos['total'] if productos['total'] is not None else 0,
+                    'bajo_stock': productos['bajo_stock'] if productos['bajo_stock'] is not None else 0
+                }
+        except Exception as e:
+            print(f"Error al obtener estadísticas de productos: {str(e)}")
         
-        # Estadísticas de clientes
-        cur.execute("""
-            SELECT COUNT(*) as total,
-                   SUM(CASE WHEN MONTH(fecha_registro) = MONTH(CURDATE()) AND YEAR(fecha_registro) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as nuevos
-            FROM clientes
-        """)
-        clientes = cur.fetchone()
+        try:
+            # Estadísticas de clientes
+            cur.execute("""
+                SELECT COUNT(*) as total,
+                    SUM(CASE WHEN MONTH(fecha_registro) = MONTH(CURDATE()) AND YEAR(fecha_registro) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as nuevos
+                FROM clientes
+            """)
+            clientes = cur.fetchone()
+            if clientes:
+                stats['clientes'] = {
+                    'total': clientes['total'] if clientes['total'] is not None else 0,
+                    'nuevos': clientes['nuevos'] if clientes['nuevos'] is not None else 0
+                }
+        except Exception as e:
+            print(f"Error al obtener estadísticas de clientes: {str(e)}")
         
-        # Estadísticas de reparaciones
-        cur.execute("""
-            SELECT COUNT(*) as total,
-                   SUM(CASE WHEN estado IN ('pendiente', 'recibido', 'en_proceso') THEN 1 ELSE 0 END) as pendientes
-            FROM reparaciones
-        """)
-        reparaciones = cur.fetchone()
+        try:
+            # Estadísticas de reparaciones - consulta modificada para ser más robusta
+            cur.execute("""
+                SELECT COUNT(*) as total,
+                    SUM(CASE WHEN estado NOT IN ('ENTREGADO', 'CANCELADO', 'LISTO', 'entregado', 'cancelado', 'listo', 'completada') THEN 1 ELSE 0 END) as pendientes
+                FROM reparaciones
+            """)
+            reparaciones = cur.fetchone()
+            if reparaciones:
+                stats['reparaciones'] = {
+                    'total': reparaciones['total'] if reparaciones['total'] is not None else 0,
+                    'pendientes': reparaciones['pendientes'] if reparaciones['pendientes'] is not None else 0
+                }
+        except Exception as e:
+            print(f"Error al obtener estadísticas de reparaciones: {str(e)}")
         
         cur.close()
         
-        # Estructurar datos para la plantilla
-        stats = {
-            'ventas': {
-                'total': ventas['total'] if ventas and ventas['total'] else 0,
-                'hoy': ventas['hoy'] if ventas and ventas['hoy'] else 0
-            },
-            'productos': {
-                'total': productos['total'] if productos and productos['total'] else 0,
-                'bajo_stock': productos['bajo_stock'] if productos and productos['bajo_stock'] else 0
-            },
-            'clientes': {
-                'total': clientes['total'] if clientes and clientes['total'] else 0,
-                'nuevos': clientes['nuevos'] if clientes and clientes['nuevos'] else 0
-            },
-            'reparaciones': {
-                'total': reparaciones['total'] if reparaciones and reparaciones['total'] else 0,
-                'pendientes': reparaciones['pendientes'] if reparaciones and reparaciones['pendientes'] else 0
-            }
-        }
-        
     except Exception as e:
-        # En caso de error, inicializar con valores por defecto
-        stats = {
-            'ventas': {'total': 0, 'hoy': 0},
-            'productos': {'total': 0, 'bajo_stock': 0},
-            'clientes': {'total': 0, 'nuevos': 0},
-            'reparaciones': {'total': 0, 'pendientes': 0}
-        }
-        print(f"Error al obtener estadísticas: {str(e)}")
+        print(f"Error general al obtener estadísticas: {str(e)}")
     
     return render_template('admin/index.html', stats=stats)
 
@@ -833,67 +847,105 @@ def ver_cliente(cliente_id):
         
         # Obtener información del cliente
         cur.execute("""
-            SELECT * FROM clientes WHERE id_cliente = %s
+            SELECT * FROM clientes WHERE id = %s
         """, (cliente_id,))
         cliente = cur.fetchone()
         
         if not cliente:
-            flash('Cliente no encontrado', 'warning')
+            flash('Cliente no encontrado', 'danger')
             return redirect(url_for('admin.clientes'))
         
-        # Obtener historial de compras
-        cur.execute("""
-            SELECT v.*, e.nombre as empleado
-            FROM ventas v
-            LEFT JOIN empleados e ON v.id_empleado = e.id_empleado
-            WHERE v.id_cliente = %s
-            ORDER BY v.fecha DESC
-        """, (cliente_id,))
-        compras = cur.fetchall()
+        # Inicializar variables para evitar errores en el template
+        compras = []
+        metricas = {
+            'total_compras': 0,
+            'total_gastado': 0,
+            'promedio_compra': 0,
+            'ultima_compra': None
+        }
+        reparaciones = []
         
-        # Calcular métricas del cliente
-        cur.execute("""
-            SELECT 
-                COUNT(*) as total_compras,
-                SUM(total) as total_gastado,
-                AVG(total) as promedio_compra,
-                MAX(fecha) as ultima_compra
-            FROM ventas
-            WHERE id_cliente = %s
-        """, (cliente_id,))
-        metricas = cur.fetchone()
+        try:
+            # Obtener historial de compras
+            cur.execute("""
+                SELECT v.*, e.nombre as empleado
+                FROM ventas v
+                LEFT JOIN empleados e ON v.id_empleado = e.id_empleado
+                WHERE v.cliente_id = %s
+                ORDER BY v.fecha DESC
+            """, (cliente_id,))
+            compras = cur.fetchall()
+        except Exception as e:
+            print(f"Error al obtener compras: {str(e)}")
+            # No redirigir, continuar con los datos que tenemos
         
-        # Obtener reparaciones solicitadas
-        cur.execute("""
-            SELECT * FROM reparaciones
-            WHERE id_cliente = %s
-            ORDER BY fecha_recepcion DESC
-        """, (cliente_id,))
-        reparaciones = cur.fetchall()
+        try:
+            # Calcular métricas del cliente
+            cur.execute("""
+                SELECT 
+                    COUNT(*) as total_compras,
+                    COALESCE(SUM(total), 0) as total_gastado,
+                    COALESCE(AVG(total), 0) as promedio_compra,
+                    MAX(fecha) as ultima_compra
+                FROM ventas
+                WHERE cliente_id = %s
+            """, (cliente_id,))
+            metricas = cur.fetchone()
+            
+            # Si no hay métricas, proporcionar defaults
+            if not metricas:
+                metricas = {
+                    'total_compras': 0,
+                    'total_gastado': 0,
+                    'promedio_compra': 0,
+                    'ultima_compra': None
+                }
+        except Exception as e:
+            print(f"Error al obtener métricas: {str(e)}")
+            # No redirigir, continuar con los datos que tenemos
+        
+        try:
+            # Obtener reparaciones solicitadas
+            cur.execute("""
+                SELECT id, cliente_id, electrodomestico, marca, modelo, problema, 
+                      estado, fecha_recepcion, fecha_entrega_estimada, fecha_entrega
+                FROM reparaciones
+                WHERE cliente_id = %s
+                ORDER BY fecha_recepcion DESC
+            """, (cliente_id,))
+            reparaciones = cur.fetchall()
+        except Exception as e:
+            print(f"Error al obtener reparaciones: {str(e)}")
+            # No redirigir, continuar con los datos que tenemos
         
         cur.close()
+        
+        return render_template('admin/cliente_detalle.html',
+                              cliente=cliente,
+                              compras=compras,
+                              metricas=metricas,
+                              reparaciones=reparaciones)
         
     except Exception as e:
         print(f"Error al obtener detalles del cliente: {str(e)}")
         flash('Error al cargar información del cliente', 'danger')
         return redirect(url_for('admin.clientes'))
-    
-    return render_template('admin/cliente_detalle.html',
-                          cliente=cliente,
-                          compras=compras,
-                          metricas=metricas,
-                          reparaciones=reparaciones)
 
-@admin_bp.route('/clientes/<int:cliente_id>/eliminar', methods=['POST'])
+@admin_bp.route('/clientes/<int:cliente_id>/eliminar', methods=['POST', 'GET'])
 @login_required
 @admin_required
 def eliminar_cliente(cliente_id):
-    """Eliminar un cliente y todos sus datos asociados"""
+    """Eliminar un cliente"""
+    # Si la petición es GET, solo confirmar que el cliente existe y mostrar página de confirmación
+    if request.method == 'GET':
+        return redirect(url_for('admin.clientes'))
+        
+    # Para el método POST, verificar el token CSRF y procesar la eliminación
     try:
         cur = mysql.connection.cursor()
         
         # Verificar que el cliente existe
-        cur.execute("SELECT nombre FROM clientes WHERE id_cliente = %s", (cliente_id,))
+        cur.execute("SELECT nombre FROM clientes WHERE id = %s", (cliente_id,))
         cliente = cur.fetchone()
         
         if not cliente:
@@ -902,32 +954,22 @@ def eliminar_cliente(cliente_id):
         
         nombre_cliente = cliente['nombre']
         
-        # Eliminar datos asociados en cascada
-        # 1. Eliminar detalles de ventas asociadas al cliente
-        cur.execute("""
-            DELETE dv FROM detalle_ventas dv
-            INNER JOIN ventas v ON dv.id_venta = v.id
-            WHERE v.id_cliente = %s
-        """, (cliente_id,))
+        # Verificar si tiene relaciones antes de intentar eliminar
+        cur.execute("SELECT COUNT(*) as total FROM ventas WHERE cliente_id = %s", (cliente_id,))
+        result = cur.fetchone()
+        if result and result['total'] > 0:
+            flash('No se puede eliminar al cliente porque tiene ventas registradas', 'danger')
+            return redirect(url_for('admin.clientes'))
         
-        # 2. Eliminar ventas
-        cur.execute("DELETE FROM ventas WHERE id_cliente = %s", (cliente_id,))
-        
-        # 3. Eliminar reparaciones
-        cur.execute("DELETE FROM reparaciones WHERE id_cliente = %s", (cliente_id,))
-        
-        # 4. Eliminar el cliente
-        cur.execute("DELETE FROM clientes WHERE id_cliente = %s", (cliente_id,))
-        
-        # Confirmar eliminación
+        # Intentar eliminar directamente
+        cur.execute("DELETE FROM clientes WHERE id = %s", (cliente_id,))
         mysql.connection.commit()
-        
-        flash(f'Cliente "{nombre_cliente}" eliminado correctamente junto con todos sus datos asociados', 'success')
-        
+        flash(f'Cliente "{nombre_cliente}" eliminado correctamente', 'success')
+            
     except Exception as e:
         mysql.connection.rollback()
         print(f"Error al eliminar cliente: {str(e)}")
-        flash('Error al eliminar el cliente. Intente nuevamente más tarde.', 'danger')
+        flash('Error al eliminar cliente', 'danger')
         
     finally:
         cur.close()
@@ -939,4 +981,113 @@ def eliminar_cliente(cliente_id):
 @admin_required
 def compras():
     """Gestión de compras y proveedores"""
-    return render_template('admin/compras.html') 
+    return render_template('admin/compras.html')
+
+@admin_bp.route('/carousel')
+@login_required
+@admin_required
+def carousel():
+    """Administración del carousel"""
+    # Obtener todos los items del carousel
+    items = Carousel.obtener_todos()
+    return render_template('admin/carousel.html', items=items)
+
+@admin_bp.route('/carousel/nuevo', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def carousel_nuevo():
+    """Crear un nuevo elemento del carousel"""
+    if request.method == 'POST':
+        titulo = request.form.get('titulo')
+        descripcion = request.form.get('descripcion')
+        enlace = request.form.get('enlace')
+        orden = request.form.get('orden', 0)
+        activo = 'activo' in request.form
+        imagen = request.files.get('imagen')
+        
+        # Validar datos
+        if not titulo or not imagen:
+            flash('El título y la imagen son obligatorios', 'danger')
+            return redirect(url_for('admin.carousel_nuevo'))
+        
+        # Crear nuevo item
+        datos = {
+            'titulo': titulo,
+            'descripcion': descripcion,
+            'enlace': enlace,
+            'orden': orden,
+            'activo': activo
+        }
+        
+        if Carousel.crear(datos, imagen):
+            flash('Imagen añadida al carousel correctamente', 'success')
+            return redirect(url_for('admin.carousel'))
+        else:
+            flash('Ocurrió un error al crear el elemento', 'danger')
+    
+    return render_template('admin/carousel_form.html')
+
+@admin_bp.route('/carousel/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def carousel_editar(id):
+    """Editar un elemento del carousel"""
+    item = Carousel.obtener_por_id(id)
+    if not item:
+        flash('Elemento no encontrado', 'danger')
+        return redirect(url_for('admin.carousel'))
+    
+    if request.method == 'POST':
+        titulo = request.form.get('titulo')
+        descripcion = request.form.get('descripcion')
+        enlace = request.form.get('enlace')
+        orden = request.form.get('orden', 0)
+        activo = 'activo' in request.form
+        imagen = request.files.get('imagen')
+        
+        # Validar datos
+        if not titulo:
+            flash('El título es obligatorio', 'danger')
+            return redirect(url_for('admin.carousel_editar', id=id))
+        
+        # Actualizar datos
+        datos = {
+            'titulo': titulo,
+            'descripcion': descripcion,
+            'enlace': enlace,
+            'orden': orden,
+            'activo': activo
+        }
+        
+        # Solo actualizar imagen si se proporciona una nueva
+        if imagen and imagen.filename:
+            if Carousel.actualizar(id, datos, imagen):
+                flash('Elemento actualizado correctamente', 'success')
+                return redirect(url_for('admin.carousel'))
+        else:
+            if Carousel.actualizar(id, datos):
+                flash('Elemento actualizado correctamente', 'success')
+                return redirect(url_for('admin.carousel'))
+        
+        flash('Ocurrió un error al actualizar el elemento', 'danger')
+    
+    return render_template('admin/carousel_form.html', item=item)
+
+@admin_bp.route('/carousel/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def carousel_eliminar(id):
+    """Eliminar un elemento del carousel"""
+    if Carousel.eliminar(id):
+        flash('Elemento eliminado correctamente', 'success')
+    else:
+        flash('Error al eliminar el elemento', 'danger')
+    
+    return redirect(url_for('admin.carousel'))
+
+@admin_bp.route('/clientes/<int:cliente_id>/editar')
+@login_required
+@admin_required
+def editar_cliente(cliente_id):
+    """Redirecciona a la página de edición de cliente"""
+    return redirect(url_for('clientes.editar', cliente_id=cliente_id)) 

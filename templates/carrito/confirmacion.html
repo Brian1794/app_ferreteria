@@ -14,7 +14,8 @@
             </div>
             <h1 class="display-4 text-success">¡Gracias por tu compra!</h1>
             <p class="lead">Tu pedido ha sido recibido y está siendo procesado.</p>
-            <p>Pedido #{{ pedido.id }} - {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p>Pedido #{{ pedido.id }} - {{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') if pedido.fecha_pedido else '-' }}</p>
+            <p class="lead mb-0">¡Te enviaremos un correo electrónico con los detalles de tu pedido!</p>
         </div>
         
         <div class="col-md-8 mx-auto">
@@ -26,11 +27,11 @@
                     <!-- Estado del pedido -->
                     <div class="mb-4">
                         <h6>Estado del Pedido</h6>
-                        <div class="alert alert-{{ 'success' if pedido.estado_pago == 'PAGADO' else 'warning' }}">
-                            {% if pedido.estado_pago == 'PAGADO' %}
-                                <i class="fas fa-check-circle mr-2"></i> Pago confirmado
+                        <div class="alert alert-{{ 'success' if pedido.estado == 'PAGADO' else 'warning' }}">
+                            {% if pedido.estado == 'PAGADO' %}
+                                <i class="fas fa-check-circle mr-2"></i> Tu pago ha sido procesado correctamente.
                             {% else %}
-                                <i class="fas fa-clock mr-2"></i> Pendiente de pago
+                                <i class="fas fa-exclamation-triangle mr-2"></i> Tu pedido está pendiente de pago.
                             {% endif %}
                         </div>
                     </div>
@@ -46,8 +47,6 @@
                                 {% endif %}
                             {% elif pedido.metodo_pago == 'efectivo' %}
                                 <i class="fas fa-money-bill-wave mr-2"></i> Pago en Efectivo al recoger
-                            {% elif pedido.metodo_pago == 'oxxo' %}
-                                <i class="fas fa-store mr-2"></i> Pago en OXXO
                             {% else %}
                                 {{ pedido.metodo_pago }}
                             {% endif %}
@@ -91,8 +90,22 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
+                                        <td colspan="3" class="text-right"><strong>Subtotal</strong></td>
+                                        <td class="text-right"><strong>${{ '{:,.0f}'.format(pedido.subtotal * 1000)|replace(',', '.') }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-right"><strong>Envío</strong></td>
+                                        <td class="text-right">
+                                            {% if pedido.costo_envio > 0 %}
+                                            <strong>${{ '{:,.0f}'.format(pedido.costo_envio * 1000)|replace(',', '.') }}</strong>
+                                            {% else %}
+                                            <strong>Gratis</strong>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td colspan="3" class="text-right"><strong>Total</strong></td>
-                                        <td class="text-right"><strong>${{ "{:,.0f}".format(pedido.total|float) }} COP</strong></td>
+                                        <td class="text-right"><strong>${{ '{:,.0f}'.format(pedido.total * 1000)|replace(',', '.') }}</strong></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -103,7 +116,7 @@
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle mr-2"></i> ¿Qué sigue?</h6>
                         <ul class="mb-0">
-                            {% if pedido.estado_pago == 'PAGADO' %}
+                            {% if pedido.estado == 'PAGADO' %}
                                 <li>Tu pedido está siendo procesado por nuestro equipo.</li>
                                 <li>Recibirás un correo electrónico con la información de envío.</li>
                                 <li>Puedes seguir el estado de tu pedido en la sección "Mis Pedidos".</li>

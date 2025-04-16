@@ -27,6 +27,7 @@
                     {% endwith %}
 
                     <form method="POST" action="{{ url_for('categorias.agregar') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group mb-3">
                             <label for="nombre">Nombre de la categoría</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" required>
@@ -61,4 +62,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

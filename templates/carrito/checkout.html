@@ -165,6 +165,14 @@
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-md-6">
+                                            <p><strong>Documento:</strong> <span id="documento-texto">{{ cliente.identificacion if cliente.identificacion else 'No registrado' }}</span>
+                                            {% if not cliente.identificacion %}
+                                            <span class="badge bg-warning text-dark">No registrado</span>
+                                            {% endif %}
+                                            </p>
+                                            <input type="text" class="form-control mt-2" name="identificacion" value="{{ cliente.identificacion }}" id="documento-input" placeholder="Ingrese su número de documento">
+                                        </div>
+                                        <div class="col-md-6">
                                             <p><strong>Teléfono:</strong> <span id="telefono-texto">{{ cliente.telefono }}</span>
                                             {% if not cliente.telefono %}
                                             <span class="badge bg-warning text-dark">No registrado</span>
@@ -172,7 +180,9 @@
                                             </p>
                                             <input type="text" class="form-control mt-2" name="telefono" value="{{ cliente.telefono }}" id="telefono-input" placeholder="Ingrese su teléfono">
                                         </div>
-                                        <div class="col-md-6">
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
                                             <p><strong>Dirección:</strong> <span id="direccion-texto">{{ cliente.direccion }}</span>
                                             {% if not cliente.direccion %}
                                             <span class="badge bg-warning text-dark">No registrada</span>
@@ -224,23 +234,31 @@
                                     <h6 class="my-0">{{ item.nombre }}</h6>
                                     <small class="text-muted">Cantidad: {{ item.cantidad }}</small>
                                 </div>
-                                <span class="text-muted">${{ item.subtotal|float|round(2) }}</span>
+                                <span class="text-muted">${{ '{:,.0f}'.format(item.subtotal * 1000)|replace(',', '.') }}</span>
                             </li>
                             {% endfor %}
                             
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Subtotal</span>
-                                <strong>${{ total|float|round(2) }}</strong>
+                                <strong>${{ '{:,.0f}'.format(total * 1000)|replace(',', '.') }}</strong>
                             </li>
                             
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Envío</span>
+                                {% if not cliente.total_pedidos or (cliente.total_pedidos > 0 and total >= 50) %}
                                 <strong>Gratis</strong>
+                                {% else %}
+                                <strong>${{ '{:,.0f}'.format(5000)|replace(',', '.') }}</strong>
+                                {% endif %}
                             </li>
                             
                             <li class="list-group-item d-flex justify-content-between bg-light">
                                 <span class="text-success"><strong>Total</strong></span>
-                                <strong class="text-success">${{ total }}</strong>
+                                {% if not cliente.total_pedidos or (cliente.total_pedidos > 0 and total >= 50) %}
+                                <strong class="text-success">${{ '{:,.0f}'.format(total * 1000)|replace(',', '.') }}</strong>
+                                {% else %}
+                                <strong class="text-success">${{ '{:,.0f}'.format((total * 1000) + 5000)|replace(',', '.') }}</strong>
+                                {% endif %}
                             </li>
                         </ul>
                     </div>
@@ -252,7 +270,13 @@
                     </div>
                     <div class="card-body">
                         <p><i class="fas fa-shield-alt text-success"></i> Pago seguro garantizado</p>
-                        <p><i class="fas fa-truck text-primary"></i> Envío gratis en compras mayores a $500</p>
+                        <p><i class="fas fa-truck text-primary"></i> 
+                        {% if not cliente.total_pedidos %}
+                            Primer envío gratis para nuevos clientes
+                        {% else %}
+                            Envío gratis en compras mayores a $50.000
+                        {% endif %}
+                        </p>
                         <p><i class="fas fa-exchange-alt text-warning"></i> Política de devolución: 30 días</p>
                     </div>
                 </div>
@@ -275,11 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const estadoGuardado = document.getElementById('estado_guardado');
     const telefonoInput = document.getElementById('telefono-input');
     const telefonoTexto = document.getElementById('telefono-texto');
+    const documentoInput = document.getElementById('documento-input');
+    const documentoTexto = document.getElementById('documento-texto');
     
     // Función para guardar datos del cliente
     guardarDatosBtn.addEventListener('click', function() {
         const telefono = telefonoInput.value.trim();
         const direccion = direccionInput.value.trim();
+        const documento = documentoInput.value.trim();
         
         if (!telefono || !direccion) {
             mostrarEstadoGuardado('error', 'Por favor complete los campos de teléfono y dirección');
@@ -292,6 +319,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('telefono', telefono);
         formData.append('direccion', direccion);
+        formData.append('identificacion', documento);
+        formData.append('csrf_token', '{{ csrf_token() }}');
         
         // Enviar datos al servidor
         fetch('{{ url_for("carrito.actualizar_datos_cliente") }}', {
@@ -306,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Actualizar textos mostrados
                 if (telefonoTexto) telefonoTexto.textContent = telefono;
                 if (direccionTexto) direccionTexto.textContent = direccion;
+                if (documentoTexto) documentoTexto.textContent = documento;
                 
                 // Ocultar badges de "No registrado" si existen
                 document.querySelectorAll('.badge.bg-warning').forEach(badge => {

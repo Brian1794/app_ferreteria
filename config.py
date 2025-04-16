@@ -15,6 +15,15 @@ class Config:
     DEBUG = False
     TESTING = False
     
+    # Configuración CSRF
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = True
+    WTF_CSRF_METHODS = {'POST', 'PUT', 'PATCH', 'DELETE'}
+    WTF_CSRF_FIELD_NAME = 'csrf_token'
+    WTF_CSRF_HEADERS = ['X-CSRFToken', 'X-CSRF-Token']
+    WTF_CSRF_TIME_LIMIT = 3600
+    WTF_CSRF_SSL_STRICT = True
+    
     # Configuración de la base de datos
     MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
     MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
@@ -22,19 +31,19 @@ class Config:
     MYSQL_DB = os.environ.get('MYSQL_DB') or 'ferreteria_la_u'
     MYSQL_CURSORCLASS = 'DictCursor'
     
-    # Configuración de conexiones para evitar error max_user_connections
-    MYSQL_MAX_CONNECTIONS = int(os.environ.get('MYSQL_MAX_CONNECTIONS') or 20)
+    # Configuración del pool de conexiones
+    MYSQL_POOL_NAME = 'ferreteria_pool'
     MYSQL_POOL_SIZE = int(os.environ.get('MYSQL_POOL_SIZE') or 10)
-    MYSQL_POOL_RECYCLE = int(os.environ.get('MYSQL_POOL_RECYCLE') or 280)
+    MYSQL_POOL_RESET_SESSION = True
     
     # Tiempos de espera MySQL
-    MYSQL_CONNECT_TIMEOUT = int(os.environ.get('MYSQL_CONNECT_TIMEOUT') or 10)
+    MYSQL_CONNECTION_TIMEOUT = int(os.environ.get('MYSQL_CONNECTION_TIMEOUT') or 30)
     MYSQL_READ_TIMEOUT = int(os.environ.get('MYSQL_READ_TIMEOUT') or 30)
     MYSQL_WRITE_TIMEOUT = int(os.environ.get('MYSQL_WRITE_TIMEOUT') or 30)
     
     # Opciones de conexión para MySQL
     MYSQL_OPTIONS = {
-        'connect_timeout': MYSQL_CONNECT_TIMEOUT,
+        'connect_timeout': MYSQL_CONNECTION_TIMEOUT,
         'read_timeout': MYSQL_READ_TIMEOUT,
         'write_timeout': MYSQL_WRITE_TIMEOUT,
         'charset': 'utf8mb4',
@@ -76,7 +85,9 @@ class Config:
     @classmethod
     def init_app(cls, app):
         """Inicialización común para todos los entornos"""
-        pass
+        # Asegurar que existe el directorio de uploads
+        uploads_dir = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+        os.makedirs(uploads_dir, exist_ok=True)
 
 class DevelopmentConfig(Config):
     """Configuración para entorno de desarrollo"""
@@ -98,7 +109,7 @@ class DevelopmentConfig(Config):
     MYSQL_MAX_CONNECTIONS = 10
     
     # Tiempos de espera más cortos para desarrollo
-    MYSQL_CONNECT_TIMEOUT = 5
+    MYSQL_CONNECTION_TIMEOUT = 5
     MYSQL_READ_TIMEOUT = 15
     MYSQL_WRITE_TIMEOUT = 15
     
@@ -132,18 +143,18 @@ class ProductionConfig(Config):
     DEBUG = False
     
     # Configuración de conexiones optimizada para producción
-    MYSQL_POOL_SIZE = int(os.environ.get('MYSQL_POOL_SIZE') or 10)
+    MYSQL_POOL_SIZE = int(os.environ.get('MYSQL_POOL_SIZE') or 20)
     MYSQL_MAX_CONNECTIONS = int(os.environ.get('MYSQL_MAX_CONNECTIONS') or 20)
     MYSQL_POOL_RECYCLE = int(os.environ.get('MYSQL_POOL_RECYCLE') or 280)
     
     # Tiempos de espera para producción
-    MYSQL_CONNECT_TIMEOUT = int(os.environ.get('MYSQL_CONNECT_TIMEOUT') or 15)
+    MYSQL_CONNECTION_TIMEOUT = int(os.environ.get('MYSQL_CONNECTION_TIMEOUT') or 15)
     MYSQL_READ_TIMEOUT = int(os.environ.get('MYSQL_READ_TIMEOUT') or 60)
     MYSQL_WRITE_TIMEOUT = int(os.environ.get('MYSQL_WRITE_TIMEOUT') or 60)
     
     # Configuración SSL para MySQL en producción
     MYSQL_OPTIONS = {
-        'connect_timeout': MYSQL_CONNECT_TIMEOUT,
+        'connect_timeout': MYSQL_CONNECTION_TIMEOUT,
         'read_timeout': MYSQL_READ_TIMEOUT,
         'write_timeout': MYSQL_WRITE_TIMEOUT,
         'charset': 'utf8mb4',
@@ -231,17 +242,15 @@ class StagingConfig(ProductionConfig):
     # Tiempo de espera de sesión intermedio
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
-# Configuración por defecto
-config = {
-    'development': DevelopmentConfig,
-    'testing': TestingConfig,
-    'production': ProductionConfig,
-    'docker': DockerDevConfig,
-    'staging': StagingConfig,
-    'default': DevelopmentConfig
-}
-
-def get_config():
+def get_config(config_name=None):
     """Obtiene la configuración según el entorno"""
-    env = os.environ.get('FLASK_ENV', 'default')
-    return config.get(env, config['default'])()
+    config = {
+        'development': DevelopmentConfig,
+        'testing': TestingConfig,
+        'production': ProductionConfig,
+        'docker': DockerDevConfig,
+        'staging': StagingConfig,
+        'default': DevelopmentConfig
+    }
+    
+    return config.get(config_name or os.environ.get('FLASK_ENV', 'default'))()

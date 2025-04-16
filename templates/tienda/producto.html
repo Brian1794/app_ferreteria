@@ -200,39 +200,49 @@
         padding: 12px 25px;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s;
-        font-size: 1rem;
         font-weight: 600;
-        flex-grow: 1;
-        height: 50px;
-        max-width: 300px;
+        transition: all 0.3s;
     }
     
     .btn-agregar-carrito:hover {
         background-color: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     }
     
     .btn-agregar-carrito:disabled {
         background-color: var(--text-muted);
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
     
-    /* Productos relacionados */
+    .btn-agregar-carrito i {
+        font-size: 1.2rem;
+    }
+    
+    /* Estilos para productos relacionados */
     .productos-relacionados {
         margin-top: 50px;
     }
     
     .productos-relacionados h2 {
-        font-size: 1.8rem;
-        color: var(--primary-color);
         margin-bottom: 25px;
-        text-align: center;
+        position: relative;
+        padding-left: 15px;
+        border-left: 4px solid var(--primary-color);
     }
     
     .productos-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .productos-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
     }
     
     .producto-card {
@@ -240,7 +250,7 @@
         border-radius: 10px;
         overflow: hidden;
         box-shadow: var(--box-shadow);
-        transition: all 0.3s ease;
+        transition: all 0.3s;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -248,16 +258,16 @@
     
     .producto-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
     
-    .producto-img {
+    .producto-card .producto-img {
         height: 180px;
         overflow: hidden;
         position: relative;
     }
     
-    .producto-img img {
+    .producto-card .producto-img img {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -265,26 +275,37 @@
     }
     
     .producto-card:hover .producto-img img {
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
     
     .producto-card .producto-categoria {
-        font-size: 0.75rem;
-        padding: 3px 10px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
     }
     
     .producto-card .producto-info {
         padding: 15px;
         flex: 1;
+        display: flex;
+        flex-direction: column;
     }
     
     .producto-card .producto-titulo {
-        font-size: 1.1rem;
+        font-size: 1rem;
+        font-weight: 600;
         margin-bottom: 8px;
     }
     
-    .producto-card .producto-descripcion {
-        font-size: 0.9rem;
+    .producto-card .stock-badge {
+        font-size: 0.8rem;
+        padding: 2px 8px;
         margin-bottom: 10px;
     }
     
@@ -296,7 +317,8 @@
     }
     
     .producto-card .producto-precio {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        font-weight: 700;
         margin-bottom: 0;
     }
     
@@ -370,92 +392,18 @@
     .modal-zoom-close:hover {
         color: #bbb;
     }
-
-    .cart-notification {
-        display: none;
-        position: fixed;
-        z-index: 9999;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        overflow: auto;
-    }
-
-    .cart-notification-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        max-width: 80%;
-        max-height: 80%;
-        overflow: auto;
-    }
-
-    .cart-notification-img {
-        float: left;
-        margin-right: 20px;
-    }
-
-    .cart-notification-img img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 5px;
-    }
-
-    .cart-notification-info {
-        flex: 1;
-    }
-
-    .cart-notification-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin-bottom: 10px;
-    }
-
-    .cart-notification-message {
-        font-size: 1rem;
-        color: var(--text-color);
-    }
-
-    .cart-notification-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container producto-detalle">
+    <!-- Token CSRF oculto para peticiones AJAX -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
     <!-- Modal para zoom de imagen -->
     <div id="imagenModal" class="modal-zoom">
         <span class="modal-zoom-close">&times;</span>
         <img class="modal-zoom-content" id="imgZoom">
-    </div>
-
-    <!-- Toast para notificación de producto agregado -->
-    <div id="cartNotification" class="cart-notification">
-        <div class="cart-notification-content">
-            <div class="cart-notification-img">
-                <img id="cartNotificationImg" src="" alt="Producto">
-            </div>
-            <div class="cart-notification-info">
-                <div class="cart-notification-title">Producto agregado al carrito</div>
-                <div id="cartNotificationMessage" class="cart-notification-message"></div>
-            </div>
-            <div class="cart-notification-close">&times;</div>
-        </div>
     </div>
 
     <!-- Breadcrumb -->
@@ -566,6 +514,7 @@
                         data-nombre="{{ producto.nombre }}" 
                         data-precio="{{ producto.precio_venta|float }}"
                         data-stock="{{ producto.stock }}"
+                        data-imagen="{{ producto.imagen }}"
                         {% if producto.stock <= 0 %}disabled{% endif %}>
                     <i class="fas fa-shopping-cart"></i> Agregar al carrito
                 </button>
@@ -613,7 +562,8 @@
                         <button class="btn-agregar btn-related-cart-add" 
                                 data-id="{{ rel.id }}" 
                                 data-nombre="{{ rel.nombre }}" 
-                                data-precio="{{ rel.precio_venta|float }}">
+                                data-precio="{{ rel.precio_venta|float }}"
+                                data-imagen="{{ rel.imagen }}">
                             <i class="fas fa-shopping-cart"></i> Agregar
                         </button>
                         {% else %}
@@ -631,7 +581,8 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/carrito.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const btnDecrementar = document.getElementById('decrementar');
@@ -710,94 +661,59 @@
         // Agregar producto principal al carrito
         btnAgregarCarrito.addEventListener('click', function() {
             const productoId = this.dataset.id;
-            const nombre = this.dataset.nombre;
-            const precio = parseFloat(this.dataset.precio);
             const cantidad = parseInt(inputCantidad.value);
             
-            agregarAlCarrito(productoId, nombre, precio, cantidad);
+            if (!productoId) {
+                console.error("Error: No se pudo obtener el ID del producto");
+                return;
+            }
+            
+            console.log(`Agregando producto ID: ${productoId}, cantidad: ${cantidad}`);
+            
+            // Desactivar botón mientras se procesa
+            this.disabled = true;
+            
+            // Usar la función del objeto CartManager
+            window.CartManager.agregarAlCarrito(productoId, cantidad, function(success, data) {
+                // Reactivar botón
+                btnAgregarCarrito.disabled = false;
+                
+                if (success) {
+                    console.log('Producto agregado al carrito con éxito');
+                } else {
+                    console.error('Error al agregar producto al carrito:', data.message);
+                }
+            });
         });
         
         // Agregar productos relacionados al carrito
         botonesRelacionados.forEach(function(boton) {
             boton.addEventListener('click', function() {
                 const productoId = this.dataset.id;
-                const nombre = this.dataset.nombre;
-                const precio = parseFloat(this.dataset.precio);
                 
-                agregarAlCarrito(productoId, nombre, precio, 1);
+                if (!productoId) {
+                    console.error("Error: No se pudo obtener el ID del producto relacionado");
+                    return;
+                }
+                
+                console.log(`Agregando producto relacionado ID: ${productoId}`);
+                
+                // Desactivar botón mientras se procesa
+                this.disabled = true;
+                
+                // Usar la función del objeto CartManager
+                window.CartManager.agregarAlCarrito(productoId, 1, function(success, data) {
+                    // Reactivar botón
+                    boton.disabled = false;
+                    
+                    if (success) {
+                        console.log('Producto relacionado agregado al carrito con éxito');
+                    } else {
+                        console.error('Error al agregar producto relacionado al carrito:', data.message);
+                    }
+                });
             });
         });
-        
-        // Función para agregar al carrito
-        function agregarAlCarrito(productoId, nombre, precio, cantidad) {
-            // Obtener la URL del carrito del DOM para evitar usar Jinja en JavaScript
-            const carritoUrl = document.getElementById('carritoUrlData') 
-                ? document.getElementById('carritoUrlData').getAttribute('data-url') 
-                : '/carrito/agregar';
-                
-            fetch(carritoUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    producto_id: productoId,
-                    cantidad: cantidad
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Actualizar contador del carrito en la barra de navegación
-                    const cartCounter = document.querySelector('.cart-counter');
-                    if (cartCounter) {
-                        cartCounter.textContent = data.total_items;
-                    }
-                    
-                    // Mostrar notificación
-                    const notification = document.getElementById('cartNotification');
-                    const notificationContent = notification.querySelector('.cart-notification-content');
-                    const notificationImg = notificationContent.querySelector('#cartNotificationImg');
-                    const notificationMessage = notificationContent.querySelector('#cartNotificationMessage');
-                    
-                    // Usar la URL de imagen que viene en la respuesta o construirla desde el DOM
-                    let imgSrc = '';
-                    if (data.product_image) {
-                        const baseUrl = document.getElementById('staticUrlBase') 
-                            ? document.getElementById('staticUrlBase').getAttribute('data-url') 
-                            : '/static/uploads/productos/';
-                        imgSrc = baseUrl + data.product_image;
-                    } else {
-                        imgSrc = document.getElementById('productoDefaultImg') 
-                            ? document.getElementById('productoDefaultImg').getAttribute('data-url') 
-                            : '/static/img/producto-default.jpg';
-                    }
-                    
-                    notificationImg.src = imgSrc;
-                    notificationMessage.textContent = data.message;
-                    
-                    notification.style.display = 'block';
-                    
-                    // Cerrar notificación después de 3 segundos
-                    setTimeout(() => {
-                        notification.style.display = 'none';
-                    }, 3000);
-                } else {
-                    alert(data.message || 'Error al agregar al carrito');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ocurrió un error al agregar al carrito');
-            });
-        }
     });
 </script>
-
-<!-- Datos ocultos para usar en JavaScript en lugar de Jinja -->
-<div id="carritoUrlData" data-url="{{ url_for('carrito.agregar_al_carrito') }}" style="display:none;"></div>
-<div id="staticUrlBase" data-url="{{ url_for('static', filename='uploads/productos/') }}" style="display:none;"></div>
-<div id="productoDefaultImg" data-url="{{ url_for('static', filename='img/producto-default.jpg') }}" style="display:none;"></div>
-<div id="stockData" data-stock="{{ producto.stock }}" style="display:none;"></div>
-
 {% endblock %} 

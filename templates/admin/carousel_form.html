@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if carousel else 'Nuevo' }} Elemento de Carousel - Ferretería La U{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+        padding: 2rem;
+    }
+    
+    .preview-container {
+        background-color: var(--body-bg);
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    #imagePreview {
+        max-width: 100%;
+        max-height: 300px;
+        margin: 0 auto;
+        display: none;
+    }
+    
+    .current-image {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .current-image img {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ 'Editar' if carousel else 'Nuevo' }} Elemento de Carousel</h1>
+        <a href="{{ url_for('carousel.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Formulario de Elemento</h4>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('carousel.editar', carousel_id=carousel.id) if carousel else url_for('carousel.nuevo') }}" 
+                  method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" 
+                                   value="{{ carousel.titulo if carousel else '' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ carousel.descripcion if carousel else '' }}</textarea>
+                            <div class="form-text">Breve descripción que aparecerá debajo del título.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="enlace" class="form-label">Enlace</label>
+                            <input type="url" class="form-control" id="enlace" name="enlace" 
+                                   value="{{ carousel.enlace if carousel else '' }}">
+                            <div class="form-text">URL a la que se redirigirá al hacer clic en la imagen (opcional).</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="orden" class="form-label">Orden</label>
+                                    <input type="number" class="form-control" id="orden" name="orden" min="0" 
+                                           value="{{ carousel.orden if carousel else '0' }}">
+                                    <div class="form-text">Determina el orden de aparición (menor número = primero).</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Estado</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="activo" name="activo" 
+                                               {{ 'checked' if not carousel or carousel.activo else '' }}>
+                                        <label class="form-check-label" for="activo">Activo</label>
+                                    </div>
+                                    <div class="form-text">Si está desactivado, no se mostrará en el carousel.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="imagen" class="form-label">Imagen {{ '' if carousel else '<span class="text-danger">*</span>' }}</label>
+                            <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*" 
+                                   {{ 'required' if not carousel else '' }}>
+                            <div class="form-text">
+                                Se recomienda una imagen con resolución de 1200x400 píxeles.
+                                {% if carousel %}
+                                Dejar en blanco para mantener la imagen actual.
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if carousel and carousel.imagen %}
+                        <div class="mb-3">
+                            <label class="form-label">Imagen Actual</label>
+                            <div class="current-image-preview">
+                                <img src="{{ url_for('static', filename='uploads/carousel/' + carousel.imagen) }}" 
+                                     alt="{{ carousel.titulo }}" class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Vista Previa</label>
+                            <div id="imagePreview" class="image-preview-container">
+                                <div class="image-preview-placeholder text-center p-5 bg-light">
+                                    <i class="fas fa-image fa-3x text-secondary"></i>
+                                    <p class="mt-2">La vista previa se mostrará aquí</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('carousel.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'Actualizar' if carousel else 'Guardar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Previsualización de imagen
+        const inputImagen = document.getElementById('imagen');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        if (inputImagen && imagePreview) {
+            inputImagen.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        imagePreview.innerHTML = `
+                            <img src="${e.target.result}" class="img-fluid img-thumbnail" style="max-height: 200px;">
+                        `;
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

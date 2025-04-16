@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles de Empleado - Ferretería La U{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Detalles del Empleado</h1>
+        <div>
+            <a href="{{ url_for('empleados.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Listado
+            </a>
+            {% if current_user.es_admin or current_user.tiene_cargo('Gerente') %}
+            <a href="{{ url_for('empleados.editar', empleado_id=empleado.id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if empleado.foto_perfil %}
+                        <img src="{{ url_for('static', filename='uploads/empleados/' + empleado.foto_perfil) }}" 
+                             alt="Foto de perfil" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 150px; height: 150px; background-color: #e9ecef; margin: 0 auto;">
+                            <i class="fas fa-user fa-4x text-secondary"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h3 class="card-title">{{ empleado.nombre }}</h3>
+                    <p class="card-text">
+                        <span class="badge {{ 'bg-success' if empleado.activo else 'bg-danger' }}">
+                            {{ 'Activo' if empleado.activo else 'Inactivo' }}
+                        </span>
+                    </p>
+                    {% if empleado.cargo_nombre %}
+                    <p class="card-text fw-bold">{{ empleado.cargo_nombre }}</p>
+                    {% endif %}
+                    {% if current_user.es_admin and current_user.id != empleado.id %}
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <form action="{{ url_for('empleados.cambiar_estado', empleado_id=empleado.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn {{ 'btn-danger' if empleado.activo else 'btn-success' }} btn-sm">
+                                <i class="fas {{ 'fa-ban' if empleado.activo else 'fa-check' }}"></i> 
+                                {{ 'Desactivar' if empleado.activo else 'Activar' }}
+                            </button>
+                        </form>
+                        <form action="{{ url_for('empleados.eliminar', empleado_id=empleado.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Información Personal</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Email:</div>
+                        <div class="col-md-8">{{ empleado.email }}</div>
+                    </div>
+                    
+                    {% if empleado.telefono %}
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Teléfono:</div>
+                        <div class="col-md-8">{{ empleado.telefono }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if empleado.cedula %}
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Cédula:</div>
+                        <div class="col-md-8">{{ empleado.cedula }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if empleado.direccion %}
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Dirección:</div>
+                        <div class="col-md-8">{{ empleado.direccion }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Rol en el sistema:</div>
+                        <div class="col-md-8">
+                            <span class="badge {{ 'bg-primary' if empleado.rol == 'admin' else 'bg-secondary' }}">
+                                {{ 'Administrador' if empleado.rol == 'admin' else 'Empleado regular' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if empleado.fecha_registro %}
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Fecha de registro:</div>
+                        <div class="col-md-8">{{ empleado.fecha_registro.strftime('%d-%m-%Y %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if empleado.ultimo_login %}
+                    <div class="row">
+                        <div class="col-md-4 fw-bold">Último acceso:</div>
+                        <div class="col-md-8">{{ empleado.ultimo_login.strftime('%d-%m-%Y %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if stats_ventas or stats_reparaciones %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Estadísticas de Actividad</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if stats_ventas %}
+                        <div class="col-md-6">
+                            <div class="stats-card p-3 mb-3 bg-light rounded">
+                                <h5>Ventas</h5>
+                                <p class="mb-1"><strong>Total ventas:</strong> {{ stats_ventas.total_ventas }}</p>
+                                <p><strong>Monto total:</strong> ${{ '%.2f'|format(stats_ventas.monto_total) }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if stats_reparaciones %}
+                        <div class="col-md-6">
+                            <div class="stats-card p-3 mb-3 bg-light rounded">
+                                <h5>Reparaciones</h5>
+                                <p class="mb-1"><strong>Total asignadas:</strong> {{ stats_reparaciones.total_reparaciones }}</p>
+                                <p><strong>Activas actualmente:</strong> {{ stats_reparaciones.reparaciones_activas }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if empleado.cargo_descripcion %}
+            <div class="card">
+                <div class="card-header">
+                    <h4>Descripción del cargo</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ empleado.cargo_descripcion }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

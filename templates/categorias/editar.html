@@ -26,22 +26,23 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST" action="{{ url_for('categorias.editar', id=categoria[0]) }}">
+                    <form method="POST" action="{{ url_for('categorias.editar', id=categoria['id']) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group mb-3">
                             <label for="nombre">Nombre de la categoría</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" 
-                                   value="{{ categoria[1] }}" required>
+                                   value="{{ categoria['nombre'] }}" required>
                         </div>
                         
                         <div class="form-group mb-3">
                             <label for="descripcion">Descripción (opcional)</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" 
-                                      rows="3">{{ categoria[2] }}</textarea>
+                                      rows="3">{{ categoria['descripcion'] }}</textarea>
                         </div>
                         
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" value="1" id="activa" 
-                                   name="activa" {% if categoria[3] %}checked{% endif %}>
+                                   name="activa" {% if categoria['activo'] %}checked{% endif %}>
                             <label class="form-check-label" for="activa">
                                 Categoría activa
                             </label>
@@ -62,4 +63,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

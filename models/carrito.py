@@ -211,13 +211,14 @@ class Pedido:
         cursor = mysql.connection.cursor()
         try:
             cursor.execute("""
-                INSERT INTO pedidos (cliente_id, total, direccion_envio, telefono_contacto, notas) 
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO pedidos (cliente_id, total, direccion_envio, telefono_contacto, identificacion_cliente, notas) 
+                VALUES (%s, %s, %s, %s, %s, %s)
             """, (
                 cliente_id, 
                 total, 
                 datos_envio.get('direccion', ''),
                 datos_envio.get('telefono', ''),
+                datos_envio.get('identificacion', ''),
                 datos_envio.get('notas', '')
             ))
             
@@ -236,12 +237,7 @@ class Pedido:
                     item['subtotal']
                 ))
                 
-                # Actualizar stock
-                cursor.execute("""
-                    UPDATE productos 
-                    SET stock = stock - %s 
-                    WHERE id = %s
-                """, (item['cantidad'], item['producto_id']))
+                # Ya no actualizamos el stock aquí, lo haremos en actualizar_estado_pago
             
             # Vaciar carrito
             Carrito.vaciar_carrito(cliente_id)
@@ -261,11 +257,37 @@ class Pedido:
         """Actualiza el estado de pago de un pedido"""
         cursor = mysql.connection.cursor()
         try:
+            # Primero obtenemos el estado actual del pedido
+            cursor.execute("SELECT estado FROM pedidos WHERE id = %s", (pedido_id,))
+            pedido_actual = cursor.fetchone()
+            estado_actual = pedido_actual['estado'] if isinstance(pedido_actual, dict) else pedido_actual[0]
+            
+            # Actualizamos estado del pedido
             cursor.execute("""
                 UPDATE pedidos 
                 SET estado = %s, metodo_pago = %s, referencia_pago = %s 
                 WHERE id = %s
             """, (estado, metodo_pago, referencia, pedido_id))
+            
+            # Si el pedido pasa a estado PAGADO, descontamos el stock
+            if estado == "PAGADO" and estado_actual != "PAGADO":
+                # Obtenemos los detalles del pedido
+                cursor.execute("""
+                    SELECT producto_id, cantidad FROM pedido_detalles
+                    WHERE pedido_id = %s
+                """, (pedido_id,))
+                detalles = cursor.fetchall()
+                
+                # Actualizamos el stock de cada producto
+                for detalle in detalles:
+                    producto_id = detalle['producto_id'] if isinstance(detalle, dict) else detalle[0]
+                    cantidad = detalle['cantidad'] if isinstance(detalle, dict) else detalle[1]
+                    
+                    cursor.execute("""
+                        UPDATE productos 
+                        SET stock = stock - %s 
+                        WHERE id = %s
+                    """, (cantidad, producto_id))
             
             mysql.connection.commit()
             cursor.close()

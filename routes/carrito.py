@@ -4,6 +4,7 @@ from models.carrito import Carrito, Pedido
 from extensions import mysql
 import json
 from flask_wtf.csrf import CSRFProtect
+import time
 
 carrito_bp = Blueprint('carrito', __name__)
 
@@ -22,21 +23,49 @@ def ver_carrito():
     items = Carrito.obtener_items(current_user.id)
     total = Carrito.obtener_total(current_user.id)
     
+    if not items:
+        flash('Tu carrito está vacío. ¡Agrega algunos productos!', 'info')
+    
     return render_template('cart/view.html', 
                            items=items, 
                            total=total)
 
 @carrito_bp.route('/agregar', methods=['POST'])
-@login_required
 def agregar_al_carrito():
     """Agrega un producto al carrito"""
+    # Si es Ajax, no se requiere verificación CSRF
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
     if not current_user.is_authenticated:
         return jsonify({'success': False, 'message': 'Debe iniciar sesión'})
     
     try:
-        data = request.get_json()
-        producto_id = int(data.get('producto_id'))
-        cantidad = int(data.get('cantidad', 1))
+        # Obtener datos de la solicitud
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        
+        # Si no hay datos JSON, intentar obtener de form-data o params
+        if not data:
+            producto_id = request.form.get('producto_id') or request.args.get('producto_id')
+            cantidad = request.form.get('cantidad') or request.args.get('cantidad', 1)
+            
+            if not producto_id:
+                return jsonify({'success': False, 'message': 'ID de producto no proporcionado'})
+                
+            data = {
+                'producto_id': producto_id,
+                'cantidad': cantidad
+            }
+        
+        # Imprimir datos recibidos para depuración
+        print(f"Datos para agregar al carrito: {data}")
+        
+        # Convertir a enteros con manejo de errores
+        try:
+            producto_id = int(data.get('producto_id'))
+            cantidad = int(data.get('cantidad', 1))
+        except (ValueError, TypeError) as e:
+            print(f"Error al convertir datos: {str(e)}, datos: {data}")
+            return jsonify({'success': False, 'message': f'Datos de producto inválidos: {str(e)}'})
         
         # Validar que la cantidad sea positiva
         if cantidad <= 0:
@@ -46,27 +75,54 @@ def agregar_al_carrito():
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT stock, nombre, imagen FROM productos WHERE id = %s", (producto_id,))
         producto = cursor.fetchone()
-        cursor.close()
         
         if not producto:
-            return jsonify({'success': False, 'message': 'Producto no encontrado'})
+            cursor.close()
+            return jsonify({'success': False, 'message': f'Producto con ID {producto_id} no encontrado'})
         
-        # Obtener información del producto
-        stock = producto['stock'] if isinstance(producto, dict) else producto[0]
-        nombre = producto['nombre'] if isinstance(producto, dict) else producto[1]
-        imagen = producto['imagen'] if isinstance(producto, dict) else producto[2]
-        
-        if cantidad > stock:
-            return jsonify({
-                'success': False, 
-                'message': f'No hay suficiente stock disponible. Máximo: {stock}'
-            })
+        # Obtener información del producto con manejo seguro
+        try:
+            if isinstance(producto, dict):
+                stock = int(producto.get('stock', 0) or 0)  # Manejar None como 0
+                nombre = producto.get('nombre', 'Producto')
+                imagen = producto.get('imagen', '')
+            else:
+                stock = int(producto[0] or 0)  # Manejar None como 0
+                nombre = producto[1] if len(producto) > 1 else 'Producto'
+                imagen = producto[2] if len(producto) > 2 else ''
+                
+            print(f"Stock del producto {nombre}: {stock}")
+            
+            if cantidad > stock:
+                cursor.close()
+                return jsonify({
+                    'success': False, 
+                    'message': f'No hay suficiente stock disponible. Máximo: {stock}'
+                })
+        except Exception as e:
+            cursor.close()
+            print(f"Error al procesar información del producto: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al procesar el producto: {str(e)}'})
         
         # Agregar al carrito
-        Carrito.agregar_producto(current_user.id, producto_id, cantidad)
+        try:
+            resultado = Carrito.agregar_producto(current_user.id, producto_id, cantidad)
+            if not resultado:
+                cursor.close()
+                return jsonify({'success': False, 'message': 'Error al agregar al carrito'})
+        except Exception as e:
+            cursor.close()
+            print(f"Error en Carrito.agregar_producto: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al agregar producto: {str(e)}'})
         
         # Obtener conteo actualizado
-        total_items = Carrito.contar_items(current_user.id)
+        try:
+            total_items = Carrito.contar_items(current_user.id)
+        except Exception as e:
+            print(f"Error al contar items: {str(e)}")
+            total_items = 0
+            
+        cursor.close()
         
         return jsonify({
             'success': True, 
@@ -78,7 +134,9 @@ def agregar_al_carrito():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
+        # Registrar el error para depuración
+        print(f"Error al agregar al carrito: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
 @carrito_bp.route('/actualizar', methods=['POST'])
 @login_required
@@ -187,6 +245,22 @@ def checkout():
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT * FROM clientes WHERE id = %s", (current_user.id,))
     cliente = cursor.fetchone()
+    
+    # Obtener la cantidad de pedidos anteriores
+    cursor.execute("SELECT COUNT(*) as total_pedidos FROM pedidos WHERE cliente_id = %s", (current_user.id,))
+    total_pedidos = cursor.fetchone()
+    
+    # Agregar total_pedidos al diccionario del cliente
+    if isinstance(cliente, dict):
+        cliente['total_pedidos'] = total_pedidos['total_pedidos'] if isinstance(total_pedidos, dict) else total_pedidos[0]
+    else:
+        # Si cliente no es un diccionario, convertirlo
+        cliente_dict = {}
+        for i, campo in enumerate(cursor.description):
+            cliente_dict[campo[0]] = cliente[i]
+        cliente_dict['total_pedidos'] = total_pedidos['total_pedidos'] if isinstance(total_pedidos, dict) else total_pedidos[0]
+        cliente = cliente_dict
+    
     cursor.close()
     
     return render_template('carrito/checkout.html', 
@@ -202,6 +276,12 @@ def procesar_pedido():
         flash('Debe iniciar sesión para completar la compra', 'warning')
         return redirect(url_for('auth.login'))
     
+    # Verificar que el carrito no esté vacío
+    items = Carrito.obtener_items(current_user.id)
+    if not items:
+        flash('Tu carrito está vacío. No se puede procesar el pedido.', 'warning')
+        return redirect(url_for('productos.catalogo'))
+    
     # Obtener información del cliente
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT * FROM clientes WHERE id = %s", (current_user.id,))
@@ -215,6 +295,7 @@ def procesar_pedido():
     # Obtener datos del formulario
     telefono = request.form.get('telefono', '')
     direccion = request.form.get('direccion', '')
+    identificacion = request.form.get('identificacion', '')
     guardar_datos = 'guardar_datos' in request.form
     notas = request.form.get('notas', '')
     
@@ -230,9 +311,9 @@ def procesar_pedido():
             # Actualizar perfil del cliente
             cursor.execute("""
                 UPDATE clientes 
-                SET telefono = %s, direccion = %s
+                SET telefono = %s, direccion = %s, identificacion = %s
                 WHERE id = %s
-            """, (telefono, direccion, current_user.id))
+            """, (telefono, direccion, identificacion, current_user.id))
             mysql.connection.commit()
         except Exception as e:
             print(f"Error al actualizar perfil: {e}")
@@ -241,8 +322,20 @@ def procesar_pedido():
     datos_envio = {
         'direccion': direccion,
         'telefono': telefono,
+        'identificacion': identificacion,
         'notas': notas
     }
+    
+    # Verificar stock antes de crear el pedido
+    for item in items:
+        cursor.execute("SELECT stock FROM productos WHERE id = %s", (item['producto_id'],))
+        producto = cursor.fetchone()
+        stock_actual = producto['stock'] if isinstance(producto, dict) else producto[0]
+        
+        if item['cantidad'] > stock_actual:
+            flash(f'No hay suficiente stock para {item["nombre"]}. Stock disponible: {stock_actual}', 'danger')
+            cursor.close()
+            return redirect(url_for('carrito.checkout'))
     
     # Crear pedido
     exito, resultado = Pedido.crear_desde_carrito(current_user.id, datos_envio)
@@ -261,150 +354,31 @@ def procesar_pedido():
 @carrito_bp.route('/pago/<int:pedido_id>')
 @login_required
 def pago(pedido_id):
-    """Muestra la página de pago"""
+    """Muestra la página de pago para un pedido"""
     if not current_user.is_authenticated:
-        flash('Debe iniciar sesión para completar el pago', 'warning')
+        flash('Debe iniciar sesión para procesar el pago', 'warning')
         return redirect(url_for('auth.login'))
     
-    # Verificar que el pedido pertenezca al cliente
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT cliente_id, total FROM pedidos WHERE id = %s", (pedido_id,))
-    pedido = cursor.fetchone()
-    cursor.close()
-    
-    if not pedido:
-        flash('Pedido no encontrado', 'danger')
-        return redirect(url_for('main.index'))
-    
-    cliente_id = pedido['cliente_id'] if isinstance(pedido, dict) else pedido[0]
-    total = pedido['total'] if isinstance(pedido, dict) else pedido[1]
-    
-    if cliente_id != current_user.id:
-        flash('Acceso no autorizado', 'danger')
-        return redirect(url_for('main.index'))
-    
-    return render_template('carrito/pago.html', 
-                           pedido_id=pedido_id,
-                           total=total)
-
-@carrito_bp.route('/procesar-pago/<int:pedido_id>', methods=['POST'])
-@login_required
-def procesar_pago(pedido_id):
-    """Procesa el pago de un pedido"""
-    if not current_user.is_authenticated:
-        flash('Debe iniciar sesión para completar el pago', 'warning')
-        return redirect(url_for('auth.login'))
-    
-    # Verificar que el pedido pertenezca al cliente
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT cliente_id FROM pedidos WHERE id = %s", (pedido_id,))
-    pedido = cursor.fetchone()
-    cursor.close()
-    
-    if not pedido:
-        flash('Pedido no encontrado', 'danger')
-        return redirect(url_for('main.index'))
-    
-    cliente_id = pedido['cliente_id'] if isinstance(pedido, dict) else pedido[0]
-    
-    if cliente_id != current_user.id:
-        flash('Acceso no autorizado', 'danger')
-        return redirect(url_for('main.index'))
-    
-    # Recoger datos del formulario
-    metodo_pago = request.form.get('metodo_pago')
-    
-    if not metodo_pago:
-        flash('Por favor seleccione un método de pago', 'danger')
-        return redirect(url_for('carrito.pago', pedido_id=pedido_id))
-    
-    referencia = ""
-    detalles_pago = {}
-    
-    # Procesar según el método de pago seleccionado
-    if metodo_pago == 'tarjeta':
-        # En un entorno real, aquí iría la integración con una pasarela de pagos
-        detalles_pago = {
-            'card_number': request.form.get('card_number', '')[-4:],  # Solo guardar los últimos 4 dígitos por seguridad
-            'card_name': request.form.get('card_name', ''),
-            'card_expiry': request.form.get('card_expiry', ''),
-        }
-        referencia = f"Tarjeta terminada en {detalles_pago['card_number']}"
-    elif metodo_pago == 'pse':
-        # En un entorno real, aquí iría la integración con PSE
-        detalles_pago = {
-            'banco': request.form.get('pse_bank', ''),
-            'tipo_persona': request.form.get('pse_person_type', ''),
-            'tipo_documento': request.form.get('pse_document_type', ''),
-            'numero_documento': request.form.get('pse_document_number', '')
-        }
-        referencia = f"PSE - Banco: {detalles_pago['banco']}"
-    elif metodo_pago == 'transferencia':
-        referencia = request.form.get('transferencia_referencia', '')
-    elif metodo_pago == 'efectivo':
-        referencia = "Pago en efectivo al recibir"
-    
-    # Convertir detalles_pago a formato JSON para almacenamiento
-    detalles_json = json.dumps(detalles_pago)
-    
-    # Actualizar estado del pedido
+    # Verificar que el pedido pertenece al usuario actual
     cursor = mysql.connection.cursor()
     cursor.execute("""
-        UPDATE pedidos 
-        SET metodo_pago = %s, 
-            referencia_pago = %s,
-            detalles_pago = %s,
-            estado = 'Pagado',
-            fecha_pago = NOW()
-        WHERE id = %s
-    """, (metodo_pago, referencia, detalles_json, pedido_id))
-    mysql.connection.commit()
-    cursor.close()
-    
-    flash('¡Pago realizado con éxito! Su pedido ha sido procesado.', 'success')
-    
-    # Limpiar sesión
-    if 'pedido_id' in session:
-        session.pop('pedido_id')
-    
-    # Vaciar el carrito después del pago exitoso
-    session['carrito'] = []
-    session['carrito_cantidad'] = 0
-    
-    return redirect(url_for('carrito.confirmacion', pedido_id=pedido_id))
-
-@carrito_bp.route('/confirmacion/<int:pedido_id>')
-@login_required
-def confirmacion(pedido_id):
-    """Muestra la página de confirmación del pedido"""
-    if not current_user.is_authenticated:
-        flash('Debe iniciar sesión para ver esta página', 'warning')
-        return redirect(url_for('auth.login'))
-    
-    # Verificar que el pedido pertenezca al cliente
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        SELECT p.*, c.nombre as cliente_nombre, c.email
+        SELECT p.*, c.nombre, c.email 
         FROM pedidos p
         JOIN clientes c ON p.cliente_id = c.id
-        WHERE p.id = %s
-    """, (pedido_id,))
+        WHERE p.id = %s AND p.cliente_id = %s
+    """, (pedido_id, current_user.id))
     pedido = cursor.fetchone()
     
     if not pedido:
-        flash('Pedido no encontrado', 'danger')
-        return redirect(url_for('main.index'))
+        flash('Pedido no encontrado o no autorizado', 'danger')
+        cursor.close()
+        return redirect(url_for('carrito.mis_pedidos'))
     
-    # Convertir a diccionario si no lo es
-    if not isinstance(pedido, dict):
-        columnas = [desc[0] for desc in cursor.description]
-        pedido = dict(zip(columnas, pedido))
-    
-    cliente_id = pedido['cliente_id']
-    
-    if cliente_id != current_user.id:
-        flash('Acceso no autorizado', 'danger')
-        return redirect(url_for('main.index'))
+    # Verificar que el pedido no esté ya pagado
+    if pedido.get('estado', '') == 'PAGADO':
+        flash('Este pedido ya ha sido pagado', 'warning')
+        cursor.close()
+        return redirect(url_for('carrito.confirmacion', pedido_id=pedido_id))
     
     # Obtener detalles del pedido
     cursor.execute("""
@@ -413,21 +387,151 @@ def confirmacion(pedido_id):
         JOIN productos p ON pd.producto_id = p.id
         WHERE pd.pedido_id = %s
     """, (pedido_id,))
-    
-    detalles_raw = cursor.fetchall()
+    detalles = cursor.fetchall()
     cursor.close()
     
-    # Convertir a lista de diccionarios
-    detalles = []
-    for detalle in detalles_raw:
-        if isinstance(detalle, dict):
-            detalles.append(detalle)
-        else:
-            columnas = [desc[0] for desc in cursor.description]
-            detalles.append(dict(zip(columnas, detalle)))
+    # Definir pasarelas de pago disponibles
+    pasarelas_disponibles = ['paypal', 'mercadopago', 'stripe', 'pse']
+    
+    return render_template('carrito/pago.html', 
+                           pedido=pedido, 
+                           detalles=detalles,
+                           pasarelas_disponibles=pasarelas_disponibles)
+
+@carrito_bp.route('/procesar-pago/<int:pedido_id>', methods=['POST'])
+@login_required
+def procesar_pago(pedido_id):
+    """Procesa el pago de un pedido"""
+    if not current_user.is_authenticated:
+        flash('Debe iniciar sesión para procesar el pago', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    # Verificar que el pedido pertenece al usuario actual
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT p.*, c.nombre, c.email 
+        FROM pedidos p
+        JOIN clientes c ON p.cliente_id = c.id
+        WHERE p.id = %s AND p.cliente_id = %s
+    """, (pedido_id, current_user.id))
+    pedido = cursor.fetchone()
+    cursor.close()
+    
+    if not pedido:
+        flash('Pedido no encontrado o no autorizado', 'danger')
+        return redirect(url_for('carrito.mis_pedidos'))
+    
+    # Verificar que el pedido no esté ya pagado
+    if pedido.get('estado', '') == 'PAGADO':
+        flash('Este pedido ya ha sido pagado', 'warning')
+        return redirect(url_for('carrito.confirmacion', pedido_id=pedido_id))
+    
+    # Obtener datos del formulario
+    metodo_pago = request.form.get('metodo_pago')
+    referencia = request.form.get('referencia', '')
+    
+    # Validar método de pago
+    metodos_validos = ['efectivo', 'transferencia', 'oxxo', 'paypal', 'google_pay', 'pse', 'mercadopago']
+    if metodo_pago not in metodos_validos:
+        flash('Método de pago no válido', 'danger')
+        return redirect(url_for('carrito.pago', pedido_id=pedido_id))
+    
+    # Procesar según el método de pago
+    if metodo_pago == 'efectivo':
+        # Para pago en efectivo, solo actualizamos el estado
+        estado = 'PENDIENTE'
+        mensaje = 'Pago en efectivo registrado. Deberás pagar al recoger el pedido.'
+    elif metodo_pago == 'transferencia':
+        # Para transferencia, verificamos que se haya proporcionado una referencia
+        if not referencia:
+            flash('Debe proporcionar el número de referencia de la transferencia', 'warning')
+            return redirect(url_for('carrito.pago', pedido_id=pedido_id))
+        estado = 'PENDIENTE'
+        mensaje = 'Transferencia registrada. Nuestro equipo verificará el pago.'
+    elif metodo_pago == 'oxxo':
+        # Para OXXO, generamos un código de pago (simulado)
+        referencia = f"OXXO-{pedido_id}-{int(time.time())}"
+        estado = 'PENDIENTE'
+        mensaje = f'Código OXXO generado: {referencia}. Debes pagar en cualquier tienda OXXO.'
+    elif metodo_pago == 'pse':
+        # Para PSE, redirigimos al usuario a la ruta de iniciar pago PSE
+        banco_id = request.form.get('banco_pse')
+        tipo_persona = request.form.get('tipo_persona')
+        tipo_documento = request.form.get('tipo_documento')
+        numero_documento = request.form.get('numero_documento')
+        
+        # Verificar que se hayan proporcionado todos los datos necesarios
+        if not banco_id or not tipo_persona or not tipo_documento or not numero_documento:
+            flash('Debe proporcionar todos los datos requeridos para el pago con PSE', 'warning')
+            return redirect(url_for('carrito.pago', pedido_id=pedido_id))
+        
+        # Actualizar estado a pendiente y guardar el método de pago
+        Pedido.actualizar_estado_pago(pedido_id, 'pse', '', 'PENDIENTE')
+        
+        # Redirigir a PSE con los datos necesarios
+        return redirect(url_for('pagos_pse.iniciar', 
+                               factura_id=pedido_id,
+                               banco_id=banco_id,
+                               tipo_persona=tipo_persona,
+                               tipo_documento=tipo_documento,
+                               numero_documento=numero_documento,
+                               email=pedido.get('email', '')))
+    elif metodo_pago in ['paypal', 'google_pay', 'mercadopago']:
+        # Para pagos electrónicos, simulamos un pago exitoso
+        estado = 'PAGADO'
+        mensaje = f'Pago con {metodo_pago.upper()} procesado correctamente.'
+        referencia = f"{metodo_pago.upper()}-{pedido_id}-{int(time.time())}"
+    
+    # Actualizar estado del pago en la base de datos
+    try:
+        Pedido.actualizar_estado_pago(pedido_id, metodo_pago, referencia, estado)
+        
+        # Si el pago fue exitoso, enviar correo de confirmación
+        if estado == 'PAGADO':
+            # Aquí iría el código para enviar correo de confirmación
+            pass
+        
+        flash(mensaje, 'success')
+        return redirect(url_for('carrito.confirmacion', pedido_id=pedido_id))
+    except Exception as e:
+        flash(f'Error al procesar el pago: {str(e)}', 'danger')
+        return redirect(url_for('carrito.pago', pedido_id=pedido_id))
+
+@carrito_bp.route('/confirmacion/<int:pedido_id>')
+@login_required
+def confirmacion(pedido_id):
+    """Muestra la página de confirmación de pedido"""
+    if not current_user.is_authenticated:
+        flash('Debe iniciar sesión para ver la confirmación', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    # Verificar que el pedido pertenece al usuario actual
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT p.*, c.nombre, c.email, c.telefono, c.direccion
+        FROM pedidos p
+        JOIN clientes c ON p.cliente_id = c.id
+        WHERE p.id = %s AND p.cliente_id = %s
+    """, (pedido_id, current_user.id))
+    pedido = cursor.fetchone()
+    
+    if not pedido:
+        flash('Pedido no encontrado o no autorizado', 'danger')
+        cursor.close()
+        return redirect(url_for('carrito.mis_pedidos'))
+    
+    # Obtener detalles del pedido
+    cursor.execute("""
+        SELECT pd.*, p.nombre, p.imagen
+        FROM pedido_detalles pd
+        JOIN productos p ON pd.producto_id = p.id
+        WHERE pd.pedido_id = %s
+    """, (pedido_id,))
+    detalles = cursor.fetchall()
+    cursor.close()
     
     return render_template('carrito/confirmacion.html', 
-                           pedido=pedido,
+                           pedido=pedido, 
                            detalles=detalles)
 
 @carrito_bp.route('/mis-pedidos')
@@ -475,6 +579,7 @@ def actualizar_datos_cliente():
         # Obtener datos del formulario
         telefono = request.form.get('telefono', '')
         direccion = request.form.get('direccion', '')
+        identificacion = request.form.get('identificacion', '')
         
         # Verificar si los datos son válidos
         if not telefono or not direccion:
@@ -484,9 +589,9 @@ def actualizar_datos_cliente():
         cursor = mysql.connection.cursor()
         cursor.execute("""
             UPDATE clientes 
-            SET telefono = %s, direccion = %s
+            SET telefono = %s, direccion = %s, identificacion = %s
             WHERE id = %s
-        """, (telefono, direccion, current_user.id))
+        """, (telefono, direccion, identificacion, current_user.id))
         mysql.connection.commit()
         cursor.close()
         
@@ -494,7 +599,8 @@ def actualizar_datos_cliente():
             'success': True, 
             'message': 'Datos actualizados correctamente',
             'telefono': telefono,
-            'direccion': direccion
+            'direccion': direccion,
+            'identificacion': identificacion
         })
         
     except Exception as e:

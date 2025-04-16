@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Categorías - Ferretería La U{% endblock %}
+
+{% block extra_css %}
+<style>
+    .categorias-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+    
+    .categoria-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .categoria-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .categoria-img {
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .categoria-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .categoria-card:hover .categoria-img img {
+        transform: scale(1.1);
+    }
+    
+    .categoria-info {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .categoria-title {
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        color: var(--text-color);
+    }
+    
+    .categoria-productos {
+        margin-top: auto;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .categoria-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+    
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .section-header h1 {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .section-header p {
+        color: var(--text-muted);
+        max-width: 700px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h1>Categorías de Productos</h1>
+        <p>Explora nuestra amplia variedad de categorías para encontrar todo lo que necesitas para tus proyectos</p>
+    </div>
+    
+    {% if categorias %}
+    <div class="categorias-grid">
+        {% for categoria in categorias %}
+        <a href="{{ url_for('productos.catalogo', categoria=categoria['id']) }}" class="categoria-link">
+            <div class="categoria-card">
+                <div class="categoria-img">
+                    {% if categoria['imagen_muestra'] and categoria['imagen_muestra'] != 'None' and categoria['imagen_muestra'] != 'null' %}
+                    <img src="{{ url_for('static', filename='uploads/productos/' + categoria['imagen_muestra']) }}" alt="{{ categoria['nombre'] }}">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='img/no-image.jpg') }}" alt="{{ categoria['nombre'] }}">
+                    {% endif %}
+                </div>
+                <div class="categoria-info">
+                    <h3 class="categoria-title">{{ categoria['nombre'] }}</h3>
+                    {% if categoria['descripcion'] %}
+                    <p class="categoria-desc">{{ categoria['descripcion']|truncate(100) }}</p>
+                    {% endif %}
+                    <div class="categoria-productos">
+                        {{ categoria['total_productos'] }} producto{{ 's' if categoria['total_productos'] != 1 }}
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p>No hay categorías disponibles en este momento.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

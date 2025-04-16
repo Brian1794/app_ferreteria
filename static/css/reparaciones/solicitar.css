@@ -1,5 +1,6 @@
 .solicitud-container {
     padding: 2rem;
+    background-color: var(--bg-light);
 }
 
 .section-header {
@@ -9,6 +10,7 @@
 .section-header h1 {
     color: var(--primary-color);
     margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .section-header p {
@@ -16,8 +18,8 @@
 }
 
 .info-box {
-    background-color: rgba(33, 150, 243, 0.1);
-    border-left: 4px solid #2196f3;
+    background-color: rgba(58, 89, 209, 0.05);
+    border-left: 4px solid var(--primary-color);
     padding: 1rem;
     margin-bottom: 2rem;
     border-radius: 0 5px 5px 0;
@@ -30,7 +32,7 @@
 
 .info-box i {
     margin-right: 0.5rem;
-    color: #2196f3;
+    color: var(--primary-color);
 }
 
 .form-card {
@@ -39,6 +41,7 @@
     box-shadow: var(--box-shadow);
     padding: 2rem;
     margin-bottom: 2rem;
+    border-top: 3px solid var(--secondary-color);
 }
 
 .form-group {
@@ -59,13 +62,13 @@
     border: 1px solid var(--border-color);
     background-color: var(--input-bg, #fff);
     color: var(--text-color);
-    transition: border-color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .form-control:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 0 0 3px rgba(58, 89, 209, 0.1);
 }
 
 .form-text {
@@ -95,7 +98,7 @@
     padding: 0.75rem 1.5rem;
     border-radius: 5px;
     text-align: center;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.3s;
     text-decoration: none;
     font-weight: 500;
     display: inline-block;
@@ -110,16 +113,18 @@
 
 .btn-primary:hover {
     background-color: var(--primary-dark);
+    transform: translateY(-2px);
 }
 
 .btn-secondary {
-    background-color: #f5f5f5;
+    background-color: var(--bg-light);
     color: var(--text-color);
     border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background-color: #e5e5e5;
+    background-color: var(--border-color);
+    transform: translateY(-2px);
 }
 
 .tips-section {
@@ -127,9 +132,10 @@
 }
 
 .tips-section h3 {
-    color: var(--text-color);
+    color: var(--primary-color);
     margin-bottom: 1.5rem;
     font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .tip-grid {
@@ -144,16 +150,21 @@
     box-shadow: var(--box-shadow);
     padding: 1.5rem;
     text-align: center;
+    transition: transform 0.3s;
+}
+
+.tip-card:hover {
+    transform: translateY(-5px);
 }
 
 .tip-card i {
     font-size: 2rem;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     margin-bottom: 1rem;
 }
 
 .tip-card h4 {
-    color: var(--text-color);
+    color: var(--primary-dark);
     margin-bottom: 0.75rem;
     font-size: 1.1rem;
 }

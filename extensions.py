@@ -25,20 +25,35 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Por favor inicia sesión para acceder a esta página'
 login_manager.login_message_category = 'warning'
 
-def init_app(app):
-    """Inicializa todas las extensiones de Flask con la aplicación"""
-    # Configurar opciones adicionales para MySQL
-    app.config.setdefault('MYSQL_HOST', 'localhost')
-    app.config.setdefault('MYSQL_USER', 'root')
-    app.config.setdefault('MYSQL_PASSWORD', '')
-    app.config.setdefault('MYSQL_DB', 'ferreteria_la_u')
-    app.config.setdefault('MYSQL_CURSORCLASS', 'DictCursor')
+def init_extensions(app):
+    """Inicializa todas las extensiones de Flask"""
     
-    # Configurar MySQL con más conexiones
-    app.config['MYSQL_MAX_CONNECTIONS'] = 20  # Aumentar el número máximo de conexiones
-    app.config['MYSQL_POOL_SIZE'] = 10  # Tamaño del pool de conexiones
-    app.config['MYSQL_POOL_RECYCLE'] = 280  # Tiempo en segundos para reciclar conexiones
+    # Configuración del pool de conexiones MySQL
+    app.config['MYSQL_CONNECTION_TIMEOUT'] = app.config.get('MYSQL_CONNECTION_TIMEOUT', 30)
+    app.config['MYSQL_READ_TIMEOUT'] = app.config.get('MYSQL_READ_TIMEOUT', 30)
+    app.config['MYSQL_WRITE_TIMEOUT'] = app.config.get('MYSQL_WRITE_TIMEOUT', 30)
     
+    # Configurar el pool de conexiones
+    mysql_options = {
+        'pool_name': app.config.get('MYSQL_POOL_NAME', 'ferreteria_pool'),
+        'pool_size': app.config.get('MYSQL_POOL_SIZE', 10),
+        'connect_timeout': app.config['MYSQL_CONNECTION_TIMEOUT'],
+        'read_timeout': app.config['MYSQL_READ_TIMEOUT'],
+        'write_timeout': app.config['MYSQL_WRITE_TIMEOUT'],
+        'charset': 'utf8mb4',
+        'use_unicode': True
+    }
+    
+    # Si estamos en producción, configurar SSL
+    if not app.debug and not app.testing:
+        mysql_options['ssl'] = {'ca': '/etc/ssl/certs/ca-certificates.crt'}
+    
+    # Inicializar MySQL con la configuración del pool
+    mysql.init_app(app)
+    
+    # Registrar la función de limpieza para cerrar conexiones
+    app.teardown_appcontext(close_mysql_connection)
+
     # Configuración del correo electrónico - más flexible para cualquier proveedor
     app.config.setdefault('MAIL_SERVER', os.environ.get('MAIL_SERVER', 'smtp.gmail.com'))
     app.config.setdefault('MAIL_PORT', int(os.environ.get('MAIL_PORT', 587)))
@@ -51,7 +66,6 @@ def init_app(app):
     app.config.setdefault('MAIL_ASCII_ATTACHMENTS', os.environ.get('MAIL_ASCII_ATTACHMENTS', 'False').lower() == 'true')
     
     # Inicializar extensiones con la aplicación
-    mysql.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
@@ -73,100 +87,147 @@ def init_app(app):
             'empresa_email': os.environ.get('EMPRESA_EMAIL', 'michael.alfonso.rodri@gmail.com'),
             'empresa_whatsapp': os.environ.get('EMPRESA_WHATSAPP', '3103200632')
         }
-    
-    # Reemplazar el teardown de MySQL para evitar el error 2006
-    # Primero guardamos una referencia al teardown original
-    original_teardown = mysql.teardown
-    
-    # Eliminar el handler de teardown original
-    app.teardown_appcontext_funcs = [f for f in app.teardown_appcontext_funcs 
-                                    if f is not original_teardown]
-    
-    # Registrar nuestro propio teardown personalizado
-    @app.teardown_appcontext
-    def safe_mysql_teardown(exception):
-        """Versión segura del teardown que maneja correctamente errores de conexión"""
-        try:
-            if hasattr(g, 'mysql_db'):
-                if hasattr(g.mysql_db, '_con') and g.mysql_db._con and g.mysql_db._con.open:
-                    try:
-                        g.mysql_db.close()
-                    except MySQLdb.OperationalError as e:
-                        # Ignoramos el error 2006 específicamente
-                        if e.args[0] != 2006:  # Si no es el error 2006, lo registramos
-                            app.logger.warning(f"Error al cerrar conexión MySQL: {e}")
-                    except Exception as e:
-                        app.logger.warning(f"Error desconocido al cerrar conexión MySQL: {e}")
-        except Exception as e:
-            app.logger.warning(f"Error general en teardown de MySQL: {e}")
-    
-    # Asegurarse de cerrar conexiones al finalizar
-    @app.teardown_appcontext
-    def close_db_connection(exception):
-        db = g.pop('db', None)
-        if db is not None:
-            try:
-                db.close()
-            except Exception as e:
-                app.logger.warning(f"Error al cerrar conexión de la base de datos: {e}")
 
 def get_connection():
     """
-    Obtiene una conexión a la base de datos desde el pool.
-    Si ya existe una conexión en el contexto actual, la reutiliza.
+    Obtiene una conexión del pool de MySQL.
+    Reutiliza la conexión si ya existe en el contexto actual.
     """
     if 'db' not in g:
         g.db = mysql.connection
     return g.db
 
-def get_cursor():
-    """Obtiene un cursor normal de MySQL"""
-    return mysql.connection.cursor()
+def get_cursor(dictionary=False):
+    """
+    Obtiene un cursor MySQL, opcionalmente configurado para devolver diccionarios.
+    
+    Args:
+        dictionary (bool): Si es True, devuelve resultados como diccionarios.
+    
+    Returns:
+        cursor: Un cursor MySQL configurado.
+    """
+    conn = get_connection()
+    return conn.cursor(DictCursor) if dictionary else conn.cursor()
 
 def get_dict_cursor():
-    """Obtiene un cursor de diccionario de MySQL"""
-    return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    """
+    Obtiene un cursor MySQL configurado para devolver resultados como diccionarios.
+    Esta es una función de conveniencia que llama a get_cursor(dictionary=True).
+    
+    Returns:
+        cursor: Un cursor MySQL configurado para devolver diccionarios.
+    """
+    return get_cursor(dictionary=True)
 
 def retry_on_connection_error(max_retries=3, delay=1):
     """
-    Decorador para reintentar una función si ocurre un error de conexión MySQL.
-    Útil para operaciones de base de datos que pueden fallar por timeout.
+    Decorador que reintenta una función cuando ocurre un error de conexión MySQL.
+    
+    Args:
+        max_retries (int): Número máximo de intentos
+        delay (int): Tiempo de espera entre intentos en segundos
     """
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            retries = 0
-            while retries < max_retries:
+            last_error = None
+            for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
-                except (MySQLdb.OperationalError, MySQLdb.InterfaceError) as e:
-                    if retries == max_retries - 1:
-                        raise  # Si ya agotamos los reintentos, propagar la excepción
-                    
-                    logging.warning(f"Error de conexión a la base de datos: {e}. Reintentando ({retries+1}/{max_retries})...")
-                    time.sleep(delay)  # Esperar antes de reintentar
-                    retries += 1
+                except MySQLdb.OperationalError as e:
+                    last_error = e
+                    if attempt < max_retries - 1:
+                        current_app.logger.warning(
+                            f"Error de conexión en {func.__name__}, "
+                            f"reintentando ({attempt + 1}/{max_retries}): {e}"
+                        )
+                        time.sleep(delay)
+                    continue
+            current_app.logger.error(
+                f"Error de conexión persistente en {func.__name__} "
+                f"después de {max_retries} intentos: {last_error}"
+            )
+            raise last_error
         return wrapper
     return decorator
 
-def close_connection(e=None):
+def close_mysql_connection(e=None):
     """
-    Cierra la conexión a la base de datos y la devuelve al pool.
-    Esta función debe ser llamada cuando finaliza una solicitud.
+    Cierra la conexión MySQL y la devuelve al pool.
+    Esta función se llama automáticamente al final de cada solicitud.
+    
+    Args:
+        e: Excepción que provocó el cierre (si existe).
+    """
+    db = g.pop('db', None)
+    
+    if db is not None:
+        try:
+            # Asegurarse de que no hay transacciones pendientes
+            db.rollback()
+            
+            # Cerrar todos los cursores abiertos
+            if hasattr(db, '_cursors'):
+                for cursor in db._cursors:
+                    try:
+                        cursor.close()
+                    except Exception:
+                        pass
+            
+            # Devolver la conexión al pool
+            db.close()
+            
+        except MySQLdb.OperationalError as e:
+            # Ignorar específicamente el error de servidor desconectado
+            if e.args[0] != 2006:  # MySQL server has gone away
+                current_app.logger.warning(f"Error operacional al cerrar la conexión: {e}")
+        except Exception as e:
+            current_app.logger.error(f"Error al cerrar la conexión MySQL: {e}")
+
+def check_connection_limits():
+    """
+    Verifica los límites actuales de conexiones MySQL.
+    Útil para diagnóstico de problemas de conexión.
+    
+    Returns:
+        dict: Información sobre los límites de conexión.
+    """
+    cursor = get_cursor(dictionary=True)
+    try:
+        # Verificar variables globales relacionadas con conexiones
+        cursor.execute("""
+            SHOW VARIABLES WHERE Variable_name IN 
+            ('max_connections', 'max_user_connections', 'wait_timeout', 
+             'interactive_timeout', 'connect_timeout')
+        """)
+        variables = {row['Variable_name']: row['Value'] for row in cursor.fetchall()}
+        
+        # Obtener conexiones actuales
+        cursor.execute("SHOW STATUS WHERE Variable_name = 'Threads_connected'")
+        current_connections = cursor.fetchone()['Value']
+        
+        return {
+            'limits': variables,
+            'current_connections': current_connections
+        }
+    finally:
+        cursor.close()
+
+def verify_connection():
+    """
+    Verifica que la conexión MySQL está funcionando correctamente.
+    
+    Returns:
+        bool: True si la conexión está activa, False en caso contrario.
     """
     try:
-        db = g.pop('db', None)
-        if db is not None:
-            if hasattr(db, '_con') and db._con and db._con.open:
-                try:
-                    db.close()
-                except MySQLdb.OperationalError as e:
-                    # Ignorar específicamente el error 2006
-                    if e.args[0] != 2006:
-                        print(f"Aviso: Error al cerrar la conexión a la base de datos: {e}")
-                except Exception as e:
-                    print(f"Aviso: Error desconocido al cerrar la conexión: {e}")
+        cursor = get_cursor()
+        cursor.execute("SELECT 1")
+        return cursor.fetchone()[0] == 1
     except Exception as e:
-        # Capturar y loggear el error pero no propagarlo
-        print(f"Aviso: Error general al gestionar la conexión a la base de datos: {e}")
-        pass 
+        current_app.logger.error(f"Error al verificar la conexión MySQL: {e}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()

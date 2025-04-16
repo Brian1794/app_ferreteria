@@ -20,8 +20,8 @@
                 <div class="card-header bg-primary text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Información del Pedido</h5>
-                        <span class="badge badge-{{ 'success' if pedido.estado_pago == 'PAGADO' else 'warning' }} p-2">
-                            {% if pedido.estado_pago == 'PAGADO' %}
+                        <span class="badge badge-{{ 'success' if pedido.estado == 'PAGADO' else 'warning' }} p-2">
+                            {% if pedido.estado == 'PAGADO' %}
                                 <i class="fas fa-check-circle"></i> Pagado
                             {% else %}
                                 <i class="fas fa-clock"></i> Pendiente
@@ -34,15 +34,15 @@
                         <div class="col-md-6">
                             <h6>Detalles del Pedido</h6>
                             <p><strong>Número de Pedido:</strong> #{{ pedido.id }}</p>
-                            <p><strong>Fecha:</strong> {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                            <p><strong>Fecha:</strong> {{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') if pedido.fecha_pedido else '-' }}</p>
                             <p><strong>Estado:</strong> 
-                                {% if pedido.estado == 'Pagado' %}
+                                {% if pedido.estado == 'PAGADO' %}
                                 <span class="badge bg-success">Pagado</span>
                                 {% else %}
                                 <span class="badge bg-warning">{{ pedido.estado }}</span>
                                 {% endif %}
                             </p>
-                            <p><strong>Estado del Pago:</strong> {{ pedido.estado_pago }}</p>
+                            <p><strong>Estado del Pago:</strong> {{ pedido.estado }}</p>
                             <p>
                                 <strong>Método de Pago:</strong>
                                 {% if pedido.metodo_pago == 'transferencia' %}
@@ -52,8 +52,6 @@
                                     {% endif %}
                                 {% elif pedido.metodo_pago == 'efectivo' %}
                                     <i class="fas fa-money-bill-wave"></i> Pago en Efectivo al recoger
-                                {% elif pedido.metodo_pago == 'oxxo' %}
-                                    <i class="fas fa-store"></i> Pago en OXXO
                                 {% else %}
                                     {{ pedido.metodo_pago }}
                                 {% endif %}
@@ -156,7 +154,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
                         <div class="mr-3">
-                            {% if pedido.estado_pago == 'PAGADO' %}
+                            {% if pedido.estado == 'PAGADO' %}
                                 <span class="fa-stack fa-lg">
                                     <i class="fas fa-circle fa-stack-2x text-success"></i>
                                     <i class="fas fa-check fa-stack-1x fa-inverse"></i>
@@ -171,7 +169,7 @@
                         <div>
                             <h6 class="mb-0">Estado actual</h6>
                             <p class="mb-0">
-                                {% if pedido.estado_pago == 'PAGADO' %}
+                                {% if pedido.estado == 'PAGADO' %}
                                     Pedido pagado y en procesamiento
                                 {% else %}
                                     Pendiente de pago
@@ -180,7 +178,7 @@
                         </div>
                     </div>
                     
-                    {% if pedido.estado_pago != 'PAGADO' %}
+                    {% if pedido.estado != 'PAGADO' %}
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle mr-2"></i> Tu pedido está pendiente de pago.
                         </div>

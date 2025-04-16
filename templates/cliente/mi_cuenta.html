@@ -2,37 +2,76 @@
 
 {% block title %}Mi Cuenta - Ferretería "La U"{% endblock %}
 
-{% block extra_css %}
+{% block custom_css %}
 <style>
+    :root {
+        --color-primary: #2c3e50;
+        --color-secondary: #3498db;
+        --color-success: #2ecc71;
+        --color-warning: #f39c12;
+        --color-danger: #e74c3c;
+        --color-light: #ecf0f1;
+        --color-dark: #2c3e50;
+        --border-radius: 0.75rem;
+        --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
     .perfil-container {
-        max-width: 900px;
-        margin: 0 auto;
+        max-width: 1000px;
+        margin: 2rem auto;
+        border-radius: var(--border-radius);
+        background-color: #fff;
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
     }
     
     .perfil-header {
         display: flex;
-        align-items: center;
-        gap: 2rem;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        box-shadow: var(--box-shadow);
+        align-items: flex-start;
+        gap: 2.5rem;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .perfil-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 25%, transparent 25%,
+                          transparent 50%, rgba(52, 152, 219, 0.1) 50%, rgba(52, 152, 219, 0.1) 75%,
+                          transparent 75%, transparent);
+        background-size: 20px 20px;
+        opacity: 0.2;
+        mix-blend-mode: overlay;
     }
     
     .perfil-foto {
-        width: 120px;
-        height: 120px;
+        width: 160px;
+        height: 160px;
         border-radius: 50%;
-        object-fit: cover;
-        background-color: var(--bg-light);
-        border: 4px solid var(--primary-color);
+        background-color: #fff;
+        border: 6px solid rgba(255, 255, 255, 0.3);
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 3rem;
-        color: var(--primary-color);
+        font-size: 4rem;
+        color: var(--color-primary);
         overflow: hidden;
+        position: relative;
+        z-index: 1;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .perfil-foto:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.4);
     }
     
     .perfil-foto img {
@@ -41,403 +80,588 @@
         object-fit: cover;
     }
     
+    .cambiar-foto-btn {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background-color: var(--color-secondary);
+        color: white;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        z-index: 2;
+    }
+    
+    .cambiar-foto-btn:hover {
+        background-color: #2980b9;
+        transform: scale(1.1);
+    }
+    
     .perfil-info {
         flex: 1;
+        position: relative;
+        z-index: 1;
     }
     
     .perfil-nombre {
-        font-size: 1.8rem;
+        font-size: 2.5rem;
         margin-bottom: 0.5rem;
-        color: var(--text-color);
+        color: white;
+        font-weight: 700;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        letter-spacing: -0.5px;
     }
     
     .perfil-cargo {
-        font-size: 1.2rem;
-        color: var(--primary-color);
+        display: inline-block;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
         font-weight: 500;
-        margin-bottom: 1rem;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .perfil-detalle {
         display: grid;
-        grid-template-columns: 150px 1fr;
-        row-gap: 0.5rem;
-        font-size: 1rem;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem 2rem;
+        margin-top: 1.5rem;
     }
     
     .perfil-label {
-        color: var(--text-muted);
-        font-weight: 500;
+        font-weight: 600;
+        opacity: 0.9;
     }
     
     .perfil-value {
-        color: var(--text-color);
+        color: #fff;
     }
     
-    .stats-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        padding: 1.5rem;
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        box-shadow: var(--box-shadow);
-        transition: transform 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-    
-    .stat-icon {
-        display: inline-block;
-        width: 50px;
-        height: 50px;
-        background-color: rgba(var(--primary-rgb), 0.1);
-        border-radius: 50%;
-        text-align: center;
-        line-height: 50px;
-        font-size: 1.5rem;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-    }
-    
+    /* Estilos para las acciones */
     .acciones-container {
-        margin-top: 1rem;
-        margin-bottom: 2rem;
         display: flex;
-        gap: 1rem;
+        justify-content: center;
+        gap: 1.2rem;
+        margin: 2rem;
         flex-wrap: wrap;
     }
     
     .accion-btn {
-        padding: 0.8rem 1.5rem;
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-weight: 600;
-        text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        transition: background-color 0.3s;
+        padding: 0.8rem 1.5rem;
+        border-radius: var(--border-radius);
+        background-color: var(--color-secondary);
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
     }
     
     .accion-btn:hover {
-        background-color: var(--primary-dark);
-        text-decoration: none;
+        background-color: #2980b9;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         color: white;
+        text-decoration: none;
+    }
+    
+    .accion-btn i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
     }
     
     .accion-btn-outline {
         background-color: transparent;
-        border: 1px solid var(--primary-color);
-        color: var(--primary-color);
+        border: 1px solid var(--color-secondary);
+        color: var(--color-secondary);
     }
     
     .accion-btn-outline:hover {
-        background-color: var(--primary-color);
+        background-color: var(--color-secondary);
         color: white;
     }
     
-    /* Estilos para la historia de actividad */
-    .historial-container {
-        margin-top: 2rem;
+    /* Estilos para las estadísticas */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 0 2rem 2rem;
     }
-
+    
+    .stat-card {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        background-color: #fff;
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: var(--transition);
+        border: 1px solid var(--color-light);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--box-shadow);
+        border-color: var(--color-secondary);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        top: 0;
+        left: 0;
+        background: var(--color-secondary);
+    }
+    
+    .stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: rgba(52, 152, 219, 0.1);
+        color: var(--color-secondary);
+        margin: 0 auto 1.5rem;
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1);
+        background-color: var(--color-secondary);
+        color: white;
+    }
+    
+    .stat-icon i {
+        font-size: 2rem;
+    }
+    
+    .stat-card h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card p {
+        font-size: 0.9rem;
+        color: var(--color-dark);
+        opacity: 0.7;
+    }
+    
+    /* Estilos para el historial */
+    .historial-container {
+        padding: 2rem;
+    }
+    
     .historial-titulo {
         font-size: 1.5rem;
-        margin-bottom: 1rem;
-        color: var(--text-color);
-        border-bottom: 2px solid var(--border-color);
-        padding-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--color-secondary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .historial-titulo i {
+        margin-right: 0.75rem;
+        color: var(--color-secondary);
     }
     
     .tabla-historial {
         width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 2rem;
-    }
-    
-    .tabla-historial th, 
-    .tabla-historial td {
-        padding: 0.75rem;
-        text-align: left;
+        border-collapse: separate;
+        border-spacing: 0;
     }
     
     .tabla-historial th {
-        background-color: rgba(var(--primary-rgb), 0.1);
-        color: var(--text-color);
+        background-color: rgba(52, 152, 219, 0.1);
+        color: var(--color-primary);
         font-weight: 600;
+        padding: 1rem;
+        text-align: left;
     }
     
-    .tabla-historial tr {
-        border-bottom: 1px solid var(--border-color);
+    .tabla-historial th:first-child {
+        border-top-left-radius: var(--border-radius);
     }
     
-    .tabla-historial tr:last-child {
+    .tabla-historial th:last-child {
+        border-top-right-radius: var(--border-radius);
+    }
+    
+    .tabla-historial td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--color-light);
+    }
+    
+    .tabla-historial tr:last-child td {
         border-bottom: none;
     }
     
-    .tabla-historial tr:nth-child(even) {
-        background-color: var(--hover-bg);
+    .tabla-historial tr:hover td {
+        background-color: rgba(52, 152, 219, 0.03);
     }
     
     .estado-badge {
         display: inline-block;
-        padding: 0.25rem 0.75rem;
+        padding: 0.3rem 0.8rem;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 600;
+        text-transform: uppercase;
     }
     
-    .estado-pagada {
-        background-color: #28a745;
-        color: white;
+    .estado-pendiente, .estado-recibido {
+        background-color: rgba(243, 156, 18, 0.1);
+        color: var(--color-warning);
     }
     
-    .estado-pendiente {
-        background-color: #ffc107;
-        color: #212529;
+    .estado-en-proceso, .estado-diagnostico, .estado-reparacion {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: var(--color-secondary);
     }
     
-    .estado-cancelada {
-        background-color: #dc3545;
-        color: white;
+    .estado-completado, .estado-listo, .estado-entregado {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: var(--color-success);
     }
     
-    .estado-recibido {
-        background-color: #17a2b8;
-        color: white;
-    }
-    
-    .estado-en_progreso {
-        background-color: #007bff;
-        color: white;
-    }
-    
-    .estado-listo {
-        background-color: #28a745;
-        color: white;
+    .estado-cancelado {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: var(--color-danger);
     }
     
     .empty-state {
         text-align: center;
-        padding: 2rem;
-        color: var(--text-muted);
+        padding: 3rem 1rem;
     }
     
     .empty-state i {
         font-size: 3rem;
+        color: var(--color-secondary);
+        opacity: 0.5;
         margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: var(--color-dark);
+        opacity: 0.7;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Estilos para el modal */
+    .modal-content {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        border: none;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+    
+    .modal-title {
+        font-weight: 600;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .preview-container {
+        background-color: var(--color-light);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        text-align: center;
     }
     
     @media (max-width: 768px) {
         .perfil-header {
             flex-direction: column;
+            align-items: center;
             text-align: center;
             gap: 1rem;
+            padding: 2rem 1.5rem;
+        }
+        
+        .perfil-foto {
+            margin-right: 0;
+            margin-bottom: 1.5rem;
+            width: 140px;
+            height: 140px;
         }
         
         .perfil-detalle {
             grid-template-columns: 1fr;
+            gap: 0.5rem;
             text-align: center;
         }
         
-        .perfil-label {
-            font-weight: 600;
-            margin-top: 0.5rem;
+        .perfil-label, .perfil-value {
+            width: 100%;
         }
         
         .acciones-container {
-            justify-content: center;
+            flex-direction: column;
+            padding: 1rem;
         }
         
-        .tabla-historial {
-            display: block;
-            overflow-x: auto;
+        .accion-btn {
+            width: 100%;
+            justify-content: center;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="perfil-container">
-    <div class="perfil-header">
-        <div class="perfil-foto">
-            {% if current_user.foto_perfil %}
-                <img src="{{ url_for('static', filename='uploads/perfiles/' + current_user.foto_perfil) }}" alt="{{ current_user.nombre }}">
+<div class="container">
+    <div class="perfil-container">
+        <div class="perfil-header">
+            <div class="perfil-foto">
+                {% if cliente.foto_perfil %}
+                <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="Foto de perfil">
+                {% else %}
+                <i class="fas fa-user-circle"></i>
+                {% endif %}
+                <button id="editarFotoPerfilBtn" class="cambiar-foto-btn" title="Cambiar foto">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            <div class="perfil-info">
+                <h1 class="perfil-nombre">{{ cliente.nombre }} {{ cliente.apellido|default('') }}</h1>
+                <div class="perfil-cargo">Cliente</div>
+                <div class="perfil-detalle">
+                    <div class="perfil-label">Email:</div>
+                    <div class="perfil-value">{{ cliente.email }}</div>
+                    <div class="perfil-label">Teléfono:</div>
+                    <div class="perfil-value">{{ cliente.telefono|default('No especificado') }}</div>
+                    <div class="perfil-label">Dirección:</div>
+                    <div class="perfil-value">{{ cliente.direccion|default('No especificada') }}</div>
+                    <div class="perfil-label">Fecha de registro:</div>
+                    <div class="perfil-value">{{ cliente.fecha_registro.strftime('%d/%m/%Y') if cliente.fecha_registro else 'No disponible' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="acciones-container">
+            <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="accion-btn accion-btn-outline">
+                <i class="fas fa-user-edit"></i> Editar Perfil
+            </a>
+            <a href="{{ url_for('auth.cambiar_password') }}" class="accion-btn">
+                <i class="fas fa-key"></i> Cambiar Contraseña
+            </a>
+            <a href="{{ url_for('tienda.index') }}" class="accion-btn">
+                <i class="fas fa-shopping-cart"></i> Ir a Comprar
+            </a>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h2>{{ total_compras|default(0) }}</h2>
+                <p>Compras Realizadas</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h2>{{ total_reparaciones|default(0) }}</h2>
+                <p>Servicios Solicitados</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h2>${{ (total_gastado|default(0))|round(2) }}</h2>
+                <p>Total Gastado</p>
+        </div>
+    </div>
+    
+    <!-- Historial de Compras -->
+        <div class="historial-container">
+            <h2 class="historial-titulo">
+                <i class="fas fa-shopping-bag me-2"></i>
+                Últimas Compras
+            </h2>
+            {% if ultimas_compras %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Productos</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for compra in ultimas_compras %}
+                        <tr>
+                            <td>{{ compra.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ compra.total_productos }} productos</td>
+                            <td>${{ compra.total|round(2) }}</td>
+                            <td>
+                                <span class="badge bg-{{ compra.estado|lower }}">
+                                    {{ compra.estado }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-                <i class="fas fa-user"></i>
+            <div class="empty-state">
+                <i class="fas fa-shopping-bag"></i>
+                <p>Aún no has realizado ninguna compra</p>
+                <a href="{{ url_for('tienda.index') }}" class="btn btn-primary">
+                    Ir a la Tienda
+                </a>
+            </div>
             {% endif %}
         </div>
         
-        <div class="perfil-info">
-            <h1 class="perfil-nombre">{{ current_user.nombre }}</h1>
-            <div class="perfil-cargo">Cliente</div>
-            
-            <div class="perfil-detalle">
-                <div class="perfil-label">Email:</div>
-                <div class="perfil-value">{{ current_user.email }}</div>
-                
-                <div class="perfil-label">Teléfono:</div>
-                <div class="perfil-value">{{ current_user.telefono|default('No registrado') }}</div>
-                
-                <div class="perfil-label">Dirección:</div>
-                <div class="perfil-value">{{ current_user.direccion|default('No registrada') }}</div>
+        <!-- Historial de Reparaciones -->
+        <div class="historial-container">
+            <h2 class="historial-titulo">
+                <i class="fas fa-tools me-2"></i>
+                Últimas Reparaciones
+            </h2>
+            {% if ultimas_reparaciones %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Técnico</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reparacion in ultimas_reparaciones %}
+                        <tr>
+                            <td>{{ reparacion.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ reparacion.descripcion }}</td>
+                            <td>
+                                <span class="badge bg-{{ reparacion.estado|lower }}">
+                                    {{ reparacion.estado }}
+                                </span>
+                            </td>
+                            <td>{{ reparacion.tecnico.nombre if reparacion.tecnico else 'Sin asignar' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </div>
-    
-    <div class="acciones-container">
-        <a href="{{ url_for('auth.cambiar_password') }}" class="accion-btn">
-            <i class="fas fa-key"></i> Cambiar Contraseña
-        </a>
-        
-        <a href="#" id="editarFotoPerfilBtn" class="accion-btn accion-btn-outline">
-            <i class="fas fa-camera"></i> Cambiar Foto de Perfil
-        </a>
-        
-        <a href="{{ url_for('clientes.editar', cliente_id=current_user.id) }}" class="accion-btn accion-btn-outline">
-            <i class="fas fa-edit"></i> Editar Perfil
-        </a>
-    </div>
-    
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-            <div class="perfil-cargo">Mis Compras</div>
-            <p>Consulta tu historial de compras, facturas y estado de tus pedidos en nuestra tienda.</p>
-            <a href="{{ url_for('tienda.mis_compras') }}" class="accion-btn accion-btn-outline">Ver compras</a>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-tools"></i>
-            </div>
-            <div class="perfil-cargo">Mis Reparaciones</div>
-            <p>Revisa el estado de tus servicios de reparación, diagnósticos y detalles técnicos.</p>
-            <a href="{{ url_for('reparaciones.mis_reparaciones') }}" class="accion-btn accion-btn-outline">Ver reparaciones</a>
-        </div>
-    </div>
-    
-    <!-- Últimas compras -->
-    <div class="historial-container">
-        <h2 class="historial-titulo">
-            <i class="fas fa-shopping-bag mr-2"></i> Últimas Compras
-        </h2>
-        
-        {% if ultimas_compras %}
-            <table class="tabla-historial">
-                <thead>
-                    <tr>
-                        <th>Nº Factura</th>
-                        <th>Fecha</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for compra in ultimas_compras %}
-                    <tr>
-                        <td>#{{ compra.id }}</td>
-                        <td>{{ compra.fecha.strftime('%d/%m/%Y') if compra.fecha else '' }}</td>
-                        <td>${{ "{:,.2f}".format(compra.total|float) }}</td>
-                        <td>
-                            <span class="estado-badge estado-{{ compra.estado|lower }}">
-                                {{ compra.estado }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('tienda.compra_exitosa', venta_id=compra.id) }}" class="accion-btn accion-btn-outline">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="text-center mt-3">
-                <a href="{{ url_for('tienda.mis_compras') }}" class="accion-btn">Ver todas mis compras</a>
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <i class="fas fa-shopping-cart"></i>
-                <p>No tienes compras realizadas todavía.</p>
-                <a href="{{ url_for('productos.catalogo') }}" class="accion-btn">Ir a la tienda</a>
-            </div>
-        {% endif %}
-    </div>
-    
-    <!-- Reparaciones activas -->
-    <div class="historial-container">
-        <h2 class="historial-titulo">
-            <i class="fas fa-tools mr-2"></i> Reparaciones Activas
-        </h2>
-        
-        {% if reparaciones_activas %}
-            <table class="tabla-historial">
-                <thead>
-                    <tr>
-                        <th>Nº</th>
-                        <th>Descripción</th>
-                        <th>Fecha recepción</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for reparacion in reparaciones_activas %}
-                    <tr>
-                        <td>#{{ reparacion.id }}</td>
-                        <td>{{ reparacion.descripcion }}</td>
-                        <td>{% if reparacion.fecha_recepcion %}{{ reparacion.fecha_recepcion.strftime('%d/%m/%Y') }}{% else %}Pendiente{% endif %}</td>
-                        <td>
-                            <span class="estado-badge estado-{{ reparacion.estado|lower }}">
-                                {{ reparacion.estado }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="accion-btn accion-btn-outline">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
+            {% else %}
             <div class="empty-state">
                 <i class="fas fa-tools"></i>
-                <p>No tienes reparaciones activas en este momento.</p>
-                <a href="{{ url_for('reparaciones.solicitud') }}" class="accion-btn">Solicitar reparación</a>
+                <p>Aún no has solicitado ninguna reparación</p>
+                <a href="{{ url_for('reparaciones.solicitar') }}" class="btn btn-primary">
+                    Solicitar Reparación
+                </a>
             </div>
-        {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar foto de perfil -->
+<div class="modal fade" id="modalCambiarFoto" tabindex="-1" aria-labelledby="cambiarFotoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cambiarFotoLabel">Cambiar Foto de Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form action="{{ url_for('auth.actualizar_foto_perfil') }}" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fotoPerfil" class="form-label">Selecciona una nueva imagen</label>
+                        <input type="file" class="form-control" id="fotoPerfil" name="foto" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="preview-container text-center" style="display: none;">
+                            <p>Vista previa:</p>
+                            <img id="preview-image" src="#" alt="Vista previa" style="max-width: 100%; max-height: 200px; border-radius: 5px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Botón para editar foto de perfil
         const editarFotoBtn = document.getElementById('editarFotoPerfilBtn');
-        const modalCambiarFoto = new bootstrap.Modal(document.getElementById('modalCambiarFoto'));
         
         if (editarFotoBtn) {
             editarFotoBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                const modalElement = document.getElementById('modalCambiarFoto');
+                if (modalElement) {
+                    const modalCambiarFoto = new bootstrap.Modal(modalElement);
                 modalCambiarFoto.show();
+                } else {
+                    console.error('El modal #modalCambiarFoto no existe en el DOM');
+                }
+            });
+        }
+        
+        // Previsualizar la foto seleccionada
+        const fotoPerfil = document.getElementById('fotoPerfil');
+        if (fotoPerfil) {
+            fotoPerfil.addEventListener('change', function() {
+                const previewContainer = document.querySelector('.preview-container');
+                const previewImage = document.getElementById('preview-image');
+                
+                if (previewContainer && previewImage && this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
             });
         }
     });
 </script>
-{% endblock %} 
+{% endblock %}

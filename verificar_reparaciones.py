@@ -1,24 +1,44 @@
 from app import app, mysql
 import sys
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def verificar_tabla_reparaciones():
     try:
-        print("Conectando a la base de datos...")
+        logger.info("Conectando a la base de datos...")
         with app.app_context():
-            cursor = mysql.connection.cursor()
+            # Verificar que mysql existe y tiene el atributo connection
+            if not hasattr(mysql, 'connection'):
+                logger.error("Objeto mysql no tiene atributo connection")
+                return False
+                
+            # Obtener la conexión de manera segura
+            connection = mysql.connection
+            if not connection:
+                logger.error("No se pudo establecer conexión a la base de datos")
+                return False
+            
+            cursor = connection.cursor()
+            if not cursor:
+                logger.error("No se pudo obtener el cursor de la base de datos")
+                return False
             
             # Verificar si la tabla existe
             cursor.execute("SHOW TABLES LIKE 'reparaciones'")
             if cursor.fetchone():
-                print("Tabla 'reparaciones' encontrada")
+                logger.info("Tabla 'reparaciones' encontrada")
                 
                 # Describir la estructura de la tabla
                 cursor.execute("DESCRIBE reparaciones")
                 columnas = cursor.fetchall()
                 
-                print("\nEstructura de la tabla reparaciones:")
+                logger.info("Estructura de la tabla reparaciones:")
                 for columna in columnas:
-                    print(f"{columna[0]} - {columna[1]} - {columna[2]}")
+                    logger.info(f"{columna[0]} - {columna[1]} - {columna[2]}")
                 
                 # Verificar campos necesarios para registro de solicitud
                 campos_requeridos = {
@@ -38,43 +58,74 @@ def verificar_tabla_reparaciones():
                 # Verificar campos faltantes
                 campos_faltantes = [campo for campo, existe in campos_requeridos.items() if not existe]
                 if campos_faltantes:
-                    print("\nCAMPOS FALTANTES en la tabla reparaciones:")
+                    logger.info("CAMPOS FALTANTES en la tabla reparaciones:")
                     for campo in campos_faltantes:
-                        print(f" - {campo}")
+                        logger.info(f" - {campo}")
                     
                     # Agregar campos faltantes
-                    print("\nAgregando campos faltantes...")
+                    logger.info("Agregando campos faltantes...")
                     for campo in campos_faltantes:
-                        if campo == 'fecha_solicitud':
-                            cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} DATETIME")
-                        elif campo == 'cliente_id':
-                            cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} INT, ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id)")
-                        elif campo == 'estado':
-                            cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} VARCHAR(50)")
-                        elif campo == 'problema':
-                            cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} TEXT")
-                        else:
-                            cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} VARCHAR(255)")
+                        try:
+                            if campo == 'fecha_solicitud':
+                                cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} DATETIME")
+                            elif campo == 'cliente_id':
+                                cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} INT, ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id)")
+                            elif campo == 'estado':
+                                cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} VARCHAR(50)")
+                            elif campo == 'problema':
+                                cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} TEXT")
+                            else:
+                                cursor.execute(f"ALTER TABLE reparaciones ADD COLUMN {campo} VARCHAR(255)")
+                            logger.info(f"Campo {campo} agregado correctamente")
+                        except Exception as field_error:
+                            logger.error(f"Error al agregar campo {campo}: {str(field_error)}")
                     
-                    mysql.connection.commit()
-                    print("Campos agregados correctamente.")
+                    connection.commit()
+                    logger.info("Cambios en la estructura de la tabla guardados correctamente.")
                 else:
-                    print("\nTodos los campos requeridos existen en la tabla.")
+                    logger.info("Todos los campos requeridos existen en la tabla.")
                 
                 # Verificar si hay datos en la tabla
                 cursor.execute("SELECT COUNT(*) FROM reparaciones")
                 count = cursor.fetchone()[0]
-                print(f"\nLa tabla tiene {count} registros.")
+                logger.info(f"La tabla tiene {count} registros.")
                 
             else:
-                print("La tabla 'reparaciones' no existe.")
+                logger.warning("La tabla 'reparaciones' no existe.")
+                logger.info("Creando tabla reparaciones...")
+                
+                # Crear la tabla si no existe
+                create_table_sql = """
+                CREATE TABLE reparaciones (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    cliente_id INT,
+                    electrodomestico VARCHAR(255),
+                    marca VARCHAR(255),
+                    modelo VARCHAR(255),
+                    problema TEXT,
+                    estado VARCHAR(50) DEFAULT 'PENDIENTE',
+                    fecha_solicitud DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+                )
+                """
+                try:
+                    cursor.execute(create_table_sql)
+                    connection.commit()
+                    logger.info("Tabla reparaciones creada exitosamente")
+                except Exception as create_error:
+                    logger.error(f"Error al crear tabla reparaciones: {str(create_error)}")
+                    connection.rollback()
             
             cursor.close()
             return True
         
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error al verificar tabla reparaciones: {str(e)}")
         return False
 
 if __name__ == "__main__":
-    verificar_tabla_reparaciones() 
+    resultado = verificar_tabla_reparaciones()
+    if resultado:
+        logger.info("Verificación completada exitosamente")
+    else:
+        logger.error("La verificación falló") 

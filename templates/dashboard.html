@@ -93,12 +93,24 @@
             
             {% if 'reparaciones' in modulos_permitidos or current_user.es_admin %}
             <div class="col-md-4 col-sm-6 mb-4">
-                <a href="{{ url_for('reparaciones.admin') }}" class="module-card module-reparaciones">
+                <a href="{{ url_for('reparaciones.admin_dashboard') }}" class="module-card module-reparaciones">
                     <div class="module-icon">
                         <i class="fas fa-tools"></i>
                     </div>
                     <h3>Reparaciones</h3>
                     <p>Gestiona y da seguimiento a las reparaciones de electrodomésticos</p>
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if current_user.cargo_nombre == 'Técnico' %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                <a href="{{ url_for('reparaciones.mis_reparaciones') }}" class="module-card module-reparaciones-tecnico">
+                    <div class="module-icon">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <h3>Mi Panel de Técnico</h3>
+                    <p>Accede a tus reparaciones asignadas y actualiza su estado</p>
                 </a>
             </div>
             {% endif %}

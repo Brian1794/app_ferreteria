@@ -208,8 +208,8 @@
             </div>
             <div class="stat-content">
                 <h3>Ventas</h3>
-                <div class="stat-value">{{ stats.ventas.total }}</div>
-                <div class="stat-small">{{ stats.ventas.hoy }} hoy</div>
+                <div class="stat-value">{{ stats.ventas.total if stats and stats.ventas else 0 }}</div>
+                <div class="stat-small">{{ stats.ventas.hoy if stats and stats.ventas else 0 }} hoy</div>
             </div>
         </div>
         
@@ -219,8 +219,8 @@
             </div>
             <div class="stat-content">
                 <h3>Productos</h3>
-                <div class="stat-value">{{ stats.productos.total }}</div>
-                <div class="stat-small">{{ stats.productos.bajo_stock }} con bajo stock</div>
+                <div class="stat-value">{{ stats.productos.total if stats and stats.productos else 0 }}</div>
+                <div class="stat-small">{{ stats.productos.bajo_stock if stats and stats.productos else 0 }} con bajo stock</div>
             </div>
         </div>
         
@@ -230,8 +230,8 @@
             </div>
             <div class="stat-content">
                 <h3>Clientes</h3>
-                <div class="stat-value">{{ stats.clientes.total }}</div>
-                <div class="stat-small">{{ stats.clientes.nuevos }} nuevos este mes</div>
+                <div class="stat-value">{{ stats.clientes.total if stats and stats.clientes else 0 }}</div>
+                <div class="stat-small">{{ stats.clientes.nuevos if stats and stats.clientes else 0 }} nuevos este mes</div>
             </div>
         </div>
         
@@ -241,78 +241,82 @@
             </div>
             <div class="stat-content">
                 <h3>Reparaciones</h3>
-                <div class="stat-value">{{ stats.reparaciones.total }}</div>
-                <div class="stat-small">{{ stats.reparaciones.pendientes }} pendientes</div>
+                <div class="stat-value">{{ stats.reparaciones.total if stats and stats.reparaciones else 0 }}</div>
+                <div class="stat-small">{{ stats.reparaciones.pendientes if stats and stats.reparaciones else 0 }} pendientes</div>
             </div>
         </div>
     </div>
     
     <!-- Módulos del sistema -->
-    <h2>Módulos del Sistema</h2>
-    <div class="modules-grid">
-        <a href="{{ url_for('ventas.index') }}" class="module-card module-ventas">
-            <div class="module-icon">
-                <i class="fas fa-cash-register"></i>
-            </div>
-            <div class="module-title">Ventas</div>
-            <div class="module-description">Gestionar ventas y facturación</div>
+    <h2 class="section-title">Módulos del Sistema</h2>
+    <div class="admin-modules">
+        <!-- Módulo de Reparaciones -->
+        <a href="{{ url_for('reparaciones.admin_dashboard') }}" class="admin-module module-repairs">
+            <i class="fas fa-tools"></i>
+            <h3 class="admin-module-title">Reparaciones</h3>
+            <p class="admin-module-description">Gestionar servicios técnicos</p>
         </a>
-        
-        <a href="{{ url_for('productos.listar_productos') }}" class="module-card module-productos">
-            <div class="module-icon">
-                <i class="fas fa-box-open"></i>
-            </div>
-            <div class="module-title">Productos</div>
-            <div class="module-description">Administrar inventario</div>
+
+        <!-- Módulo de Productos -->
+        <a href="{{ url_for('productos.listar_productos') }}" class="admin-module module-products">
+            <i class="fas fa-box-open"></i>
+            <h3 class="admin-module-title">Productos</h3>
+            <p class="admin-module-description">Gestionar inventario</p>
         </a>
-        
-        <a href="{{ url_for('admin.clientes') }}" class="module-card module-clientes">
-            <div class="module-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="module-title">Clientes</div>
-            <div class="module-description">Gestionar información de clientes</div>
+
+        <!-- Módulo de Clientes -->
+        <a href="{{ url_for('admin.clientes') }}" class="admin-module module-users">
+            <i class="fas fa-user-friends"></i>
+            <h3 class="admin-module-title">Clientes</h3>
+            <p class="admin-module-description">Gestionar usuarios</p>
         </a>
-        
-        <a href="{{ url_for('reparaciones.admin') }}" class="module-card module-reparaciones">
-            <div class="module-icon">
-                <i class="fas fa-tools"></i>
-            </div>
-            <div class="module-title">Reparaciones</div>
-            <div class="module-description">Gestionar servicios técnicos</div>
+
+        <!-- Módulo de Ventas -->
+        <a href="{{ url_for('ventas.index') }}" class="admin-module module-orders">
+            <i class="fas fa-shopping-bag"></i>
+            <h3 class="admin-module-title">Ventas</h3>
+            <p class="admin-module-description">Gestionar pedidos</p>
         </a>
-        
-        <a href="{{ url_for('admin.compras') }}" class="module-card module-compras">
-            <div class="module-icon">
-                <i class="fas fa-truck-loading"></i>
-            </div>
-            <div class="module-title">Compras</div>
-            <div class="module-description">Proveedores e inventario</div>
+
+        <!-- Módulo de Empleados -->
+        <a href="{{ url_for('admin.usuarios') }}" class="admin-module">
+            <i class="fas fa-id-card"></i>
+            <h3 class="admin-module-title">Empleados</h3>
+            <p class="admin-module-description">Gestionar personal</p>
         </a>
-        
-        <a href="{{ url_for('admin.usuarios') }}" class="module-card module-empleados">
-            <div class="module-icon">
-                <i class="fas fa-id-card"></i>
-            </div>
-            <div class="module-title">Empleados</div>
-            <div class="module-description">Gestión de personal</div>
+
+        <!-- Módulo de Reportes -->
+        <a href="{{ url_for('admin.reportes') }}" class="admin-module">
+            <i class="fas fa-chart-bar"></i>
+            <h3 class="admin-module-title">Reportes</h3>
+            <p class="admin-module-description">Ver estadísticas</p>
         </a>
-        
-        <a href="{{ url_for('admin.reportes') }}" class="module-card module-reportes">
-            <div class="module-icon">
-                <i class="fas fa-chart-bar"></i>
-            </div>
-            <div class="module-title">Reportes</div>
-            <div class="module-description">Estadísticas y análisis</div>
+
+        <!-- Módulo de Configuración -->
+        <a href="{{ url_for('admin.configuracion') }}" class="admin-module">
+            <i class="fas fa-cog"></i>
+            <h3 class="admin-module-title">Configuración</h3>
+            <p class="admin-module-description">Ajustes del sistema</p>
         </a>
-        
-        <a href="{{ url_for('admin.configuracion') }}" class="module-card module-configuracion">
-            <div class="module-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="module-title">Configuración</div>
-            <div class="module-description">Ajustes del sistema</div>
+
+        <!-- Módulo de Categorías -->
+        <a href="/categorias/" class="admin-module">
+            <i class="fas fa-tags"></i>
+            <h3 class="admin-module-title">Categorías</h3>
+            <p class="admin-module-description">Gestionar categorías</p>
         </a>
+
+        <!-- Módulo de Carousel -->
+        <a href="{{ url_for('carousel.index') }}" class="admin-module">
+            <i class="fas fa-images"></i>
+            <h3 class="admin-module-title">Carousel</h3>
+            <p class="admin-module-description">Gestionar imágenes del carousel</p>
+        </a>
+    </div>
+    
+    <!-- módulos anteriores - mantener para compatibilidad -->
+    <div class="modules-grid" style="display: none;">
+        <!-- contenido original -->
     </div>
 </div>
 {% endblock %} 

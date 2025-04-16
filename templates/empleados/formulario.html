@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if empleado and empleado.id else 'Nuevo' }} Empleado - Ferretería La U{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ 'Editar' if empleado and empleado.id else 'Nuevo' }} Empleado</h1>
+        <a href="{{ url_for('empleados.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('empleados.editar', empleado_id=empleado.id) if empleado and empleado.id else url_for('empleados.nuevo') }}" 
+                  method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="text-center mb-3">
+                            <div class="avatar-preview">
+                                {% if empleado and empleado.foto_perfil %}
+                                <img src="{{ url_for('static', filename='uploads/empleados/' + empleado.foto_perfil) }}" 
+                                     alt="Foto de perfil" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                                {% else %}
+                                <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 150px; height: 150px; background-color: #e9ecef;">
+                                    <i class="fas fa-user fa-4x text-secondary"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <label for="foto_perfil" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-camera"></i> Cambiar foto
+                                </label>
+                                <input type="file" id="foto_perfil" name="foto_perfil" style="display: none;" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" 
+                                           value="{{ empleado.nombre if empleado else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ empleado.email if empleado else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefono" name="telefono" 
+                                           value="{{ empleado.telefono if empleado else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cedula" class="form-label">Cédula</label>
+                                    <input type="text" class="form-control" id="cedula" name="cedula" 
+                                           value="{{ empleado.cedula if empleado else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" 
+                                   value="{{ empleado.direccion if empleado else '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="cargo_id" class="form-label">Cargo <span class="text-danger">*</span></label>
+                            <select class="form-select" id="cargo_id" name="cargo_id" required 
+                                    {% if not es_admin %}disabled{% endif %}>
+                                <option value="">Seleccione un cargo</option>
+                                {% for cargo in cargos %}
+                                <option value="{{ cargo.id }}" 
+                                        {{ 'selected' if empleado and empleado.cargo_id == cargo.id else '' }}>
+                                    {{ cargo.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if not es_admin %}
+                            <input type="hidden" name="cargo_id" value="{{ empleado.cargo_id if empleado else '' }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="rol" class="form-label">Rol en el sistema</label>
+                            <select class="form-select" id="rol" name="rol" 
+                                    {% if not es_admin %}disabled{% endif %}>
+                                <option value="empleado" 
+                                        {{ 'selected' if empleado and empleado.rol == 'empleado' else '' }}>
+                                    Empleado regular
+                                </option>
+                                <option value="admin" 
+                                        {{ 'selected' if empleado and empleado.rol == 'admin' else '' }}>
+                                    Administrador
+                                </option>
+                            </select>
+                            {% if not es_admin %}
+                            <input type="hidden" name="rol" value="{{ empleado.rol if empleado else 'empleado' }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ 'Nueva contraseña' if empleado else 'Contraseña' }}</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       {{ 'required' if not empleado else '' }}>
+                                <button class="btn btn-outline-secondary" type="button" id="toggle-password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                {% if empleado %}
+                                Dejar en blanco para mantener la contraseña actual
+                                {% else %}
+                                Mínimo 6 caracteres, debe incluir letras y números
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {% if es_admin %}
+                        <div class="mb-3">
+                            <label class="form-label d-block">Estado de la cuenta</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="activo" name="activo" value="1"
+                                       {{ 'checked' if not empleado or empleado.activo else '' }}
+                                       {% if es_mismo_usuario %}disabled{% endif %}>
+                                <label class="form-check-label" for="activo">
+                                    Cuenta activa
+                                </label>
+                                {% if es_mismo_usuario %}
+                                <input type="hidden" name="activo" value="1">
+                                <div class="form-text">No puedes desactivar tu propia cuenta</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('empleados.index') }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'Actualizar' if empleado and empleado.id else 'Guardar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Previsualización de imagen
+        const inputFoto = document.getElementById('foto_perfil');
+        const avatarPreview = document.querySelector('.avatar-preview');
+        
+        if (inputFoto && avatarPreview) {
+            inputFoto.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Foto de perfil" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">`;
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+        
+        // Mostrar/ocultar contraseña
+        const togglePasswordBtn = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('password');
+        
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+    });
+</script>
+{% endblock %} 

@@ -26,6 +26,7 @@
     <div class="card">
         <div class="card-body">
             <form action="{{ url_for('productos.agregar') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group mb-3">
@@ -68,10 +69,12 @@
                     <div class="col-md-4">
                         <div class="form-group mb-3">
                             <label for="categoria_id">Categoría</label>
-                            <select class="form-control" id="categoria_id" name="categoria_id">
+                            <select class="form-control" id="categoria_id" name="categoria_id" style="background-color: white !important; color: black !important;">
                                 <option value="">-- Seleccionar Categoría --</option>
+                                <!-- Información de depuración -->
+                                <!-- Número de categorías: {{ categorias|length }} -->
                                 {% for cat in categorias %}
-                                    <option value="{{ cat[0] }}">{{ cat[1] }}</option>
+                                    <option value="{{ cat[0] }}" style="background-color: white !important; color: black !important; padding: 8px !important;">{{ cat[1] }}</option>
                                 {% endfor %}
                             </select>
                         </div>

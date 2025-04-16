@@ -94,6 +94,9 @@
         {% include 'includes/messages.html' %}
         
         <form method="POST" action="{{ url_for('reparaciones.solicitud') }}">
+            <!-- CSRF Token como campo oculto -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+            
             <!-- Datos del Cliente -->
             <div class="form-section">
                 <h3 class="form-section-title">Datos de Contacto</h3>
@@ -229,4 +232,4 @@
         }
     });
 </script>
-{% endblock %} 
+{% endblock %}

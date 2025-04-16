@@ -4,6 +4,17 @@
 
 {% block extra_css %}
 <style>
+    :root {
+        --card-bg: #1e2a3a;
+        --bg-secondary: rgba(255,255,255,0.05);
+        --hover-bg: rgba(255,255,255,0.04);
+        --border-color: rgba(255,255,255,0.1);
+        --heading-color: white;
+        --text-color: #ddd;
+        --text-muted: #bbb;
+        --box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
     .clients-container {
         max-width: 1200px;
         margin: 30px auto;
@@ -56,18 +67,18 @@
     }
     
     .icon-total {
-        background-color: rgba(var(--primary-rgb), 0.1);
-        color: var(--primary-color);
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
     }
     
     .icon-hoy {
-        background-color: rgba(var(--success-rgb), 0.1);
-        color: rgba(var(--success-rgb), 1);
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
     }
     
     .icon-mes {
-        background-color: rgba(var(--info-rgb), 0.1);
-        color: rgba(var(--info-rgb), 1);
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
     }
     
     .stat-content h3 {
@@ -159,32 +170,6 @@
         color: var(--text-muted);
     }
     
-    .sortable {
-        cursor: pointer;
-        position: relative;
-    }
-    
-    .sortable:hover {
-        background-color: var(--hover-bg);
-    }
-    
-    .sortable::after {
-        content: "↕";
-        position: absolute;
-        right: 10px;
-        opacity: 0.5;
-    }
-    
-    .sortable.asc::after {
-        content: "↑";
-        opacity: 1;
-    }
-    
-    .sortable.desc::after {
-        content: "↓";
-        opacity: 1;
-    }
-    
     .actions-cell {
         text-align: right;
     }
@@ -205,15 +190,15 @@
     }
     
     .view-btn:hover {
-        color: var(--primary-color);
+        color: #3498db;
     }
     
     .edit-btn:hover {
-        color: var(--info-color);
+        color: #f39c12;
     }
     
     .delete-btn:hover {
-        color: var(--danger-color);
+        color: #e74c3c;
     }
     
     .empty-state {
@@ -237,6 +222,207 @@
         color: var(--text-muted);
         max-width: 500px;
         margin: 0 auto 20px;
+    }
+
+    /* Estilos para el modal de confirmación */
+    .delete-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .delete-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .delete-modal-content {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 25px;
+        width: 90%;
+        max-width: 450px;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .delete-modal.active .delete-modal-content {
+        transform: translateY(0);
+    }
+    
+    .delete-modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .delete-modal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 15px;
+    }
+    
+    .delete-modal-title {
+        font-size: 1.4rem;
+        color: var(--heading-color);
+        font-weight: 600;
+    }
+    
+    .delete-modal-body {
+        color: var(--text-color);
+        margin-bottom: 25px;
+    }
+    
+    .delete-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    .delete-modal-cancel {
+        background-color: var(--bg-secondary);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .delete-modal-cancel:hover {
+        background-color: var(--hover-bg);
+        color: var(--heading-color);
+    }
+    
+    .delete-modal-confirm {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .delete-modal-confirm:hover {
+        background-color: #c0392b;
+    }
+
+    /* Estilos para notificaciones/alertas personalizadas */
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 350px;
+        z-index: 9999;
+        font-family: 'Roboto', sans-serif;
+    }
+    
+    .custom-notification {
+        background-color: var(--card-bg);
+        color: white;
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        animation: slideInRight 0.4s ease-out, fadeOut 0.5s ease-out 5s forwards;
+        position: relative;
+    }
+    
+    .custom-notification::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+    }
+    
+    .custom-notification.success::before {
+        background-color: #2ecc71;
+    }
+    
+    .custom-notification.danger::before {
+        background-color: #e74c3c;
+    }
+    
+    .custom-notification.warning::before {
+        background-color: #f39c12;
+    }
+    
+    .custom-notification.info::before {
+        background-color: #3498db;
+    }
+    
+    .notification-icon {
+        margin-right: 15px;
+        font-size: 18px;
+    }
+    
+    .success .notification-icon {
+        color: #2ecc71;
+    }
+    
+    .danger .notification-icon {
+        color: #e74c3c;
+    }
+    
+    .warning .notification-icon {
+        color: #f39c12;
+    }
+    
+    .info .notification-icon {
+        color: #3498db;
+    }
+    
+    .notification-content {
+        flex: 1;
+    }
+    
+    .notification-content p {
+        margin: 0;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
     }
 </style>
 {% endblock %}
@@ -297,12 +483,12 @@
             <select class="form-select form-select-sm" id="orderBySelect">
                 <option value="nombre" {% if orderby == 'nombre' %}selected{% endif %}>Nombre</option>
                 <option value="email" {% if orderby == 'email' %}selected{% endif %}>Email</option>
-                <option value="fecha_registro" {% if orderby == 'fecha_registro' %}selected{% endif %}>Fecha de registro</option>
-                <option value="ultimo_login" {% if orderby == 'ultimo_login' %}selected{% endif %}>Último acceso</option>
+                <option value="fecha_registro" {% if orderby == 'fecha_registro' %}selected{% endif %}>Fecha</option>
+                <option value="ultimo_login" {% if orderby == 'ultimo_login' %}selected{% endif %}>Acceso</option>
             </select>
             <select class="form-select form-select-sm" id="orderSelect">
-                <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascendente</option>
-                <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descendente</option>
+                <option value="asc" {% if order == 'asc' %}selected{% endif %}>Asc</option>
+                <option value="desc" {% if order == 'desc' %}selected{% endif %}>Desc</option>
             </select>
         </div>
     </div>
@@ -316,7 +502,7 @@
                         <th>Cliente</th>
                         <th>Email</th>
                         <th>Teléfono</th>
-                        <th>Fecha de Registro</th>
+                        <th>Fecha</th>
                         <th>Último Acceso</th>
                         <th>Acciones</th>
                     </tr>
@@ -326,13 +512,13 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    {% if cliente.foto_perfil %}
-                                        <img src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="{{ cliente.nombre }}" class="avatar me-2">
-                                    {% else %}
-                                        <div class="avatar me-2">
+                                    <div class="avatar me-2">
+                                        {% if cliente.foto_perfil %}
+                                            <img loading="lazy" width="40" height="40" src="{{ url_for('static', filename='uploads/perfiles/' + cliente.foto_perfil) }}" alt="">
+                                        {% else %}
                                             <i class="fas fa-user"></i>
-                                        </div>
-                                    {% endif %}
+                                        {% endif %}
+                                    </div>
                                     <div>
                                         <div class="fw-bold">{{ cliente.nombre }}</div>
                                         {% if cliente.ciudad %}
@@ -343,30 +529,23 @@
                             </td>
                             <td>{{ cliente.email }}</td>
                             <td>{{ cliente.telefono|default('--') }}</td>
-                            <td>
-                                {% if cliente.fecha_registro %}
-                                    {{ cliente.fecha_registro.strftime('%d/%m/%Y') }}
-                                {% else %}
-                                    --
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if cliente.ultimo_login %}
-                                    {{ cliente.ultimo_login.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    --
-                                {% endif %}
-                            </td>
+                            <td>{{ cliente.fecha_registro.strftime('%d/%m/%Y') if cliente.fecha_registro else '--' }}</td>
+                            <td>{{ cliente.ultimo_login.strftime('%d/%m/%Y') if cliente.ultimo_login else '--' }}</td>
                             <td class="actions-cell">
-                                <a href="{{ url_for('admin.ver_cliente', cliente_id=cliente.id_cliente) }}" class="action-btn view-btn" title="Ver detalles">
+                                <a href="{{ url_for('admin.ver_cliente', cliente_id=cliente['id']) }}" class="action-btn view-btn" title="Ver detalles">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="#" class="action-btn edit-btn" title="Editar cliente">
+                                <a href="{{ url_for('admin.editar_cliente', cliente_id=cliente['id']) }}" class="action-btn edit-btn" title="Editar cliente">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="action-btn delete-btn" title="Eliminar cliente" data-bs-toggle="modal" data-bs-target="#deleteClientModal" data-cliente-id="{{ cliente.id_cliente }}" data-cliente-nombre="{{ cliente.nombre }}">
+                                <a href="#" 
+                                   class="action-btn delete-btn" 
+                                   title="Eliminar cliente"
+                                   data-cliente-id="{{ cliente['id'] }}"
+                                   data-cliente-nombre="{{ cliente['nombre'] }}"
+                                   onclick="mostrarModalEliminar(this)">
                                     <i class="fas fa-trash-alt"></i>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -379,8 +558,8 @@
                 </div>
                 <h2 class="empty-state-title">No se encontraron clientes</h2>
                 {% if search %}
-                    <p class="empty-state-text">No hay resultados para tu búsqueda. Intenta con otros términos o revisa los filtros aplicados.</p>
-                    <a href="{{ url_for('admin.clientes') }}" class="btn btn-primary">Mostrar todos los clientes</a>
+                    <p class="empty-state-text">No hay resultados para tu búsqueda.</p>
+                    <a href="{{ url_for('admin.clientes') }}" class="btn btn-primary btn-sm">Mostrar todos</a>
                 {% else %}
                     <p class="empty-state-text">Aún no hay clientes registrados en el sistema.</p>
                 {% endif %}
@@ -389,24 +568,25 @@
     </div>
 </div>
 
-<!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteClientModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal de confirmación para eliminar cliente -->
+<div id="deleteModal" class="delete-modal">
+    <div class="delete-modal-content">
+        <div class="delete-modal-header">
+            <div class="delete-modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar al cliente <strong id="clienteNombre"></strong>?</p>
-                <p class="text-danger">Esta acción no se puede deshacer y eliminará todos los datos asociados al cliente.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteClientForm" method="POST" action="">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
+            <h2 class="delete-modal-title">Confirmar eliminación</h2>
+        </div>
+        <div class="delete-modal-body">
+            <p>¿Estás seguro que deseas eliminar a <span id="clienteNombre"></span>?</p>
+            <p>Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="delete-modal-actions">
+            <button class="delete-modal-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+            <form id="deleteForm" method="POST" action="" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="delete-modal-confirm">Eliminar</button>
+            </form>
         </div>
     </div>
 </div>
@@ -415,37 +595,97 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Actualizar orden de la tabla
+        // Optimizar selección de elementos DOM
         const orderBySelect = document.getElementById('orderBySelect');
         const orderSelect = document.getElementById('orderSelect');
         
+        // Manejador para ordenamiento
         if (orderBySelect && orderSelect) {
+            const updateSort = () => {
+                const params = new URLSearchParams(window.location.search);
+                params.set('orderby', orderBySelect.value);
+                params.set('order', orderSelect.value);
+                window.location.href = `${window.location.pathname}?${params.toString()}`;
+            };
+            
             orderBySelect.addEventListener('change', updateSort);
             orderSelect.addEventListener('change', updateSort);
         }
         
-        function updateSort() {
-            const orderBy = orderBySelect.value;
-            const order = orderSelect.value;
+        // Crear y mostrar notificaciones personalizadas a partir de mensajes flash
+        const createCustomNotifications = () => {
+            // Buscar los mensajes flash existentes
+            const flashes = document.querySelectorAll('.alert');
+            if (flashes.length === 0) return;
             
-            const currentUrl = new URL(window.location);
-            currentUrl.searchParams.set('orderby', orderBy);
-            currentUrl.searchParams.set('order', order);
+            // Crear contenedor para notificaciones si no existe
+            let container = document.querySelector('.notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'notification-container';
+                document.body.appendChild(container);
+            }
             
-            window.location.href = currentUrl.toString();
-        }
-        
-        // Modal de eliminación
-        const deleteClientModal = document.getElementById('deleteClientModal');
-        if (deleteClientModal) {
-            deleteClientModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const clienteId = button.getAttribute('data-cliente-id');
-                const clienteNombre = button.getAttribute('data-cliente-nombre');
+            // Convertir cada alerta estándar en notificación personalizada
+            flashes.forEach(flash => {
+                const type = flash.classList.contains('alert-success') ? 'success' : 
+                           flash.classList.contains('alert-danger') ? 'danger' :
+                           flash.classList.contains('alert-warning') ? 'warning' : 'info';
                 
-                document.getElementById('clienteNombre').textContent = clienteNombre;
-                document.getElementById('deleteClientForm').action = `/admin/clientes/${clienteId}/eliminar`;
+                const icon = type === 'success' ? 'check-circle' : 
+                           type === 'danger' ? 'exclamation-triangle' :
+                           type === 'warning' ? 'exclamation-circle' : 'info-circle';
+                
+                const message = flash.textContent.trim();
+                
+                // Crear elemento de notificación
+                const notification = document.createElement('div');
+                notification.className = `custom-notification ${type}`;
+                notification.innerHTML = `
+                    <div class="notification-icon">
+                        <i class="fas fa-${icon}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <p>${message}</p>
+                    </div>
+                `;
+                
+                // Agregar al contenedor y ocultar la alerta original
+                container.appendChild(notification);
+                flash.style.display = 'none';
+                
+                // Eliminar notificación después de 5 segundos
+                setTimeout(() => {
+                    notification.remove();
+                }, 5500);
             });
+        };
+        
+        // Iniciar sistema de notificaciones
+        createCustomNotifications();
+    });
+    
+    // Funciones para el modal de eliminación
+    function mostrarModalEliminar(elemento) {
+        const clienteId = elemento.getAttribute('data-cliente-id');
+        const clienteNombre = elemento.getAttribute('data-cliente-nombre');
+        
+        document.getElementById('clienteNombre').textContent = clienteNombre;
+        document.getElementById('deleteForm').action = "{{ url_for('admin.eliminar_cliente', cliente_id=0) }}".replace('0', clienteId);
+        
+        const modal = document.getElementById('deleteModal');
+        modal.classList.add('active');
+    }
+    
+    function cerrarModalEliminar() {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.remove('active');
+    }
+    
+    // Cerrar el modal al hacer clic fuera del contenido
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            cerrarModalEliminar();
         }
     });
 </script>

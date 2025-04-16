@@ -1,0 +1,249 @@
+<!-- Top Bar -->
+<div class="top-bar">
+    <div class="container">
+        <div class="top-bar-content">
+            <div class="location-badge">
+                <i class="fas fa-map-marker-alt"></i> Entregar a <strong>Colombia</strong>
+            </div>
+            <div class="top-bar-actions">
+                <div class="dropdown">
+                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe"></i> ES
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Español</a></li>
+                        <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                </div>
+                
+                <a href="{{ url_for('main.contacto') }}" class="dropdown-toggle">
+                    <i class="fas fa-headset"></i> Servicio al Cliente
+                </a>
+                
+                <a href="#" class="dropdown-toggle">
+                    <i class="fas fa-box-open"></i> Devoluciones y Pedidos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Header -->
+<header class="main-header">
+    <div class="container">
+        <div class="d-flex py-2 align-items-center justify-content-between">
+            <!-- Logo -->
+            <a href="{{ url_for('main.index') }}" class="brand-logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Ferretería La U">
+                <div class="brand-name">Ferretería <span>LA U</span></div>
+            </a>
+            
+            <!-- Search -->
+            <form class="search-form" action="{{ url_for('productos.buscar') }}" method="GET">
+                <input type="text" name="q" class="search-input" placeholder="Buscar productos, marcas..." aria-label="Buscar">
+                <button type="submit" class="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+            
+            <!-- Actions -->
+            <div class="header-actions">
+                {% if current_user.is_authenticated %}
+                    <!-- Cart -->
+                    <a href="{{ url_for('carrito.ver') }}" class="action-button">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="badge-counter" id="cart-count">{{ session.get('cart_items', 0) }}</span>
+                    </a>
+                    
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <div class="action-button" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificationsDropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge-counter" id="notificaciones-count">{{ session.get('notificaciones_total', 0) }}</span>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationsDropdown">
+                            <h6 class="dropdown-header">Notificaciones</h6>
+                            
+                            <div id="notificaciones-container">
+                                {% if session.get('notificaciones', []) %}
+                                    {% for notificacion in session.get('notificaciones', []) %}
+                                        <a class="dropdown-item notification-item" href="{{ notificacion.url }}">
+                                            <div class="notification-content">
+                                                <div class="notification-icon">
+                                                    <i class="fas fa-{{ notificacion.icono }}"></i>
+                                                </div>
+                                                <div class="notification-text">
+                                                    <p class="notification-title">{{ notificacion.titulo }}</p>
+                                                    <p class="notification-message">{{ notificacion.mensaje }}</p>
+                                                    <small class="notification-time">{{ notificacion.fecha }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="dropdown-item text-center">
+                                        <p class="text-muted">No tienes notificaciones nuevas</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="{{ url_for('main.ver_todas_notificaciones') }}">
+                                Ver todas
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="dropdown">
+                        <div class="user-menu-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
+                            <div class="user-avatar">
+                                {% if current_user.foto_perfil %}
+                                    <img src="{{ url_for('static', filename='uploads/perfiles/' + current_user.foto_perfil) }}" alt="Perfil">
+                                {% else %}
+                                    <i class="fas fa-user"></i>
+                                {% endif %}
+                            </div>
+                            <span class="user-name">{{ current_user.nombre.split(' ')[0] }}</span>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            {% if current_user.cargo_nombre == 'Técnico' %}
+                                <a class="dropdown-item" href="{{ url_for('auth.perfil_tecnico') }}">
+                                    <i class="fas fa-user-cog"></i> Mi Perfil
+                                </a>
+                            {% elif current_user.es_cliente %}
+                                <a class="dropdown-item" href="{{ url_for('main.mi_cuenta') }}">
+                                    <i class="fas fa-user"></i> Mi Cuenta
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('reparaciones.mis_reparaciones') }}">
+                                    <i class="fas fa-tools"></i> Mis Reparaciones
+                                </a>
+                            {% else %}
+                                <a class="dropdown-item" href="{{ url_for('main.dashboard') }}">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            {% endif %}
+                            
+                            <a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}">
+                                <i class="fas fa-key"></i> Cambiar Contraseña
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="action-button">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </a>
+                    <a href="{{ url_for('auth.registro') }}" class="action-button">
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Navigation -->
+<nav class="lower-navbar">
+    <div class="container">
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.index') }}">Inicio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('tienda.index') }}">Tienda</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('reparaciones.solicitud') }}">Solicitar Reparación</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.contacto') }}">Contacto</a>
+            </li>
+            
+            {% if current_user.is_authenticated %}
+                {% if not current_user.es_cliente %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Panel</a>
+                    </li>
+                    
+                    {% if current_user.cargo_nombre == 'Técnico' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reparaciones.por_tecnico') }}">Mis Reparaciones</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% if current_user.es_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.index') }}">Administración</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/header/style.css') }}">
+
+<style>
+    .notification-badge {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .notification-menu {
+        width: 320px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0;
+    }
+    
+    .notification-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .notification-icon {
+        flex: 0 0 40px;
+        height: 40px;
+        margin-right: 10px;
+        border-radius: 50%;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .notification-text {
+        flex: 1;
+    }
+    
+    .notification-title {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .notification-message {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    
+    .notification-time {
+        display: block;
+        margin-top: 3px;
+        color: var(--text-muted);
+        font-size: 0.7rem;
+    }
+</style> 

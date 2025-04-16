@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Cliente - {{ cliente.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Detalles del Cliente</h4>
+                    <div>
+                        <a href="{{ url_for('clientes.index') }}" class="btn btn-outline-light me-2">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn btn-outline-light">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3 border-bottom pb-2">Información Personal</h5>
+                            <p><strong>Nombre:</strong> {{ cliente.nombre }} {{ cliente.apellido }}</p>
+                            <p><strong>Email:</strong> {{ cliente.email|default('No registrado') }}</p>
+                            <p><strong>Teléfono:</strong> {{ cliente.telefono|default('No registrado') }}</p>
+                            <p><strong>Identificación:</strong> {{ cliente.identificacion|default('No registrada') }}</p>
+                            <p><strong>Fecha de Registro:</strong> {{ cliente.fecha_registro.strftime('%d/%m/%Y') if cliente.fecha_registro else 'No disponible' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3 border-bottom pb-2">Dirección</h5>
+                            <p><strong>Dirección:</strong> {{ cliente.direccion|default('No registrada') }}</p>
+                            <p><strong>Ciudad:</strong> {{ cliente.ciudad|default('No registrada') }}</p>
+                            <p><strong>Código Postal:</strong> {{ cliente.codigo_postal|default('No registrado') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total de Compras</h5>
+                                    <p class="card-text display-6">{{ estadisticas.total_compras|default(0) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Gastado</h5>
+                                    <p class="card-text display-6">${{ '%.0f'|format(estadisticas.total_gastado|default(0)) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Reparaciones</h5>
+                                    <p class="card-text display-6">{{ estadisticas.total_reparaciones|default(0) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de compras -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Historial de Compras</h4>
+                </div>
+                <div class="card-body">
+                    {% if compras and compras|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>ID</th>
+                                    <th>Total</th>
+                                    <th>Productos</th>
+                                    <th>Vendedor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compra in compras %}
+                                <tr>
+                                    <td>{{ compra.fecha.strftime('%d/%m/%Y') if compra.fecha else '--' }}</td>
+                                    <td>#{{ compra.id }}</td>
+                                    <td>${{ '%.0f'|format(compra.total) }}</td>
+                                    <td>{{ compra.total_items|default(0) }}</td>
+                                    <td>{{ compra.empleado|default('Online') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.ver_venta', venta_id=compra.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Este cliente aún no ha realizado compras.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de reparaciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Reparaciones Solicitadas</h4>
+                </div>
+                <div class="card-body">
+                    {% if reparaciones and reparaciones|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Dispositivo</th>
+                                    <th>Estado</th>
+                                    <th>Técnico</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reparacion in reparaciones %}
+                                <tr>
+                                    <td>{{ reparacion.fecha_recepcion.strftime('%d/%m/%Y') if reparacion.fecha_recepcion else '--' }}</td>
+                                    <td>{{ reparacion.electrodomestico }} {{ reparacion.marca }}</td>
+                                    <td>
+                                        <span class="badge {% if reparacion.estado in ['ENTREGADO', 'LISTO', 'entregado', 'listo'] %}bg-success{% elif reparacion.estado in ['CANCELADO', 'cancelado'] %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ reparacion.estado }}
+                                        </span>
+                                    </td>
+                                    <td>{{ reparacion.tecnico_nombre|default('No asignado') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('reparaciones.ver', id=reparacion.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Este cliente aún no ha solicitado reparaciones.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

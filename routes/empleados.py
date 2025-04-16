@@ -45,6 +45,7 @@ def nuevo():
         rol = request.form.get('rol')
         cargo_id = request.form.get('cargo_id')
         telefono = request.form.get('telefono', '')
+        cedula = request.form.get('cedula', '')
         direccion = request.form.get('direccion', '')
         
         # Validaciones básicas
@@ -65,22 +66,51 @@ def nuevo():
             flash('El email ya está registrado', 'warning')
             
             # Obtener lista de cargos para el formulario
-            cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+            cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
             cargos = cur.fetchall()
             cur.close()
             
-            return render_template('empleados/formulario.html', cargos=cargos)
+            return render_template('empleados/formulario.html', 
+                                  cargos=cargos, 
+                                  empleado=None, 
+                                  es_admin=True, 
+                                  es_mismo_usuario=False)
         
         # Hashear contraseña
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         
         try:
+            # Verificar si existen las columnas telefono, cedula y direccion
+            columnas_existentes = []
+            cur.execute("SHOW COLUMNS FROM empleados")
+            for column in cur.fetchall():
+                columnas_existentes.append(column[0])
+            
+            # Construir consulta SQL base
+            query = "INSERT INTO empleados (nombre, email, password, rol, cargo_id"
+            values = "%s, %s, %s, %s, %s"
+            params = [nombre, email, hashed_password, rol, cargo_id]
+            
+            # Agregar columnas adicionales si existen
+            if 'telefono' in columnas_existentes:
+                query += ", telefono"
+                values += ", %s"
+                params.append(telefono)
+                
+            if 'cedula' in columnas_existentes:
+                query += ", cedula"
+                values += ", %s"
+                params.append(cedula)
+                
+            if 'direccion' in columnas_existentes:
+                query += ", direccion"
+                values += ", %s"
+                params.append(direccion)
+            
+            query += ", activo) VALUES (" + values + ", TRUE)"
+            
             # Insertar nuevo empleado
-            cur.execute('''
-                INSERT INTO empleados 
-                (nombre, email, password, rol, cargo_id, telefono, direccion, activo)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE)
-            ''', (nombre, email, hashed_password, rol, cargo_id, telefono, direccion))
+            cur.execute(query, params)
             
             mysql.connection.commit()
             nuevo_id = cur.lastrowid
@@ -93,19 +123,27 @@ def nuevo():
             flash(f'Error al crear empleado: {str(e)}', 'danger')
             
             # Obtener lista de cargos para el formulario
-            cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+            cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
             cargos = cur.fetchall()
             cur.close()
             
-            return render_template('empleados/formulario.html', cargos=cargos)
+            return render_template('empleados/formulario.html', 
+                                  cargos=cargos, 
+                                  empleado=None, 
+                                  es_admin=True, 
+                                  es_mismo_usuario=False)
     
     # Obtener lista de cargos para el formulario
     cur = mysql.connection.cursor()
-    cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+    cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
     cargos = cur.fetchall()
     cur.close()
     
-    return render_template('empleados/formulario.html', cargos=cargos)
+    return render_template('empleados/formulario.html', 
+                          cargos=cargos, 
+                          empleado=None, 
+                          es_admin=True, 
+                          es_mismo_usuario=False)
 
 @empleados_bp.route('/<int:empleado_id>')
 @login_required
@@ -190,6 +228,7 @@ def editar(empleado_id):
         email = request.form.get('email')
         password = request.form.get('password', '')  # Opcional
         telefono = request.form.get('telefono', '')
+        cedula = request.form.get('cedula', '')
         direccion = request.form.get('direccion', '')
         
         # Campos que solo puede cambiar un administrador
@@ -207,7 +246,7 @@ def editar(empleado_id):
             flash('Nombre y email son obligatorios', 'warning')
             
             # Obtener lista de cargos para el formulario
-            cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+            cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
             cargos = cur.fetchall()
             
             return render_template('empleados/formulario.html', 
@@ -223,7 +262,7 @@ def editar(empleado_id):
                 flash('El email ya está registrado por otro empleado', 'warning')
                 
                 # Obtener lista de cargos para el formulario
-                cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+                cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
                 cargos = cur.fetchall()
                 
                 return render_template('empleados/formulario.html', 
@@ -238,7 +277,7 @@ def editar(empleado_id):
                 flash('El email ya está registrado por un cliente', 'warning')
                 
                 # Obtener lista de cargos para el formulario
-                cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+                cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
                 cargos = cur.fetchall()
                 
                 return render_template('empleados/formulario.html', 
@@ -248,12 +287,28 @@ def editar(empleado_id):
                                       es_mismo_usuario=es_mismo_usuario)
         
         try:
+            # Verificar si existen las columnas telefono, cedula y direccion
+            columnas_existentes = []
+            cur.execute("SHOW COLUMNS FROM empleados")
+            for column in cur.fetchall():
+                columnas_existentes.append(column[0])
+            
             # Construir consulta SQL base
-            query = '''
-                UPDATE empleados
-                SET nombre = %s, email = %s, telefono = %s, direccion = %s
-            '''
-            params = [nombre, email, telefono, direccion]
+            query = "UPDATE empleados SET nombre = %s, email = %s"
+            params = [nombre, email]
+            
+            # Agregar columnas adicionales si existen
+            if 'telefono' in columnas_existentes:
+                query += ", telefono = %s"
+                params.append(telefono)
+                
+            if 'cedula' in columnas_existentes:
+                query += ", cedula = %s"
+                params.append(cedula)
+                
+            if 'direccion' in columnas_existentes:
+                query += ", direccion = %s"
+                params.append(direccion)
             
             # Agregar cambio de contraseña si se proporcionó
             if password:
@@ -284,7 +339,8 @@ def editar(empleado_id):
             cur.close()
     
     # Obtener lista de cargos para el formulario
-    cur.execute('SELECT id, nombre FROM cargos WHERE activo = TRUE ORDER BY nombre')
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT id, nombre FROM cargos ORDER BY nombre')
     cargos = cur.fetchall()
     cur.close()
     
@@ -327,11 +383,11 @@ def cambiar_estado(empleado_id):
     
     return redirect(url_for('empleados.ver', empleado_id=empleado_id))
 
-@empleados_bp.route('/mi-perfil')
+@empleados_bp.route('/mi_perfil')
 @login_required
 def mi_perfil():
     """Muestra el perfil del empleado actualmente logueado"""
-    if current_user.es_cliente:
+    if not current_user.is_empleado:
         flash('Acceso denegado', 'danger')
         return redirect(url_for('main.index'))
     
@@ -413,4 +469,39 @@ def debug_usuario():
         
         return render_template('empleados/debug_usuario.html', user_data=result)
     except Exception as e:
-        return f"Error al depurar usuario: {str(e)}" 
+        return f"Error al depurar usuario: {str(e)}"
+
+@empleados_bp.route('/<int:empleado_id>/eliminar', methods=['POST'])
+@login_required
+@admin_required
+def eliminar(empleado_id):
+    """Eliminar un empleado"""
+    try:
+        # No permitir eliminar el propio usuario
+        if current_user.id == empleado_id:
+            flash('No puedes eliminar tu propia cuenta', 'warning')
+            return redirect(url_for('empleados.ver', empleado_id=empleado_id))
+        
+        cur = mysql.connection.cursor()
+        
+        # Verificar si el empleado existe
+        cur.execute('SELECT id, nombre FROM empleados WHERE id = %s', (empleado_id,))
+        empleado = cur.fetchone()
+        
+        if not empleado:
+            flash('Empleado no encontrado', 'warning')
+            return redirect(url_for('empleados.index'))
+        
+        nombre_empleado = empleado['nombre']
+        
+        # Eliminar el empleado
+        cur.execute('DELETE FROM empleados WHERE id = %s', (empleado_id,))
+        mysql.connection.commit()
+        cur.close()
+        
+        flash(f'Empleado "{nombre_empleado}" eliminado con éxito', 'success')
+        
+    except Exception as e:
+        flash(f'Error al eliminar empleado: {str(e)}', 'danger')
+    
+    return redirect(url_for('empleados.index')) 

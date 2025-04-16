@@ -10,7 +10,7 @@
             <a href="{{ url_for('admin.cargos') }}" class="btn btn-secondary me-2">
                 <i class="fas fa-briefcase"></i> Gestionar Cargos
             </a>
-            <a href="{{ url_for('admin.nuevo_empleado') }}" class="btn btn-primary">
+            <a href="{{ url_for('empleados.nuevo') }}" class="btn btn-primary">
                 <i class="fas fa-user-plus"></i> Nuevo Usuario
             </a>
         </div>
@@ -177,7 +177,7 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ url_for('admin.editar_empleado', id=empleado.id_empleado if empleado.id_empleado else empleado.id) }}" 
+                                            <a href="{{ url_for('empleados.editar', empleado_id=empleado.id_empleado if empleado.id_empleado else empleado.id) }}" 
                                                class="btn btn-sm btn-outline-primary" title="Editar">
                                                 <i class="fas fa-pencil-alt"></i>
                                             </a>
@@ -200,7 +200,7 @@
                                         <i class="fas fa-users fa-4x mb-3 text-muted"></i>
                                         <h5>No hay usuarios registrados</h5>
                                         <p class="text-muted">Comienza agregando un nuevo usuario al sistema</p>
-                                        <a href="{{ url_for('admin.nuevo_empleado') }}" class="btn btn-primary mt-2">
+                                        <a href="{{ url_for('empleados.nuevo') }}" class="btn btn-primary mt-2">
                                             <i class="fas fa-user-plus"></i> Agregar Usuario
                                         </a>
                                     </div>
@@ -214,32 +214,7 @@
     </div>
 </div>
 
-<!-- Modal de confirmación para eliminar -->
-<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminarLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar al usuario <strong id="nombreEmpleado"></strong>?</p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Advertencia:</strong> Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="formEliminar" method="POST">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de restablecimiento de contraseña -->
+<!-- Modal para restablecer contraseña -->
 <div class="modal fade" id="modalResetPassword" tabindex="-1" aria-labelledby="modalResetPasswordLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -248,39 +223,37 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Vas a restablecer la contraseña de <strong id="nombreEmpleadoReset"></strong>.</p>
+                <p>¿Estás seguro de que deseas enviar un correo de restablecimiento de contraseña a <strong id="nombreEmpleadoReset"></strong>?</p>
                 <form id="formResetPassword" method="POST">
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="reset_type" id="reset_email" value="email" checked>
-                            <label class="form-check-label" for="reset_email">
-                                Enviar enlace de restablecimiento por email
-                            </label>
-                            <div class="form-text">Se enviará un correo electrónico con un enlace para crear una nueva contraseña</div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="reset_type" id="reset_temp" value="temp">
-                            <label class="form-check-label" for="reset_temp">
-                                Establecer contraseña temporal
-                            </label>
-                        </div>
-                        <div id="temp_password_container" class="mt-2 ps-4 d-none">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="temp_password" name="temp_password" placeholder="Contraseña temporal" aria-label="Contraseña temporal">
-                                <button class="btn btn-outline-secondary" type="button" id="generate_password">
-                                    <i class="fas fa-dice"></i> Generar
-                                </button>
-                            </div>
-                            <div class="form-text">Mínimo 6 caracteres. Esta contraseña deberá cambiarse en el próximo inicio de sesión.</div>
-                        </div>
-                    </div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" id="empleado_id" name="empleado_id" value="">
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-warning" id="btnConfirmReset">Restablecer</button>
+                <button type="button" class="btn btn-warning" onclick="document.getElementById('formResetPassword').submit();">Enviar correo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para eliminar/desactivar usuario -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEliminarLabel">Confirmar acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas cambiar el estado de <strong id="nombreEmpleado"></strong>?</p>
+                <form id="formEliminar" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('formEliminar').submit();">Confirmar</button>
             </div>
         </div>
     </div>
@@ -290,52 +263,21 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Controlar modal de eliminación
-        function confirmarEliminar(id, nombre) {
+        // Función para mostrar el modal de eliminación
+        window.confirmarEliminar = function(id, nombre) {
             document.getElementById('nombreEmpleado').textContent = nombre;
-            document.getElementById('formEliminar').action = "{{ url_for('admin.eliminar_empleado', id=0) }}".replace('0', id);
+            document.getElementById('formEliminar').action = "{{ url_for('empleados.index') }}".replace('index', id + '/cambiar_estado');
             new bootstrap.Modal(document.getElementById('modalEliminar')).show();
         }
         
-        // Exponer la función al scope global
-        window.confirmarEliminar = confirmarEliminar;
-        
-        // Controlar modal de reset de contraseña
-        function confirmarResetPassword(id, nombre) {
+        // Función para mostrar el modal de reset de contraseña
+        window.confirmarResetPassword = function(id, nombre) {
             document.getElementById('nombreEmpleadoReset').textContent = nombre;
-            document.getElementById('formResetPassword').action = "{{ url_for('admin.reset_password_empleado', id=0) }}".replace('0', id);
+            // Usar la URL correcta para el restablecimiento de contraseña
+            document.getElementById('formResetPassword').action = "{{ url_for('auth.recuperar_password') }}";
+            document.getElementById('empleado_id').value = id;
             new bootstrap.Modal(document.getElementById('modalResetPassword')).show();
         }
-        
-        // Exponer la función al scope global
-        window.confirmarResetPassword = confirmarResetPassword;
-        
-        // Mostrar/ocultar contenedor de contraseña temporal
-        document.querySelectorAll('input[name="reset_type"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                const tempPasswordContainer = document.getElementById('temp_password_container');
-                if (this.value === 'temp') {
-                    tempPasswordContainer.classList.remove('d-none');
-                } else {
-                    tempPasswordContainer.classList.add('d-none');
-                }
-            });
-        });
-        
-        // Generador de contraseñas
-        document.getElementById('generate_password').addEventListener('click', function() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-            let password = '';
-            for (let i = 0; i < 10; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            document.getElementById('temp_password').value = password;
-        });
-        
-        // Enviar formulario de reset
-        document.getElementById('btnConfirmReset').addEventListener('click', function() {
-            document.getElementById('formResetPassword').submit();
-        });
     });
 </script>
 {% endblock %} 

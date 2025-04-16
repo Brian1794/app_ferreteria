@@ -6,9 +6,10 @@ from flask import flash
 from extensions import get_cursor
 from models.usuario import Usuario
 import datetime
+from models.carousel import Carousel
 
 def crear_tablas():
-    """Crea las tablas necesarias en la base de datos si no existen"""
+    """Crea todas las tablas en la base de datos"""
     cursor = mysql.connection.cursor()
     
     try:
@@ -24,6 +25,27 @@ def crear_tablas():
                     activo BOOLEAN DEFAULT TRUE
                 )
             ''')
+            
+            # Crear tabla carousel usando la clase Carousel
+            try:
+                Carousel.crear_tabla()
+                print("Tabla carousel creada correctamente mediante la clase Carousel")
+            except Exception as e:
+                print(f"Error al crear tabla carousel mediante la clase: {e}")
+                # Intento alternativo con SQL directo
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS carousel (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        titulo VARCHAR(100) NOT NULL,
+                        descripcion TEXT,
+                        imagen VARCHAR(255) NOT NULL,
+                        enlace VARCHAR(255),
+                        orden INT DEFAULT 0,
+                        activo BOOLEAN DEFAULT TRUE,
+                        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ''')
+                print("Tabla carousel creada mediante SQL directo")
             
             # Tabla de categorías
             cursor.execute('''
@@ -66,6 +88,7 @@ def crear_tablas():
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     nombre VARCHAR(200) NOT NULL,
+                    identificacion VARCHAR(50),
                     email VARCHAR(100) UNIQUE,
                     password VARCHAR(255) NOT NULL,
                     direccion VARCHAR(255),
@@ -212,17 +235,20 @@ def crear_tablas():
                     modelo VARCHAR(100),
                     problema TEXT,
                     diagnostico TEXT,
-                    notas TEXT,
+                    solucion TEXT,
                     estado VARCHAR(50) DEFAULT 'RECIBIDO',
-                    costo_estimado DECIMAL(12,2) DEFAULT 0,
-                    costo_final DECIMAL(12,2) DEFAULT 0,
                     fecha_recepcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     fecha_entrega_estimada DATE,
-                    fecha_entrega DATE,
+                    fecha_entrega DATETIME,
+                    fecha_actualizacion DATETIME,
+                    costo_revision DECIMAL(10,2) DEFAULT 20000,
+                    costo_reparacion DECIMAL(10,2),
+                    total DECIMAL(10,2),
+                    observaciones TEXT,
                     FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
                     FOREIGN KEY (tecnico_id) REFERENCES empleados(id) ON DELETE SET NULL,
                     FOREIGN KEY (recepcionista_id) REFERENCES empleados(id) ON DELETE SET NULL
-                )
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
             
             # Tabla de historial de reparaciones
@@ -237,7 +263,7 @@ def crear_tablas():
                     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
                     FOREIGN KEY (usuario_id) REFERENCES empleados(id) ON DELETE SET NULL
-                )
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
             
             # Tabla de repuestos para reparaciones
@@ -246,13 +272,13 @@ def crear_tablas():
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     reparacion_id INT NOT NULL,
                     producto_id INT,
-                    repuesto_descripcion TEXT NOT NULL,
                     cantidad INT NOT NULL,
-                    precio_unitario DECIMAL(12,2) NOT NULL,
-                    subtotal DECIMAL(12,2) NOT NULL,
+                    precio_unitario DECIMAL(10,2) NOT NULL,
+                    subtotal DECIMAL(10,2) NOT NULL,
+                    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
                     FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL
-                )
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
             
             # Tabla de configuración
@@ -350,9 +376,60 @@ def crear_tablas():
                     FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
                 )
             ''')
+            
+            # Tabla de facturas
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS facturas (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    numero_factura VARCHAR(100) UNIQUE NOT NULL,
+                    pedido_id INT NOT NULL,
+                    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    fecha_vencimiento TIMESTAMP,
+                    subtotal DECIMAL(12,2) NOT NULL,
+                    iva DECIMAL(12,2) NOT NULL,
+                    total DECIMAL(12,2) NOT NULL,
+                    estado VARCHAR(50) DEFAULT 'EMITIDA',
+                    formato VARCHAR(50) DEFAULT 'PDF',
+                    url_descarga VARCHAR(255),
+                    FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+                )
+            ''')
+            
+            # Tabla de pagos PSE
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS pagos_pse (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    pedido_id INT NOT NULL,
+                    factura_id INT,
+                    referencia_pago VARCHAR(100) UNIQUE NOT NULL,
+                    banco_id VARCHAR(50) NOT NULL,
+                    banco_nombre VARCHAR(100) NOT NULL,
+                    estado VARCHAR(50) DEFAULT 'PENDIENTE',
+                    monto DECIMAL(12,2) NOT NULL,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    fecha_procesado TIMESTAMP,
+                    tipo_persona VARCHAR(10) NOT NULL,
+                    tipo_documento VARCHAR(50) NOT NULL,
+                    numero_documento VARCHAR(50) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    url_retorno VARCHAR(255),
+                    ip_origen VARCHAR(50),
+                    user_agent TEXT,
+                    respuesta_pse TEXT,
+                    FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+                    FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE SET NULL
+                )
+            ''')
         except Exception as e:
             print(f"Error durante la creación de tablas: {e}")
             
+        # Crear tabla de carousel
+        try:
+            Carousel.crear_tabla()
+            print("Tabla carousel creada o verificada correctamente")
+        except Exception as e:
+            print(f"Error al crear tabla carousel: {e}")
+        
         # Confirmar cambios
         mysql.connection.commit()
     finally:
@@ -524,29 +601,63 @@ def get_cursor():
     return mysql.connection.cursor()
 
 def verificar_estructura_tablas():
-    """Verifica la estructura de las tablas y actualiza si es necesario"""
+    """Verifica la estructura de las tablas críticas del sistema"""
+    cursor = None
     try:
-        # Verificar y crear la tabla historial_reparaciones
-        crear_tabla_historial_reparaciones()
-        
-        # Verificar si la tabla reparaciones tiene la columna diagnostico
         cursor = mysql.connection.cursor()
-        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'diagnostico'")
-        if not cursor.fetchone():
-            cursor.execute("ALTER TABLE reparaciones ADD COLUMN diagnostico TEXT NULL")
-            mysql.connection.commit()
-            print("Columna diagnostico añadida a la tabla reparaciones")
         
-        # Verificar si la tabla reparaciones tiene la columna fecha_actualizacion
-        cursor.execute("SHOW COLUMNS FROM reparaciones LIKE 'fecha_actualizacion'")
-        if not cursor.fetchone():
-            cursor.execute("ALTER TABLE reparaciones ADD COLUMN fecha_actualizacion DATETIME NULL")
-            mysql.connection.commit()
-            print("Columna fecha_actualizacion añadida a la tabla reparaciones")
+        # Verificar tabla clientes
+        cursor.execute("SHOW TABLES LIKE 'clientes'")
+        if cursor.fetchone():
+            cursor.execute("DESCRIBE clientes")
+            columnas = {col[0] for col in cursor.fetchall()}
+            campos_requeridos = {'id', 'nombre', 'email', 'password', 'telefono'}
+            campos_faltantes = campos_requeridos - columnas
+            if campos_faltantes:
+                print(f"Advertencia: Faltan campos en la tabla clientes: {campos_faltantes}")
+        
+        # Verificar tabla reparaciones
+        cursor.execute("SHOW TABLES LIKE 'reparaciones'")
+        if cursor.fetchone():
+            cursor.execute("DESCRIBE reparaciones")
+            columnas = {col[0] for col in cursor.fetchall()}
+            campos_requeridos = {
+                'id', 'cliente_id', 'descripcion', 'estado', 
+                'fecha_recepcion', 'fecha_entrega_estimada'
+            }
+            campos_faltantes = campos_requeridos - columnas
+            if campos_faltantes:
+                print(f"Advertencia: Faltan campos en la tabla reparaciones: {campos_faltantes}")
+                
+            # Verificar si existen las tablas relacionadas
+            tablas_relacionadas = [
+                'historial_reparaciones',
+                'reparaciones_repuestos'
+            ]
             
-        cursor.close()
+            for tabla in tablas_relacionadas:
+                cursor.execute(f"SHOW TABLES LIKE '{tabla}'")
+                if not cursor.fetchone():
+                    if tabla == 'historial_reparaciones':
+                        crear_tabla_historial_reparaciones()
+                    elif tabla == 'reparaciones_repuestos':
+                        crear_tabla_reparaciones_repuestos()
+        else:
+            # Si no existe la tabla reparaciones, crearla
+            inicializar_tablas_reparaciones()
+        
+        mysql.connection.commit()
+        return True
+        
     except Exception as e:
         print(f"Error al verificar estructura de tablas: {e}")
+        if cursor:
+            mysql.connection.rollback()
+        return False
+        
+    finally:
+        if cursor:
+            cursor.close()
 
 # Crear la tabla de historial de reparaciones si no existe
 def crear_tabla_historial_reparaciones():
@@ -707,15 +818,84 @@ def actualizar_tabla_reparaciones():
         cursor.close()
 
 def inicializar_tablas_reparaciones():
-    """Inicializa todas las tablas necesarias para el módulo de reparaciones"""
+    """Inicializa las tablas necesarias para el módulo de reparaciones"""
+    cursor = None
     try:
-        crear_tabla_historial_reparaciones()
-        crear_tabla_reparaciones_repuestos()
-        crear_tabla_whatsapp_mensajes()
-        actualizar_tabla_reparaciones()
-        print("Inicialización de tablas de reparaciones completada")
+        if not hasattr(mysql, 'connection'):
+            print("Error: No hay conexión MySQL disponible")
+            return False
+            
+        cursor = mysql.connection.cursor()
+        
+        # Crear tabla de reparaciones
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reparaciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                cliente_id INT,
+                tecnico_id INT,
+                recepcionista_id INT,
+                descripcion TEXT NOT NULL,
+                electrodomestico VARCHAR(100),
+                marca VARCHAR(100),
+                modelo VARCHAR(100),
+                problema TEXT,
+                diagnostico TEXT,
+                solucion TEXT,
+                estado VARCHAR(50) DEFAULT 'RECIBIDO',
+                fecha_recepcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_entrega_estimada DATE,
+                fecha_entrega DATETIME,
+                fecha_actualizacion DATETIME,
+                costo_revision DECIMAL(10,2) DEFAULT 20000,
+                costo_reparacion DECIMAL(10,2),
+                total DECIMAL(10,2),
+                observaciones TEXT,
+                FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
+                FOREIGN KEY (tecnico_id) REFERENCES empleados(id) ON DELETE SET NULL,
+                FOREIGN KEY (recepcionista_id) REFERENCES empleados(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ''')
+        
+        # Crear tabla de historial
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS historial_reparaciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                reparacion_id INT NOT NULL,
+                estado_anterior VARCHAR(50),
+                estado_nuevo VARCHAR(50) NOT NULL,
+                descripcion TEXT,
+                usuario_id INT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
+                FOREIGN KEY (usuario_id) REFERENCES empleados(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ''')
+        
+        # Crear tabla de repuestos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reparaciones_repuestos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                reparacion_id INT NOT NULL,
+                producto_id INT,
+                cantidad INT NOT NULL,
+                precio_unitario DECIMAL(10,2) NOT NULL,
+                subtotal DECIMAL(10,2) NOT NULL,
+                fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (reparacion_id) REFERENCES reparaciones(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ''')
+        
+        mysql.connection.commit()
+        print("Tablas del módulo de reparaciones inicializadas correctamente")
+        return True
+        
     except Exception as e:
-        print(f"Error en inicialización de tablas: {e}")
-
-# Llamar a la función de inicialización al cargar el módulo
-inicializar_tablas_reparaciones()
+        print(f"Error al inicializar tablas de reparaciones: {e}")
+        if cursor and mysql.connection:
+            mysql.connection.rollback()
+        return False
+        
+    finally:
+        if cursor:
+            cursor.close()

@@ -24,34 +24,24 @@
                         <tbody>
                             {% for pedido in pedidos %}
                             <tr>
-                                <td>{{ pedido.id }}</td>
-                                <td>{{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td><a href="{{ url_for('carrito.detalle_pedido', pedido_id=pedido.id) }}">#{{ pedido.id }}</a></td>
+                                <td>{{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') if pedido.fecha_pedido else '-' }}</td>
                                 <td>${{ "{:,.0f}".format(pedido.total|float) }} COP</td>
                                 <td>
-                                    {% if pedido.estado_pago == 'PAGADO' %}
+                                    {% if pedido.estado == 'PAGADO' %}
                                         <span class="badge badge-success">Pagado</span>
-                                    {% elif pedido.estado_pago == 'PENDIENTE' %}
+                                    {% elif pedido.estado == 'PENDIENTE' %}
                                         <span class="badge badge-warning">Pendiente</span>
                                     {% else %}
-                                        <span class="badge badge-secondary">{{ pedido.estado_pago }}</span>
+                                        <span class="badge badge-secondary">{{ pedido.estado }}</span>
                                     {% endif %}
                                 </td>
+                                <td>{{ pedido.metodo_pago|default('-', true)|capitalize }}</td>
                                 <td>
-                                    {% if pedido.metodo_pago == 'transferencia' %}
-                                        <i class="fas fa-university"></i> Transferencia
-                                    {% elif pedido.metodo_pago == 'efectivo' %}
-                                        <i class="fas fa-money-bill-wave"></i> Efectivo
-                                    {% elif pedido.metodo_pago == 'oxxo' %}
-                                        <i class="fas fa-store"></i> OXXO
-                                    {% else %}
-                                        {{ pedido.metodo_pago }}
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('carrito.detalle_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ url_for('carrito.detalle_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-eye"></i> Ver
                                     </a>
-                                    {% if pedido.estado_pago == 'PENDIENTE' %}
+                                    {% if pedido.estado == 'PENDIENTE' %}
                                         <a href="{{ url_for('carrito.pago', pedido_id=pedido.id) }}" class="btn btn-sm btn-success">
                                             <i class="fas fa-credit-card"></i> Pagar
                                         </a>

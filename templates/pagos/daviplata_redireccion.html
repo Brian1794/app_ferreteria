@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Redireccionando a Daviplata{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f5f7fa;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .daviplata-container {
+        background-color: #e30613;
+        background-image: linear-gradient(135deg, #e30613 0%, #ab000c 100%);
+        color: white;
+        min-height: 100vh;
+        text-align: center;
+        padding: 20px;
+        position: relative;
+    }
+    
+    .daviplata-header {
+        padding: 15px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    
+    .daviplata-logo {
+        width: 180px;
+        margin-bottom: 10px;
+    }
+    
+    .daviplata-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    .daviplata-payment {
+        background-color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin: 0 auto;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        color: #333;
+    }
+    
+    .daviplata-amount {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 20px 0;
+        color: #e30613;
+    }
+    
+    .daviplata-detail {
+        background-color: #f9f9f9;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .daviplata-detail-label {
+        color: #777;
+        font-size: 0.9rem;
+    }
+    
+    .daviplata-detail-value {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .daviplata-celphone {
+        font-size: 1.3rem;
+        margin: 20px 0;
+    }
+    
+    .daviplata-notification {
+        background-color: #fff3cd;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 400px;
+        text-align: left;
+        display: flex;
+        align-items: flex-start;
+        color: #856404;
+    }
+    
+    .daviplata-notification i {
+        margin-right: 10px;
+        font-size: 1.5rem;
+        color: #856404;
+    }
+    
+    .daviplata-actions {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .daviplata-button {
+        background-color: #e30613;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 15px;
+    }
+    
+    .daviplata-button:hover {
+        background-color: #c50000;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(229, 6, 19, 0.3);
+    }
+    
+    .daviplata-cancel {
+        background-color: #f1f1f1;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+    
+    .daviplata-cancel:hover {
+        background-color: #e5e5e5;
+        color: #333;
+    }
+    
+    .daviplata-loading {
+        display: none;
+        margin-top: 15px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .daviplata-spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(227, 6, 19, 0.1);
+        border-top: 5px solid #e30613;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .daviplata-loading-text {
+        font-size: 1.1rem;
+        color: white;
+    }
+    
+    .phone-shape {
+        position: relative;
+        max-width: 450px;
+        margin: 0 auto;
+        border-radius: 40px;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        border: 10px solid #111;
+        position: relative;
+    }
+    
+    .phone-notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 30px;
+        background-color: #111;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+        z-index: 2;
+    }
+    
+    /* Estilos responsivos */
+    @media (max-width: 480px) {
+        .phone-shape {
+            border: none;
+            box-shadow: none;
+        }
+        
+        .phone-notch {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="phone-shape">
+    <div class="phone-notch"></div>
+    <div class="daviplata-container">
+        <div class="daviplata-header">
+            <img src="https://www.daviplata.com/wps/wcm/connect/eb56b0e9-20e6-47a7-b48c-02396e14fcca/logo.png?MOD=AJPERES&CACHEID=ROOTWORKSPACE-eb56b0e9-20e6-47a7-b48c-02396e14fcca-ovdYI8I" alt="Daviplata" class="daviplata-logo">
+            <h2 class="daviplata-title">Pago en línea</h2>
+        </div>
+        
+        <div class="daviplata-payment">
+            <div class="daviplata-amount">${{ "{:,.0f}".format(pago_info.monto|float) }}</div>
+            
+            <div class="daviplata-detail">
+                <div>
+                    <div class="daviplata-detail-label">Comercio</div>
+                    <div class="daviplata-detail-value">Ferretería La U</div>
+                </div>
+                <div>
+                    <div class="daviplata-detail-label">Pedido</div>
+                    <div class="daviplata-detail-value">#{{ pedido.id }}</div>
+                </div>
+            </div>
+            
+            <div class="daviplata-detail">
+                <div>
+                    <div class="daviplata-detail-label">Fecha</div>
+                    <div class="daviplata-detail-value">{{ pago_info.fecha }}</div>
+                </div>
+                <div>
+                    <div class="daviplata-detail-label">Ref.</div>
+                    <div class="daviplata-detail-value">
+                        {% if pago_info.get('referencia') %}
+                            {{ pago_info.referencia[:8] }}
+                        {% else %}
+                            {{ pago_info.get('factura_id', 'N/A') }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="daviplata-celphone">
+                <div class="daviplata-detail-label">Número celular</div>
+                {% if pago_info.celular %}
+                    <div class="daviplata-detail-value">+57 {{ pago_info.celular }}</div>
+                {% else %}
+                    <div class="daviplata-detail-value">+57 {{ pago_info.numero_documento }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="daviplata-notification">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <div>Recibirás una notificación en tu aplicación Daviplata para autorizar este pago.</div>
+            </div>
+        </div>
+        
+        <div class="daviplata-actions">
+            <form id="pse-form" action="{{ url_for('pagos_pse.procesar') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="daviplata-button">Autorizar pago</button>
+            </form>
+            <a href="{{ url_for('pagos_pse.cancelar') }}" class="daviplata-button daviplata-cancel">Cancelar</a>
+        </div>
+        
+        <div class="daviplata-loading" id="loading-section">
+            <div class="daviplata-spinner"></div>
+            <div class="daviplata-loading-text">Verificando tu cuenta Daviplata...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pseForm = document.getElementById('pse-form');
+        const loadingSection = document.getElementById('loading-section');
+        const actionsDiv = document.querySelector('.daviplata-actions');
+        
+        // Manejar el envío del formulario
+        if (pseForm) {
+            pseForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevenir el envío predeterminado
+                
+                // Ocultar botones y mostrar carga
+                actionsDiv.style.display = 'none';
+                loadingSection.style.display = 'flex';
+                
+                // Después de 3 segundos, mostrar la pantalla de PIN
+                setTimeout(function() {
+                    loadingSection.innerHTML = `
+                        <div style="background-color: white; padding: 20px; border-radius: 10px; color: #333; margin: 20px auto; max-width: 300px;">
+                            <div style="font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;">Ingrese su clave</div>
+                            <div style="display: flex; justify-content: space-between; margin: 20px 0;">
+                                <div style="width: 15px; height: 15px; border-radius: 50%; background-color: #333;"></div>
+                                <div style="width: 15px; height: 15px; border-radius: 50%; background-color: #333;"></div>
+                                <div style="width: 15px; height: 15px; border-radius: 50%; background-color: #333;"></div>
+                                <div style="width: 15px; height: 15px; border-radius: 50%; background-color: #333;"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Después de 2 segundos, mostrar confirmación
+                    setTimeout(function() {
+                        loadingSection.innerHTML = `
+                            <div style="font-size: 40px; color: white; margin-bottom: 20px;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="daviplata-loading-text">¡Pago autorizado!</div>
+                        `;
+                        
+                        // Después de mostrar confirmación, enviar el formulario
+                        setTimeout(function() {
+                            // Asegurarse de que el formulario se envíe directamente
+                            pseForm.removeEventListener('submit', arguments.callee);
+                            pseForm.submit();
+                        }, 2000);
+                    }, 2000);
+                }, 3000);
+            });
+        }
+        
+        // Auto-enviar después de 8 segundos si el usuario no hace nada
+        setTimeout(function() {
+            if (actionsDiv.style.display !== 'none' && pseForm) {
+                actionsDiv.style.display = 'none';
+                loadingSection.style.display = 'flex';
+                loadingSection.innerHTML = `
+                    <div style="font-size: 40px; color: white; margin-bottom: 20px;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="daviplata-loading-text">¡Pago en proceso!</div>
+                    <div style="color: rgba(255,255,255,0.7); margin-top: 10px; font-size: 0.9rem;">Conectando con Daviplata...</div>
+                `;
+                
+                setTimeout(function() {
+                    // Eliminar event listeners para evitar duplicados
+                    const newForm = pseForm.cloneNode(true);
+                    pseForm.parentNode.replaceChild(newForm, pseForm);
+                    newForm.submit();
+                }, 2000);
+            }
+        }, 8000);
+    });
+</script>
+{% endblock %} 

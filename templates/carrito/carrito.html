@@ -35,7 +35,7 @@
                                 </div>
                             </div>
                             <div class="col-md-2 text-center">
-                                ${{ item.precio_venta }}
+                                ${{ '{:,.0f}'.format(item.precio_venta * 1000)|replace(',', '.') }}
                             </div>
                             <div class="col-md-2 text-center">
                                 <div class="input-group">
@@ -53,7 +53,7 @@
                                 </div>
                             </div>
                             <div class="col-md-2 text-center">
-                                $<span class="subtotal">{{ item.precio_venta * item.cantidad }}</span>
+                                $<span class="subtotal">{{ '{:,.0f}'.format((item.precio_venta * item.cantidad) * 1000)|replace(',', '.') }}</span>
                                 <button class="btn btn-sm btn-danger ml-2 eliminar-producto" 
                                         data-producto-id="{{ item.producto_id }}">
                                     <i class="fas fa-trash"></i>
@@ -73,7 +73,7 @@
                                 </button>
                             </div>
                             <div class="col-md-4 text-right">
-                                <h4>Total: $<span id="total-carrito">{{ total }}</span></h4>
+                                <h4>Total: $<span id="total-carrito">{{ '{:,.0f}'.format(total * 1000)|replace(',', '.') }}</span></h4>
                                 <a href="{{ url_for('carrito.checkout') }}" class="btn btn-success btn-lg mt-2">
                                     Proceder al pago <i class="fas fa-arrow-right"></i>
                                 </a>
@@ -169,10 +169,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Actualizar subtotal del producto
                 const item = document.querySelector(`.item-carrito .cantidad-producto[data-producto-id="${productoId}"]`).closest('.item-carrito');
                 const subtotalElement = item.querySelector('.subtotal');
-                subtotalElement.textContent = parseFloat(data.subtotal).toFixed(2);
+                subtotalElement.textContent = formatearPrecio(parseFloat(data.subtotal) * 1000);
                 
                 // Actualizar total
-                document.getElementById('total-carrito').textContent = parseFloat(data.total).toFixed(2);
+                document.getElementById('total-carrito').textContent = formatearPrecio(parseFloat(data.total) * 1000);
                 
                 // Actualizar contador de carrito en el nav
                 const cartCounter = document.querySelector('.cart-counter');
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.remove();
                 
                 // Actualizar total
-                document.getElementById('total-carrito').textContent = parseFloat(data.total).toFixed(2);
+                document.getElementById('total-carrito').textContent = formatearPrecio(parseFloat(data.total) * 1000);
                 
                 // Actualizar contador de carrito en el nav
                 const cartCounter = document.querySelector('.cart-counter');
@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             alert('Ocurrió un error al vaciar el carrito');
         });
+    }
+    
+    // Función para formatear precios en miles con puntos
+    function formatearPrecio(valor) {
+        return valor.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 });
 </script>

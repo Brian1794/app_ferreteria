@@ -297,11 +297,13 @@
                 <h3 class="producto-titulo">{{ producto.nombre }}</h3>
             </a>
             
-            {% if producto.stock > 0 %}
-            <span class="stock-badge en-stock">En stock</span>
-            {% else %}
-            <span class="stock-badge sin-stock">Sin stock</span>
-            {% endif %}
+            <span class="stock-badge {% if producto.stock > 0 %}en-stock{% else %}sin-stock{% endif %}">
+                {% if producto.stock > 0 %}
+                    En stock ({{ producto.stock }})
+                {% else %}
+                    Sin stock
+                {% endif %}
+            </span>
             
             <p class="producto-descripcion">
                 {% if producto.descripcion %}
@@ -312,7 +314,7 @@
             </p>
             
             <div class="producto-footer">
-                <div class="producto-precio">${{ producto.precio_venta }}</div>
+                <div class="producto-precio">${{ '{:,.0f}'.format(producto.precio_venta|float) }}</div>
             </div>
         </div>
     </div>
@@ -413,4 +415,4 @@
         });
     });
 </script>
-{% endblock %} 
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Reparación #{{ reparacion.id }} - Ferretería "La U"{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos base */
+    body {
+        background-color: #f8f9fa;
+        font-family: Arial, sans-serif;
+    }
+    
+    .reparacion-container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
+    
+    /* Encabezado de reparación */
+    .reparacion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .reparacion-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #343a40;
+        margin: 0;
+    }
+    
+    .reparacion-estado {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        color: white;
+        font-size: 0.9rem;
+    }
+    
+    /* Tarjeta principal */
+    .reparacion-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+    
+    /* Secciones */
+    .reparacion-section {
+        padding: 20px;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    
+    .reparacion-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        color: #343a40;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    /* Filas de información */
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-group {
+        margin-right: 30px;
+        margin-bottom: 10px;
+        flex: 1 1 200px;
+    }
+    
+    .info-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        color: #212529;
+        font-weight: 500;
+    }
+    
+    /* Sección de chat */
+    .chat-container {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #f1f1f1;
+    }
+    
+    .chat-messages {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message:last-child {
+        margin-bottom: 0;
+    }
+    
+    .message-content {
+        background-color: #e9ecef;
+        padding: 12px 15px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        max-width: 70%;
+        position: relative;
+    }
+    
+    .message-meta {
+        margin-top: 5px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .message-sender {
+        font-weight: 600;
+    }
+    
+    .message-time {
+        margin-left: 10px;
+    }
+    
+    .message-cliente {
+        align-items: flex-start;
+    }
+    
+    .message-cliente .message-content {
+        background-color: #f1f1f1;
+        color: #212529;
+        border-top-left-radius: 0;
+    }
+    
+    .message-tecnico, .message-empleado, .message-admin {
+        align-items: flex-end;
+    }
+    
+    .message-tecnico .message-content, .message-empleado .message-content, .message-admin .message-content {
+        background-color: #007bff;
+        color: white;
+        border-top-right-radius: 0;
+    }
+    
+    .chat-form {
+        display: flex;
+        padding: 15px;
+        background-color: white;
+        border-top: 1px solid #f1f1f1;
+    }
+    
+    .chat-input {
+        flex: 1;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 10px 15px;
+        margin-right: 10px;
+        outline: none;
+    }
+    
+    .chat-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .chat-button:hover {
+        background-color: #0069d9;
+    }
+    
+    /* Botones */
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    /* Nuevos estilos para mensajes */
+    .new-message .message-content {
+        border: 2px solid #dc3545;
+        animation: pulse 2s infinite;
+    }
+
+    .message-status {
+        position: absolute;
+        top: -10px;
+        right: 10px;
+        background-color: #dc3545;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reparacion-container">
+    <div class="reparacion-header">
+        <h1 class="reparacion-title">Reparación #{{ reparacion.id }}</h1>
+        <span class="reparacion-estado" data-color="{{ reparacion.estado_color if reparacion.estado_color else '6c757d' }}">
+            {{ reparacion.estado_nombre or 'En proceso' }}
+        </span>
+    </div>
+    
+    {% include 'includes/messages.html' %}
+    
+    <div class="reparacion-card">
+        <div class="reparacion-section">
+            <h2 class="section-title">Información del equipo</h2>
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Equipo</div>
+                    <div class="info-value">{{ reparacion.electrodomestico or reparacion.aparato or 'No especificado' }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Marca</div>
+                    <div class="info-value">{{ reparacion.marca or 'No especificada' }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Modelo</div>
+                    <div class="info-value">{{ reparacion.modelo or 'No especificado' }}</div>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Problema reportado</div>
+                    <div class="info-value">{{ reparacion.problema or reparacion.descripcion or 'No especificado' }}</div>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Fecha de recepción</div>
+                    <div class="info-value">{{ reparacion.fecha_recepcion or 'No especificada' }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Fecha estimada de entrega</div>
+                    <div class="info-value">{{ reparacion.fecha_entrega_estimada or 'Por determinar' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="reparacion-section">
+            <h2 class="section-title">Información del cliente</h2>
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Nombre</div>
+                    <div class="info-value">{{ reparacion.nombre_cliente or 'No especificado' }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Teléfono</div>
+                    <div class="info-value">{{ reparacion.telefono_cliente or 'No especificado' }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{ reparacion.email_cliente or 'No especificado' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        {% if es_tecnico %}
+        <div class="reparacion-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="section-title mb-0">Diagnóstico técnico</h2>
+                <a href="{{ url_for('reparaciones.actualizar_estado', id=reparacion.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Actualizar estado
+                </a>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Diagnóstico</div>
+                    <div class="info-value">{{ reparacion.diagnostico or 'No se ha realizado el diagnóstico' }}</div>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Solución aplicada</div>
+                    <div class="info-value">{{ reparacion.solucion or 'No se ha aplicado una solución' }}</div>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">Costo estimado</div>
+                    <div class="info-value">{{ reparacion.costo_estimado or '0.00' }} $</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Costo final</div>
+                    <div class="info-value">{{ reparacion.costo_final or '0.00' }} $</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="reparacion-section">
+            <h2 class="section-title">Comunicación</h2>
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    {% if mensajes %}
+                        {% for mensaje in mensajes %}
+                            <div class="message message-{{ mensaje.remitente_tipo }} {% if not mensaje.leido and mensaje.remitente_tipo != current_user.tipo %}new-message{% endif %}">
+                                <div class="message-content">
+                                    {{ mensaje.mensaje }}
+                                    {% if not mensaje.leido and mensaje.remitente_tipo != current_user.tipo %}
+                                        <span class="message-status">Nuevo</span>
+                                    {% endif %}
+                                </div>
+                                <div class="message-meta">
+                                    <span class="message-sender">{{ mensaje.remitente_nombre }}</span>
+                                    <span class="message-time">
+                                        {% if mensaje.fecha_creacion is defined %}
+                                            {{ mensaje.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-muted">No hay mensajes. Inicia la comunicación ahora.</p>
+                    {% endif %}
+                </div>
+                
+                <form method="POST" class="chat-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="text" name="mensaje" class="chat-input" placeholder="Escribe tu mensaje..." required>
+                    <button type="submit" class="chat-button">
+                        <i class="fas fa-paper-plane"></i> Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Aplicar el color de fondo desde el data-attribute
+    document.addEventListener('DOMContentLoaded', function() {
+        const estadoElement = document.querySelector('.reparacion-estado');
+        if (estadoElement) {
+            const color = estadoElement.getAttribute('data-color');
+            estadoElement.style.backgroundColor = '#' + color;
+        }
+    });
+    
+    // Desplazar el chat al final para ver los mensajes más recientes
+    window.onload = function() {
+        var chatMessages = document.getElementById('chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Auto refresh cada 60 segundos para ver nuevos mensajes
+    setTimeout(function() {
+        location.reload();
+    }, 60000);
+</script>
+{% endblock %} 

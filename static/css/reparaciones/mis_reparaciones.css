@@ -1,31 +1,35 @@
 .reparaciones-container {
     padding: 2rem;
+    background-color: var(--bg-light) !important;
 }
 
 .section-header {
     margin-bottom: 2rem;
+    background-color: transparent !important;
 }
 
 .section-header h1 {
-    color: var(--primary-color);
+    color: var(--primary-color) !important;
     margin-bottom: 0.5rem;
 }
 
 .section-header p {
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
 }
 
 .reparaciones-card {
-    background-color: var(--card-bg);
+    background-color: white !important;
     border-radius: 10px;
     box-shadow: var(--box-shadow);
     margin-bottom: 2rem;
     overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
 .reparaciones-table {
     width: 100%;
     border-collapse: collapse;
+    background-color: white !important;
 }
 
 .reparaciones-table th,
@@ -36,9 +40,13 @@
 }
 
 .reparaciones-table th {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: var(--bg-light) !important;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--primary-dark) !important;
+}
+
+.reparaciones-table tr {
+    background-color: white !important;
 }
 
 .reparaciones-table tr:last-child td {
@@ -46,7 +54,7 @@
 }
 
 .reparaciones-table tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: var(--bg-light) !important;
 }
 
 .badge {
@@ -55,52 +63,58 @@
     font-size: 0.75em;
     font-weight: 600;
     display: inline-block;
+    position: relative;
+    z-index: 5;
 }
 
-.badge-recibido { background-color: #ff9800; color: white; }
-.badge-diagnostico { background-color: #2196f3; color: white; }
-.badge-progreso { background-color: #9c27b0; color: white; }
-.badge-listo { background-color: #4caf50; color: white; }
-.badge-entregado { background-color: #607d8b; color: white; }
-.badge-cancelado { background-color: #f44336; color: white; }
+.badge-recibido { background-color: var(--secondary-color) !important; color: white !important; }
+.badge-diagnostico { background-color: var(--primary-color) !important; color: white !important; }
+.badge-progreso { background-color: var(--primary-light) !important; color: white !important; }
+.badge-listo { background-color: var(--accent-color) !important; color: white !important; }
+.badge-entregado { background-color: var(--tertiary-color) !important; color: var(--primary-dark) !important; }
+.badge-cancelado { background-color: #f44336 !important; color: white !important; }
 
 .btn-action {
     padding: 0.5rem 1rem;
     border-radius: 5px;
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color) !important;
+    color: white !important;
     text-align: center;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.3s;
     text-decoration: none;
     font-weight: 500;
     display: inline-block;
+    position: relative;
+    z-index: 10;
 }
 
 .btn-action:hover {
-    background-color: var(--primary-dark);
-    color: white;
+    background-color: var(--primary-dark) !important;
+    color: white !important;
+    transform: translateY(-2px);
 }
 
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
+    background-color: white !important;
 }
 
 .empty-state i {
     font-size: 4rem;
     margin-bottom: 1rem;
-    color: var(--border-color);
+    color: var(--accent-light) !important;
 }
 
 .empty-state h3 {
     margin-bottom: 1rem;
-    color: var(--text-color);
+    color: var(--primary-color) !important;
 }
 
 .info-box {
-    background-color: rgba(33, 150, 243, 0.1);
-    border-left: 4px solid #2196f3;
+    background-color: rgba(58, 89, 209, 0.05) !important;
+    border-left: 4px solid var(--primary-color);
     padding: 1rem;
     margin-bottom: 2rem;
     border-radius: 0 5px 5px 0;
@@ -108,7 +122,11 @@
 
 .info-box p {
     margin: 0;
-    color: var(--text-color);
+    color: var(--text-color) !important;
+}
+
+.reparaciones-container *:not(.badge):not(.btn-action):not(i):not(.main-navbar *):not(.secondary-navbar *) {
+    color: var(--text-color) !important;
 }
 
 @media (max-width: 768px) {

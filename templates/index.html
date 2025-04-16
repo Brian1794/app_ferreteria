@@ -408,14 +408,144 @@
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero">
-    <h1>Ferretería "La U"</h1>
-    <p>Todo lo que necesitas para construir, reparar y mejorar tu hogar o negocio. Contamos con un amplio catálogo de productos, atención personalizada y precios competitivos.</p>
-    <div class="cta-buttons">
-        <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-accent">Ver Productos</a>
-        <a href="#servicios" class="btn">Nuestros Servicios</a>
-        <a href="#contacto" class="btn btn-secondary">Contáctanos</a>
+<!-- Carousel principal -->
+<div class="carousel-container">
+    {% if carousel_items %}
+    <div id="mainCarousel" class="carousel slide custom-carousel" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            {% for item in carousel_items %}
+            <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active" aria-current="true"{% endif %} aria-label="Slide {{ loop.index }}"></button>
+            {% endfor %}
+        </div>
+        <div class="carousel-inner">
+            {% for item in carousel_items %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                {% if item.enlace %}
+                <a href="{{ item.enlace }}">
+                {% endif %}
+                    <img src="{{ url_for('static', filename='uploads/carousel/' + item.imagen) }}" class="d-block w-100" alt="{{ item.titulo }}">
+                {% if item.enlace %}
+                </a>
+                {% endif %}
+                
+                {% if item.titulo or item.descripcion %}
+                <div class="carousel-caption d-none d-md-block">
+                    <h3>{{ item.titulo }}</h3>
+                    {% if item.descripcion %}
+                    <p>{{ item.descripcion }}</p>
+                    {% endif %}
+                    {% if item.enlace %}
+                    <a href="{{ item.enlace }}" class="carousel-link">Ver más</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
+    </div>
+    {% else %}
+    <!-- Mostrar un banner estático si no hay imágenes en el carousel -->
+    <div class="static-banner">
+        <div class="banner-content">
+            <h2>Bienvenido a Ferretería "La U"</h2>
+            <p>Encuentra todo lo que necesitas para tus proyectos de construcción, remodelación y reparación.</p>
+            <a href="{{ url_for('productos.catalogo') }}" class="btn btn-primary btn-lg">Ver productos</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Sección de Productos Destacados -->
+{% if productos_destacados %}
+<section class="featured-products">
+    <div class="section-header">
+        <h2>Productos Destacados</h2>
+        <a href="{{ url_for('productos.catalogo') }}" class="view-all">Ver todos</a>
+    </div>
+    
+    <div class="row">
+        {% for producto in productos_destacados %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="product-card">
+                <div class="product-image">
+                    {% if producto.imagen %}
+                    <img src="{{ url_for('static', filename='uploads/productos/' ~ producto.imagen) }}" alt="{{ producto.nombre }}">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='img/producto-default.jpg') }}" alt="{{ producto.nombre }}">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ producto.nombre }}</h3>
+                    <div class="product-category">{{ producto.categoria }}</div>
+                    <div class="product-price">${{ '{:,.0f}'.format(producto.precio_venta) }}</div>
+                    
+                    <div class="product-actions">
+                        <a href="{{ url_for('productos.detalle', id=producto.id) }}" class="btn btn-outline-primary btn-sm">Ver detalles</a>
+                        {% if current_user.is_authenticated and current_user.es_cliente %}
+                        <form action="{{ url_for('carrito.agregar') }}" method="post" class="d-inline">
+                            <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                            <input type="hidden" name="cantidad" value="1">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-cart-plus"></i> Añadir
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Sección de Servicios -->
+<section class="services-section">
+    <div class="section-header">
+        <h2>Nuestros Servicios</h2>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3>Reparaciones</h3>
+                <p>Servicio técnico especializado para la reparación de herramientas y electrodomésticos.</p>
+                <a href="{{ url_for('reparaciones.index') }}" class="btn btn-outline-primary">Más información</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h3>Entrega a Domicilio</h3>
+                <p>Entregas rápidas y seguras a cualquier punto de la ciudad.</p>
+                <a href="{{ url_for('main.contacto') }}#entregas" class="btn btn-outline-primary">Consultar</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <h3>Asesoría Técnica</h3>
+                <p>Profesionales capacitados para orientar tus proyectos de construcción y remodelación.</p>
+                <a href="{{ url_for('main.contacto') }}" class="btn btn-outline-primary">Contactar</a>
+            </div>
+        </div>
     </div>
 </section>
 

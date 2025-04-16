@@ -140,7 +140,8 @@ def nuevo():
             cur.close()
             
             flash('Cliente creado con éxito', 'success')
-            return redirect(url_for('clientes.ver', cliente_id=nuevo_id))
+            # Redirigir al panel de administración en lugar de clientes.ver
+            return redirect(url_for('admin.clientes'))
             
         except Exception as e:
             flash(f'Error al crear el cliente: {str(e)}', 'danger')
@@ -236,6 +237,12 @@ def editar(cliente_id):
         return redirect(url_for('main.mi_cuenta' if current_user.es_cliente else 'clientes.index'))
     
     if request.method == 'POST':
+        # Verificar token CSRF
+        csrf_token = request.form.get('csrf_token')
+        if not csrf_token:
+            flash('El token de seguridad CSRF es requerido', 'danger')
+            return render_template('clientes/formulario.html', cliente=cliente)
+            
         # Obtener datos del formulario
         nombre = request.form.get('nombre')
         apellido = request.form.get('apellido', '')
@@ -288,12 +295,16 @@ def editar(cliente_id):
                 UPDATE clientes 
                 SET nombre = %s, apellido = %s, email = %s, telefono = %s, 
                     direccion = %s, ciudad = %s, codigo_postal = %s, 
-                    identificacion = %s, tipo_cliente = %s, notas = %s, 
-                    activo = %s, puede_comprar_online = %s
+                    identificacion = %s
             '''
             params = [nombre, apellido, email, telefono, direccion, ciudad, 
-                     codigo_postal, identificacion, tipo_cliente, notas, 
-                     activo, puede_comprar_online]
+                     codigo_postal, identificacion]
+            
+            # Si es un administrador o empleado, actualizar campos adicionales
+            if current_user.is_empleado:
+                # Solo actualizamos el campo activo que sabemos que existe
+                query += ", activo = %s"
+                params.extend([activo])
             
             # Si se proporcionó una nueva contraseña, actualizarla
             if password:
@@ -313,12 +324,12 @@ def editar(cliente_id):
             
             flash('Cliente actualizado con éxito', 'success')
             
-            # Si es un cliente actualizando su propio perfil, redireccionar al carrito
+            # Si es un cliente actualizando su propio perfil, redireccionar a mi cuenta
             if current_user.es_cliente:
-                return redirect(url_for('carrito.checkout'))
-            # Si es un empleado, redireccionar a la vista de detalles del cliente
+                return redirect(url_for('main.mi_cuenta'))
+            # Si es un empleado, redireccionar a la lista de clientes en lugar de a la vista de detalles
             else:
-                return redirect(url_for('clientes.ver', cliente_id=cliente_id))
+                return redirect(url_for('admin.clientes'))
             
         except Exception as e:
             flash(f'Error al actualizar el cliente: {str(e)}', 'danger')
@@ -356,7 +367,8 @@ def cambiar_estado(cliente_id):
     except Exception as e:
         flash(f'Error al cambiar estado del cliente: {str(e)}', 'danger')
     
-    return redirect(url_for('clientes.ver', cliente_id=cliente_id))
+    # Redirigir al panel de administración en lugar de clientes.ver
+    return redirect(url_for('admin.clientes'))
 
 @clientes_bp.route('/buscar', methods=['GET'])
 @login_required

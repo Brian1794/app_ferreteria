@@ -3,13 +3,17 @@
         <style>
             .alert {
                 position: relative;
-                padding: 1rem;
+                padding: 1rem 1.25rem;
                 margin-bottom: 1.5rem;
                 border: 1px solid transparent;
                 border-radius: var(--border-radius);
                 box-shadow: var(--box-shadow);
                 animation: fadeIn 0.4s ease;
                 transition: var(--theme-transition);
+                font-weight: 500;
+                letter-spacing: 0.2px;
+                display: flex;
+                align-items: center;
             }
             
             .alert-success {
@@ -63,6 +67,11 @@
                 to { opacity: 1; transform: translateY(0); }
             }
             
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-10px); }
+            }
+            
             /* Botón de cierre para alertas */
             .alert .btn-close {
                 position: absolute;
@@ -87,8 +96,8 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 24px;
-                height: 24px;
+                width: 28px;
+                height: 28px;
                 margin-right: 0.75rem;
                 border-radius: 50%;
                 font-size: 14px;
@@ -113,11 +122,40 @@
                 background-color: rgba(var(--info-color), 0.2);
                 color: rgba(var(--info-color), 1);
             }
+            
+            .alert-content {
+                display: flex;
+                align-items: center;
+                flex: 1;
+            }
+            
+            .messages {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                max-width: 400px;
+                width: 100%;
+            }
+            
+            .messages .alert {
+                margin-bottom: 10px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transform-origin: right top;
+            }
+            
+            .fade-in {
+                animation: fadeIn 0.4s ease forwards;
+            }
+            
+            .fade-out {
+                animation: fadeOut 0.4s ease forwards;
+            }
         </style>
 
-        <div class="messages fade-in">
+        <div class="messages">
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}" {% if message == 'Has cerrado sesión correctamente.' %}id="logout-success-message"{% endif %}>
+                <div class="alert alert-{{ category }} fade-in" {% if message == 'Has cerrado sesión correctamente.' %}id="logout-success-message"{% endif %}>
                     <div class="alert-content">
                         <span class="alert-icon">
                             {% if category == 'success' %}
@@ -154,22 +192,24 @@
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(alert => {
                     alert.addEventListener('click', function() {
-                        this.style.opacity = '0';
+                        this.classList.remove('fade-in');
+                        this.classList.add('fade-out');
                         setTimeout(() => {
                             this.style.display = 'none';
-                        }, 300);
+                        }, 400);
                     });
                 });
                 
-                // Auto-esconder alertas después de 5 segundos
+                // Auto-esconder alertas después de 2 segundos
                 setTimeout(() => {
                     alerts.forEach(alert => {
-                        alert.style.opacity = '0';
+                        alert.classList.remove('fade-in');
+                        alert.classList.add('fade-out');
                         setTimeout(() => {
                             alert.style.display = 'none';
-                        }, 300);
+                        }, 400);
                     });
-                }, 5000);
+                }, 2000);
             });
         </script>
     {% endif %}

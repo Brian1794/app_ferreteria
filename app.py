@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, session, g
+from flask import Flask, render_template, redirect, url_for, flash, session, g, current_app, request
 from dotenv import load_dotenv
 from flask_login import current_user
 from datetime import datetime
@@ -7,7 +7,7 @@ import logging
 from flask_wtf.csrf import CSRFProtect
 
 # Importar extensiones
-from extensions import login_manager, bcrypt, mysql, init_app, get_cursor, mail
+from extensions import login_manager, bcrypt, mysql, init_extensions, get_cursor, mail
 
 # Importar configuración
 from config import get_config
@@ -25,10 +25,13 @@ from routes.admin import admin_bp
 from routes.ventas import ventas_bp
 from routes.empleados import empleados_bp
 from routes.carrito import carrito_bp
+from routes.notificaciones import notificaciones_bp
+from routes.carousel import carousel_bp
+from routes.pagos_pse import pagos_pse_bp
 
 # Importar database
 import database as db
-from models.models import crear_tablas, insertar_datos_iniciales, verificar_estructura_tablas
+from models.models import crear_tablas, insertar_datos_iniciales, verificar_estructura_tablas, inicializar_tablas_reparaciones
 from models.usuario import Usuario
 import MySQLdb
 
@@ -122,7 +125,7 @@ def load_user(user_id):
                 # Crear usuario con los datos disponibles
                 user = Usuario(
                     id=user_data.get(id_campo, user_data.get('id', user_id)),
-                    nombre=f"{user_data.get('nombre', '')} {user_data.get('apellido', '')}".strip(),
+                    nombre=f"{user_data.get('nombre', '')} {user_data.get('')}".strip(),
                     email=user_data.get('correo', user_data.get('email', user_data.get('cedula', ''))),
                     es_admin=es_admin,
                     es_cliente=False,
@@ -164,51 +167,54 @@ def init_db():
     """
     Inicializa la base de datos comprobando conexión y estructura básica
     """
-    try:
-        # Conectar a la base de datos
-        cursor = mysql.connection.cursor()
-        logger.info("Verificando conexión a base de datos...")
-        
-        # Verificar conexión
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
-        logger.info("Conexión a base de datos establecida correctamente")
-        
-        # Verificar tabla clientes 
-        cursor.execute("SHOW TABLES LIKE 'clientes'")
-        if not cursor.fetchone():
-            logger.warning("Tabla 'clientes' no existe. La aplicación puede necesitar inicializar la base de datos")
-        
-        # Verificar campos críticos en clientes
+    with current_app.app_context():
         try:
-            cursor.execute("DESCRIBE clientes")
-            columnas_clientes = [col[0] for col in cursor.fetchall()]
-            id_campo = 'id_cliente' if 'id_cliente' in columnas_clientes else 'id'
-            logger.info(f"Campo ID en tabla clientes: {id_campo}")
+            # Verificar conexión
+            logger.info("Verificando conexión a base de datos...")
+            cursor = None
+            try:
+                cursor = mysql.connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                logger.info("Conexión a base de datos establecida correctamente")
+            except Exception as e:
+                logger.error(f"Error al conectar a la base de datos: {e}")
+                return False
+            finally:
+                if cursor:
+                    cursor.close()
+            
+            # Verificar estructura de tablas
+            with mysql.connection.cursor() as cursor:
+                try:
+                    # Verificar tabla clientes 
+                    cursor.execute("SHOW TABLES LIKE 'clientes'")
+                    if not cursor.fetchone():
+                        logger.warning("Tabla 'clientes' no existe. La aplicación puede necesitar inicializar la base de datos")
+                    
+                    # Verificar campos críticos en clientes
+                    cursor.execute("DESCRIBE clientes")
+                    columnas_clientes = [col[0] for col in cursor.fetchall()]
+                    id_campo = 'id_cliente' if 'id_cliente' in columnas_clientes else 'id'
+                    logger.info(f"Campo ID en tabla clientes: {id_campo}")
+                except Exception as e:
+                    logger.error(f"Error al verificar estructura de clientes: {e}")
+                
+                try:
+                    # Verificar tabla reparaciones
+                    cursor.execute("SHOW TABLES LIKE 'reparaciones'")
+                    if cursor.fetchone():
+                        logger.info("Tabla 'reparaciones' encontrada")
+                    else:
+                        logger.warning("Tabla 'reparaciones' no encontrada")
+                except Exception as e:
+                    logger.error(f"Error al verificar tabla reparaciones: {e}")
+            
+            return True
+            
         except Exception as e:
-            logger.error(f"Error al verificar estructura de clientes: {e}")
-        
-        # Verificar tabla reparaciones
-        cursor.execute("SHOW TABLES LIKE 'reparaciones'")
-        if cursor.fetchone():
-            logger.info("Tabla 'reparaciones' encontrada")
-            
-            # Verificar estructura de tabla reparaciones
-            cursor.execute("DESCRIBE reparaciones")
-            columnas = [col[0] for col in cursor.fetchall()]
-            if 'electrodomestico' in columnas:
-                logger.info("Campo 'electrodomestico' encontrado en tabla reparaciones")
-            elif 'aparato' in columnas:
-                logger.info("Campo 'aparato' encontrado en tabla reparaciones") 
-            
-            if 'problema' not in columnas:
-                logger.warning("Campo 'problema' no encontrado en tabla reparaciones, puede causar errores")
-        else:
-            logger.warning("Tabla 'reparaciones' no encontrada. Las funciones de reparación no estarán disponibles")
-        
-        cursor.close()
-    except Exception as e:
-        logger.error(f"Error al inicializar la base de datos: {e}")
+            logger.error(f"Error en init_db: {e}")
+            return False
 
 def initialize_database():
     """Inicializa la base de datos en un contexto seguro"""
@@ -235,6 +241,8 @@ def initialize_database():
             insertar_datos_iniciales()
             # Verificar y actualizar estructura de tablas si es necesario
             verificar_estructura_tablas()
+            # Inicializar tablas de reparaciones
+            inicializar_tablas_reparaciones()
             print("Base de datos inicializada correctamente")
             return True
         except Exception as e:
@@ -246,53 +254,34 @@ def initialize_database():
             pass
 
 def create_app(config_name=None):
-    """Crea la aplicación Flask usando el patrón de fábrica"""
-    # Cargar variables de entorno
-    load_dotenv()
-    
-    # Crear instancia de Flask
+    """Crea y configura la aplicación Flask"""
     app = Flask(__name__)
     
-    # Configurar la aplicación desde config.py
-    config = get_config()
+    # Cargar configuración
+    config = get_config(config_name)
     app.config.from_object(config)
     
-    # Aplicar opciones de conexión MySQL desde la configuración
-    if hasattr(config, 'MYSQL_OPTIONS') and config.MYSQL_OPTIONS:
-        app.config['MYSQL_OPTIONS'] = config.MYSQL_OPTIONS
-    
-    # Asegurar que la SECRET_KEY esté configurada
+    # Asegurar que hay una SECRET_KEY
     if not app.config.get('SECRET_KEY'):
-        app.config['SECRET_KEY'] = 'clave-super-secreta-ferreteria-app'
-    
-    # Configurar protección CSRF
-    csrf = CSRFProtect(app)
-    
-    # Añadir la función csrf_token a los templates
-    @app.context_processor
-    def inject_csrf_token():
-        from flask_wtf.csrf import generate_csrf
-        return {'csrf_token': lambda: generate_csrf()}
-    
-    # Asegurarse de que la configuración de MySQL está definida correctamente
-    app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
-    app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
-    app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', '')
-    app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'ferreteria')
-    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+        app.config['SECRET_KEY'] = os.urandom(32)
     
     # Inicializar extensiones
-    init_app(app)
-    
-    # Importar mail después de init_app para evitar referencias circulares
+    mysql.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
     mail.init_app(app)
     
-    # Configurar cargador de usuarios para Flask-Login
-    login_manager.user_loader(load_user)
+    # Inicializar CSRF con configuración explícita
+    csrf = CSRFProtect()
+    csrf.init_app(app)
     
-    # Registrar blueprints con sus prefijos de URL
+    # Asegurar que CSRF esté habilitado
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hora
+    
+    # Registrar blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(main_bp, url_prefix='')
+    app.register_blueprint(main_bp)
     app.register_blueprint(productos_bp, url_prefix='/productos')
     app.register_blueprint(categorias_bp, url_prefix='/categorias')
     app.register_blueprint(reparaciones_bp, url_prefix='/reparaciones')
@@ -303,101 +292,50 @@ def create_app(config_name=None):
     app.register_blueprint(ventas_bp, url_prefix='/ventas')
     app.register_blueprint(empleados_bp, url_prefix='/empleados')
     app.register_blueprint(carrito_bp, url_prefix='/carrito')
+    app.register_blueprint(notificaciones_bp, url_prefix='/notificaciones')
+    app.register_blueprint(carousel_bp, url_prefix='/carousel')
+    app.register_blueprint(pagos_pse_bp, url_prefix='/pagos-pse')
     
-    # Configurar rutas que no requieren CSRF después de registrar blueprints
-    csrf.exempt(carrito_bp)  # Exentar todo el blueprint de carrito
-    
-    # Registrar manejadores de error personalizados
+    # Registrar manejadores de error
     register_error_handlers(app)
     
-    # Registrar nuestra función personalizada para cerrar la conexión a la base de datos
-    # que maneja el error 2006 de MySQL
-    app.teardown_appcontext(db.close_connection)
-    
-    # Configurar variables globales para las plantillas
-    @app.context_processor
-    def inject_globals():
-        return {
-            'app_name': 'Ferretería "La U"',
-            'current_year': datetime.now().year,
-            'current_user': current_user,
-            'modulos_permitidos': session.get('modulos_permitidos', []),
-            'empresa_desarrollador': 'Brian Gerardo Alfonso Rodríguez'
-        }
-    
-    # Asegurarse de que exista la carpeta de uploads
-    upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join(app.root_path, 'static', 'uploads'))
-    if not os.path.exists(upload_folder):
-        os.makedirs(upload_folder)
-    
-    # Redirección basada en el tipo de usuario después del login
-    @app.context_processor
-    def utility_processor():
-        def get_dashboard_url():
-            if not current_user.is_authenticated:
-                return url_for('main.index')
-            
-            if current_user.es_cliente:
-                return url_for('main.index')
-            elif current_user.es_admin:
-                return url_for('admin.index')
-            elif hasattr(current_user, 'es_tecnico') and current_user.es_tecnico():
-                return url_for('reparaciones.por_tecnico')
-            elif hasattr(current_user, 'es_vendedor') and current_user.es_vendedor():
-                return url_for('ventas.dashboard')
-            else:
-                return url_for('main.dashboard')
-                
-        return dict(get_dashboard_url=get_dashboard_url)
-    
-    @app.context_processor
-    def inject_user_data():
-        """Añade datos del usuario a todas las plantillas"""
-        if current_user.is_authenticated:
-            if current_user.es_cliente:
-                # Para clientes, obtenemos más información
-                return {
-                    'user_data': {
-                        'nombre': current_user.nombre,
-                        'email': current_user.email,
-                        'is_cliente': True,
-                        'is_empleado': False,
-                        'is_admin': False,
-                        'foto_perfil': current_user.foto_perfil
-                    }
-                }
-            else:
-                # Para empleados, obtenemos más información
-                return {
-                    'user_data': {
-                        'nombre': current_user.nombre,
-                        'email': current_user.email,
-                        'is_cliente': False,
-                        'is_empleado': True,
-                        'is_admin': current_user.es_admin,
-                        'foto_perfil': current_user.foto_perfil
-                    }
-                }
-        return {'user_data': None}
-    
-    # Inicialización de la base de datos al arrancar (solo verificación, no flash)
+    # Verificar conexión a la base de datos
     with app.app_context():
-        try:
-            init_db()
-        except Exception as e:
-            logger.error(f"Error al inicializar la base de datos durante el arranque: {e}")
-    
-    # Regla de URL para un verificador de estado de la base de datos
-    @app.route('/check-db-status')
-    def check_db_status():
         try:
             cursor = mysql.connection.cursor()
             cursor.execute("SELECT 1")
-            cursor.fetchone()
             cursor.close()
-            return "Base de datos conectada correctamente", 200
+            logger.info("Conexión a la base de datos establecida correctamente")
+            
+            # Inicializar la base de datos
+            init_db()
+            
+            # Verificar y crear tablas si es necesario
+            crear_tablas()
+            
+            # Insertar datos iniciales si es necesario
+            insertar_datos_iniciales()
+            
+            # Verificar estructura de tablas
+            verificar_estructura_tablas()
+            
         except Exception as e:
-            return f"Error de conexión a la base de datos: {str(e)}", 500
+            logger.error(f"Error al conectar con la base de datos: {e}")
+            # No levantar la excepción, permitir que la aplicación continúe
+            # pero registrar el error para diagnóstico
+    
+    @app.before_request
+    def before_request():
+        """Verificar la conexión a la base de datos antes de cada solicitud"""
+        try:
+            cursor = mysql.connection.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
+        except Exception as e:
+            logger.error(f"Error de conexión a la base de datos: {e}")
+            if not request.endpoint or not request.endpoint.startswith('static'):
+                flash("Error de conexión a la base de datos. Por favor, inténtelo más tarde.", "error")
+                return redirect(url_for('main.index'))
     
     return app
 

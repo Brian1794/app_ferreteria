@@ -3,13 +3,34 @@ from flask_login import login_required, current_user
 from extensions import mysql
 import datetime
 import MySQLdb
+from models.carousel import Carousel
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    """Página principal de la aplicación"""
-    return render_template('index.html')
+    """Ruta de inicio"""
+    # Obtener las imágenes activas del carousel
+    carousel_items = Carousel.obtener_todos(solo_activos=True)
+    
+    # Obtener productos destacados para mostrar en la página principal
+    productos_destacados = []
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute(
+            """SELECT p.*, c.nombre as categoria 
+               FROM productos p
+               LEFT JOIN categorias c ON p.categoria_id = c.id
+               WHERE p.destacado = 1 AND p.activo = TRUE
+               ORDER BY p.fecha_actualizacion DESC
+               LIMIT 8"""
+        )
+        productos_destacados = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print(f"Error al obtener productos destacados: {e}")
+    
+    return render_template('index.html', carousel_items=carousel_items, productos_destacados=productos_destacados)
 
 @main_bp.route('/dashboard')
 @login_required
@@ -107,62 +128,63 @@ def mi_cuenta():
         flash('Acceso no autorizado', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener últimas compras con una consulta simple sin alias
-    cur.execute('''
-        SELECT id, fecha, total, estado
-        FROM ventas
-        WHERE cliente_id = %s
-        ORDER BY fecha DESC
-        LIMIT 5
-    ''', (current_user.id,))
-    ultimas_compras = cur.fetchall()
-    
-    # Obtener reparaciones activas
-    cur.execute('''
-        SELECT id, electrodomestico, problema, fecha_recepcion, estado, 
-               marca, modelo
-        FROM reparaciones
-        WHERE cliente_id = %s AND estado NOT IN ('ENTREGADO', 'CANCELADO')
-        ORDER BY fecha_recepcion DESC
-    ''', (current_user.id,))
-    reparaciones_activas = cur.fetchall()
-    
-    # Formatear fechas para evitar errores al renderizar
-    for reparacion in reparaciones_activas:
-        if reparacion['fecha_recepcion'] is None:
-            reparacion['fecha_recepcion'] = None
-        # Asegurar que exista un campo descripción para mantener compatibilidad
-        if 'descripcion' not in reparacion or not reparacion['descripcion']:
-            if reparacion['electrodomestico']:
-                reparacion['descripcion'] = f"{reparacion['electrodomestico']} {reparacion['marca']} {reparacion['modelo']}".strip()
-            else:
-                reparacion['descripcion'] = "Sin descripción"
-    
-    # Mapeo de estados para mostrar texto amigable
-    estados_texto = {
-        'RECIBIDO': 'Recibido',
-        'DIAGNOSTICO': 'En diagnóstico',
-        'REPARACION': 'En reparación',
-        'ESPERA_REPUESTOS': 'Esperando repuestos',
-        'LISTO': 'Listo para entrega',
-        'ENTREGADO': 'Entregado',
-        'CANCELADO': 'Cancelado'
-    }
-    
-    # Agregar el texto amigable a cada reparación
-    for reparacion in reparaciones_activas:
-        if reparacion['estado'] in estados_texto:
-            reparacion['estado'] = estados_texto[reparacion['estado']]
-    
-    cur.close()
-    
-    return render_template(
-        'cliente/mi_cuenta.html',
-        ultimas_compras=ultimas_compras,
-        reparaciones_activas=reparaciones_activas
-    ) 
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Obtener datos del cliente
+        cur.execute("""
+            SELECT c.*, 
+                   COALESCE(COUNT(DISTINCT v.id), 0) as total_compras,
+                   COALESCE(COUNT(DISTINCT r.id), 0) as total_reparaciones,
+                   COALESCE(SUM(v.total), 0) as total_gastado
+            FROM clientes c
+            LEFT JOIN ventas v ON c.id = v.cliente_id
+            LEFT JOIN reparaciones r ON c.id = r.cliente_id
+            WHERE c.id = %s
+            GROUP BY c.id
+        """, (current_user.id,))
+        
+        cliente = cur.fetchone()
+        
+        if not cliente:
+            flash('No se encontró información del cliente', 'danger')
+            return redirect(url_for('main.index'))
+        
+        # Obtener las últimas compras del cliente
+        cur.execute("""
+            SELECT id, fecha, total, estado 
+            FROM ventas 
+            WHERE cliente_id = %s 
+            ORDER BY fecha DESC LIMIT 5
+        """, (current_user.id,))
+        compras = cur.fetchall() or []
+        
+        # Obtener las últimas reparaciones del cliente
+        cur.execute("""
+            SELECT id, fecha_recepcion, descripcion, estado
+            FROM reparaciones 
+            WHERE cliente_id = %s 
+            ORDER BY fecha_recepcion DESC LIMIT 5
+        """, (current_user.id,))
+        reparaciones = cur.fetchall() or []
+        
+        cur.close()
+        
+        # Renderizar la plantilla con los datos obtenidos
+        return render_template(
+            'cliente/mi_cuenta.html',
+            cliente=cliente,
+            compras=compras,
+            reparaciones=reparaciones,
+            total_gastado=cliente.get('total_gastado', 0)
+        )
+        
+    except Exception as e:
+        import traceback
+        print(f"Error en mi_cuenta: {str(e)}")
+        print(traceback.format_exc())
+        flash('Ha ocurrido un error al cargar tu cuenta', 'danger')
+        return redirect(url_for('main.index'))
 
 @main_bp.route('/contacto', methods=['GET', 'POST'])
 def contacto():

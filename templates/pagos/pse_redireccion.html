@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+
+{% block title %}Redireccionando a PSE - Banco {{ banco }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f5f7fa;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .pse-container {
+        background-color: #004884;
+        background-image: linear-gradient(135deg, #004884 0%, #0069c0 100%);
+        color: white;
+        min-height: 100vh;
+        text-align: center;
+        padding: 20px;
+        position: relative;
+    }
+    
+    .pse-header {
+        padding: 15px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    
+    .pse-logo {
+        width: 150px;
+        height: 150px;
+        object-fit: contain;
+        margin: 0 auto 30px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        display: block;
+    }
+    
+    .pse-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    .pse-payment {
+        background-color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin: 0 auto;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        color: #333;
+    }
+    
+    .pse-amount {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 20px 0;
+        color: #0069c0;
+    }
+    
+    .pse-detail {
+        background-color: #f9f9f9;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .pse-detail-label {
+        color: #777;
+        font-size: 0.9rem;
+    }
+    
+    .pse-detail-value {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .pse-notification {
+        background-color: #e7f5ff;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 500px;
+        text-align: left;
+        display: flex;
+        align-items: flex-start;
+        color: #004884;
+    }
+    
+    .pse-notification i {
+        margin-right: 10px;
+        font-size: 1.5rem;
+        color: #004884;
+    }
+    
+    .pse-actions {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .pse-button {
+        background-color: #0069c0;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 15px;
+    }
+    
+    .pse-button:hover {
+        background-color: #005aa6;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 105, 192, 0.3);
+    }
+    
+    .pse-cancel {
+        background-color: #f1f1f1;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+    
+    .pse-cancel:hover {
+        background-color: #e5e5e5;
+        color: #333;
+    }
+    
+    .pse-loading {
+        display: none;
+        margin-top: 15px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .pse-spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(0, 105, 192, 0.1);
+        border-top: 5px solid #0069c0;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .pse-loading-text {
+        font-size: 1.1rem;
+        color: white;
+    }
+    
+    .pse-secure-logos {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 15px;
+    }
+    
+    .pse-secure-logo {
+        height: 40px;
+        background-color: white;
+        padding: 5px 15px;
+        border-radius: 8px;
+    }
+    
+    .bubble {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+    }
+    
+    .bubble-1 {
+        width: 150px;
+        height: 150px;
+        top: 10%;
+        left: 5%;
+    }
+    
+    .bubble-2 {
+        width: 80px;
+        height: 80px;
+        bottom: 30%;
+        right: 10%;
+    }
+    
+    .bubble-3 {
+        width: 200px;
+        height: 200px;
+        bottom: 5%;
+        left: 15%;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pse-container">
+    <div class="bubble bubble-1"></div>
+    <div class="bubble bubble-2"></div>
+    <div class="bubble bubble-3"></div>
+    
+    <div class="pse-header">
+        {% if banco == 'Nequi' %}
+            <img src="https://nequi.com.co/wp-content/uploads/2023/02/logo.svg" alt="Nequi" class="pse-logo">
+        {% elif banco == 'Daviplata' %}
+            <img src="https://www.daviplata.com/wps/wcm/connect/dav/2b8c6d67-c7d4-4980-acae-124e62ef23d1/dp_vertical_preview.png?MOD=AJPERES&CACHEID=ROOTWORKSPACE.Z18_OH71HJ82NGUB50QO9QL5331O81-2b8c6d67-c7d4-4980-acae-124e62ef23d1-oaUgL11" alt="Daviplata" class="pse-logo">
+        {% else %}
+            <img src="{{ url_for('static', filename='img/payment/pse.png') }}" alt="PSE" class="pse-logo">
+        {% endif %}
+        
+        <h2 class="pse-title">Pago seguro con {{ banco }}</h2>
+    </div>
+    
+    <div class="pse-payment">
+        <div class="pse-amount">${{ "{:,.0f}".format(pago_info.monto|float) }}</div>
+        
+        <div class="pse-detail">
+            <div>
+                <div class="pse-detail-label">Empresa</div>
+                <div class="pse-detail-value">Ferretería La U</div>
+            </div>
+            <div>
+                <div class="pse-detail-label">Pedido</div>
+                <div class="pse-detail-value">#{{ pedido.id }}</div>
+            </div>
+        </div>
+        
+        <div class="pse-detail">
+            <div>
+                <div class="pse-detail-label">Fecha</div>
+                <div class="pse-detail-value">{{ pago_info.fecha }}</div>
+            </div>
+            <div>
+                <div class="pse-detail-label">Referencia</div>
+                <div class="pse-detail-value">
+                    {% if pago_info.get('referencia') %}
+                        {{ pago_info.referencia[:10] }}
+                    {% else %}
+                        {{ pago_info.get('factura_id', 'N/A') }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="pse-detail">
+            <div>
+                <div class="pse-detail-label">Tipo de cliente</div>
+                <div class="pse-detail-value">
+                    {% if pago_info.tipo_persona == 'N' %}
+                        Persona Natural
+                    {% else %}
+                        Persona Jurídica
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <div class="pse-detail-label">Documento</div>
+                <div class="pse-detail-value">{{ pago_info.numero_documento }}</div>
+            </div>
+        </div>
+        
+        {% if pago_info.celular %}
+        <div class="pse-detail">
+            <div>
+                <div class="pse-detail-label">Número celular</div>
+                <div class="pse-detail-value">+57 {{ pago_info.celular }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="pse-notification">
+        <i class="fas fa-info-circle"></i>
+        <div>
+            <div>Estamos estableciendo conexión con {{ banco }}. En breve serás redirigido(a) para completar tu pago de forma segura.</div>
+        </div>
+    </div>
+    
+    <div class="pse-actions">
+        <form id="pse-form" action="{{ url_for('pagos_pse.procesar') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="pse-button">Continuar con el pago</button>
+        </form>
+        <a href="{{ url_for('pagos_pse.cancelar') }}" class="pse-button pse-cancel">Cancelar y volver</a>
+    </div>
+    
+    <div class="pse-loading" id="loading-section">
+        <div class="pse-spinner"></div>
+        <div class="pse-loading-text">Conectando con {{ banco }}...</div>
+    </div>
+    
+    <div class="pse-secure-logos">
+        <img src="{{ url_for('static', filename='img/payment/ssl-secure.png') }}" alt="SSL" class="pse-secure-logo">
+        <img src="{{ url_for('static', filename='img/payment/pci-dss.png') }}" alt="PCI DSS" class="pse-secure-logo">
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pseForm = document.getElementById('pse-form');
+        const loadingSection = document.getElementById('loading-section');
+        const actionsDiv = document.querySelector('.pse-actions');
+        
+        // Manejar el envío del formulario de manera directa
+        if (pseForm) {
+            pseForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevenir el envío predeterminado
+                
+                // Ocultar botones y mostrar carga
+                actionsDiv.style.display = 'none';
+                loadingSection.style.display = 'flex';
+                
+                // Enviar el formulario después de mostrar la animación
+                setTimeout(function() {
+                    // Eliminar el event listener para evitar problemas de re-submit
+                    pseForm.removeEventListener('submit', arguments.callee);
+                    pseForm.submit();
+                }, 1500);
+            });
+        }
+        
+        // Auto-enviar después de 5 segundos en caso de que el usuario no haga clic
+        setTimeout(function() {
+            if (actionsDiv.style.display !== 'none' && pseForm) {
+                actionsDiv.style.display = 'none';
+                loadingSection.style.display = 'flex';
+                
+                // Utilizar un nuevo formulario para evitar cualquier problema con event listeners
+                const newForm = pseForm.cloneNode(true);
+                pseForm.parentNode.replaceChild(newForm, pseForm);
+                
+                setTimeout(function() {
+                    newForm.submit();
+                }, 1000);
+            }
+        }, 5000);
+    });
+</script>
+{% endblock %} 

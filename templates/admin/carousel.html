@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Carousel - Ferretería La U{% endblock %}
+
+{% block extra_css %}
+<style>
+    .carousel-item-preview {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .carousel-preview-image {
+        width: 200px;
+        height: 120px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    
+    .carousel-preview-content {
+        padding: 15px;
+        flex-grow: 1;
+    }
+    
+    .carousel-preview-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: var(--text-color);
+    }
+    
+    .carousel-preview-desc {
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .carousel-preview-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+    
+    .carousel-preview-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: var(--success-light);
+        color: var(--success-dark);
+    }
+    
+    .status-inactive {
+        background-color: var(--danger-light);
+        color: var(--danger-dark);
+    }
+    
+    .carousel-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .order-badge {
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        padding: 2px 8px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--primary-light);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h3 {
+        margin-bottom: 1rem;
+        color: var(--text-color);
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestión de Carousel</h1>
+        <a href="{{ url_for('carousel.nuevo') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Elemento
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Elementos del Carousel</h4>
+        </div>
+        <div class="card-body">
+            {% if carousel_items %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Imagen</th>
+                                <th>Título</th>
+                                <th>Orden</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in carousel_items %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>
+                                    <img src="{{ url_for('static', filename='uploads/carousel/' + item.imagen) }}" 
+                                         alt="{{ item.titulo }}" class="img-thumbnail" style="max-width: 100px; max-height: 60px;">
+                                </td>
+                                <td>{{ item.titulo }}</td>
+                                <td>{{ item.orden }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if item.activo else 'bg-danger' }}">
+                                        {{ 'Activo' if item.activo else 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td>{{ item.fecha_creacion.strftime('%d-%m-%Y') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('carousel.editar', carousel_id=item.id) }}" class="btn btn-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-danger" title="Eliminar" 
+                                                onclick="confirmarEliminar({{ item.id }}, '{{ item.titulo }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No hay elementos en el carousel. 
+                    <a href="{{ url_for('carousel.nuevo') }}" class="alert-link">Agregar un nuevo elemento</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Vista Previa</h4>
+        </div>
+        <div class="card-body">
+            {% if carousel_items %}
+                <div id="carouselPreview" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
+                        {% for item in carousel_items %}
+                        {% if item.activo %}
+                        <button type="button" data-bs-target="#carouselPreview" data-bs-slide-to="{{ loop.index0 }}" 
+                                {{ 'class="active" aria-current="true"' if loop.first else '' }} aria-label="{{ item.titulo }}"></button>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="carousel-inner">
+                        {% set first_active = true %}
+                        {% for item in carousel_items %}
+                        {% if item.activo %}
+                        <div class="carousel-item {{ 'active' if first_active else '' }}">
+                            <img src="{{ url_for('static', filename='uploads/carousel/' + item.imagen) }}" 
+                                 class="d-block w-100" alt="{{ item.titulo }}" style="max-height: 300px; object-fit: cover;">
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>{{ item.titulo }}</h5>
+                                <p>{{ item.descripcion }}</p>
+                            </div>
+                        </div>
+                        {% if first_active %}{% set first_active = false %}{% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselPreview" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselPreview" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No hay elementos activos para mostrar en el carousel.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el elemento "<span id="elementoNombre"></span>"?</p>
+                <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <form id="deleteForm" action="" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmarEliminar(id, nombre) {
+        document.getElementById('elementoNombre').textContent = nombre;
+        document.getElementById('deleteForm').action = "{{ url_for('carousel.eliminar', carousel_id=0) }}".replace('0', id);
+        
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %} 

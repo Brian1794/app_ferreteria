@@ -4,6 +4,10 @@
 
 {% block extra_css %}
 <style>
+    body {
+        background-color: #f5f7fa;
+    }
+    
     .checkout-container {
         max-width: 1100px;
         margin: 30px auto;
@@ -13,30 +17,55 @@
         display: flex;
         margin-bottom: 30px;
         justify-content: center;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     
     .step {
         display: flex;
         align-items: center;
         margin-right: 40px;
+        position: relative;
+    }
+    
+    .step:not(:last-child):after {
+        content: '';
+        position: absolute;
+        right: -30px;
+        top: 15px;
+        width: 20px;
+        height: 2px;
+        background-color: #e0e0e0;
     }
     
     .step-number {
-        width: 30px;
-        height: 30px;
+        width: 35px;
+        height: 35px;
         border-radius: 50%;
         background-color: var(--primary-color);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 10px;
+        margin-right: 12px;
         font-weight: bold;
+        box-shadow: 0 3px 8px rgba(var(--primary-rgb), 0.3);
     }
     
     .step.active .step-text {
         font-weight: bold;
         color: var(--primary-color);
+    }
+    
+    .form-section-title {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e0e0e0;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1.3rem;
     }
     
     .payment-methods {
@@ -46,35 +75,44 @@
     .payment-option {
         display: flex;
         align-items: center;
-        padding: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 5px;
-        margin-bottom: 10px;
+        padding: 25px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        margin-bottom: 15px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
+        background-color: #fff;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     
     .payment-option:hover {
         border-color: var(--primary-color);
-        background-color: rgba(var(--primary-rgb), 0.05);
+        background-color: rgba(var(--primary-rgb), 0.03);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.08);
     }
     
     .payment-option.selected {
         border-color: var(--primary-color);
-        background-color: rgba(var(--primary-rgb), 0.1);
+        background-color: rgba(var(--primary-rgb), 0.05);
+        box-shadow: 0 8px 15px rgba(var(--primary-rgb), 0.15);
     }
     
-    .payment-option-icon {
-        margin-right: 15px;
-        font-size: 24px;
-        color: var(--primary-color);
-        width: 32px;
-        text-align: center;
+    .payment-method-img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        margin-right: 20px;
+        border-radius: 10px;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
     }
     
-    .payment-logo {
-        height: 30px;
-        margin-right: 15px;
+    .payment-option:hover .payment-method-img {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     .payment-option-content {
@@ -83,76 +121,57 @@
     
     .payment-option-title {
         font-weight: bold;
-        margin-bottom: 3px;
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+        color: #2c3e50;
     }
     
     .payment-option-description {
-        color: var(--text-muted);
-        font-size: 0.9rem;
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.4;
     }
     
-    .express-payment {
-        margin-bottom: 30px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-        text-align: center;
-    }
-    
-    .express-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    .express-btn {
-        padding: 10px 15px;
-        border-radius: 5px;
-        border: 1px solid #d0d0d0;
-        background-color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .payment-radio {
+        margin-left: 15px;
+        width: 20px;
+        height: 20px;
         cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    .express-btn:hover {
-        border-color: #aaa;
-    }
-    
-    .express-btn img {
-        height: 24px;
+        accent-color: var(--primary-color);
     }
     
     .order-summary {
-        background-color: var(--card-bg);
-        border-radius: 5px;
-        box-shadow: var(--box-shadow);
-        padding: 20px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        padding: 25px;
         position: sticky;
         top: 20px;
     }
     
     .summary-title {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: bold;
-        margin-bottom: 15px;
-        color: var(--heading-color);
+        margin-bottom: 20px;
+        color: #2c3e50;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
     }
     
     .summary-item {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        font-size: 1.05rem;
     }
     
     .summary-total {
         font-weight: bold;
-        border-top: 1px solid var(--border-color);
-        padding-top: 10px;
-        margin-top: 10px;
+        font-size: 1.3rem;
+        border-top: 2px solid #e0e0e0;
+        padding-top: 15px;
+        margin-top: 15px;
+        color: var(--primary-color);
     }
     
     .checkout-btn {
@@ -161,375 +180,661 @@
         background-color: var(--primary-color);
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 10px;
         font-weight: bold;
+        font-size: 1.1rem;
         margin-top: 20px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.3);
     }
     
     .checkout-btn:hover {
         background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(var(--primary-rgb), 0.4);
     }
     
-    .input-field {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
+    .checkout-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Estilos para tarjetas de crédito */
+    .card-element {
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: white;
         margin-bottom: 15px;
     }
     
-    .input-field:focus {
-        border-color: var(--primary-color);
-        outline: none;
+    .card-errors {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
     }
     
-    .input-label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-    }
-    
-    .address-fields {
-        margin-top: 20px;
-    }
-    
-    .form-section {
-        margin-bottom: 30px;
-    }
-    
-    .form-section-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: var(--heading-color);
-    }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    .payment-gateway-logos {
+        display: flex;
+        flex-wrap: wrap;
         gap: 15px;
+        margin-top: 20px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .payment-gateway-logo {
+        max-width: 70px;
+        max-height: 50px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        opacity: 0.8;
+        filter: grayscale(20%);
+        border-radius: 8px;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .payment-gateway-logo:hover {
+        transform: scale(1.1);
+        opacity: 1;
+        filter: grayscale(0%);
+    }
+    
+    .payment-card-brands {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        align-items: center;
+    }
+    
+    .payment-card-brands i {
+        font-size: 24px;
+        color: #6c757d;
+    }
+    
+    /* Status Messages */
+    .payment-status {
+        margin-bottom: 20px;
+        padding: 18px;
+        border-radius: 8px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    }
+    
+    .payment-status.pending {
+        background-color: #fff8e6;
+        border: 1px solid #ffecb5;
+        color: #856404;
+    }
+    
+    .payment-status.failure {
+        background-color: #ffebee;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+    
+    /* Estilos para los detalles de métodos de pago */
+    .payment-method-details {
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .alert-info {
+        background-color: #f1f8ff;
+        border: 1px solid rgba(var(--primary-rgb), 0.2);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+    }
+    
+    .alert-info h5 {
+        color: var(--primary-color);
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #ddd;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        background-color: #f9fafc;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
+        background-color: #fff;
+    }
+    
+    .payment-option-icon {
+        margin-right: 15px;
+        font-size: 24px;
+        color: var(--primary-color);
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .col-lg-8 {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="checkout-container">
+<div class="container checkout-container">
     <div class="checkout-steps">
         <div class="step">
             <div class="step-number">1</div>
-            <div class="step-text">Revisar Pedido</div>
-        </div>
-        <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-text">Dirección</div>
+            <div class="step-text">Carrito</div>
         </div>
         <div class="step active">
+            <div class="step-number">2</div>
+            <div class="step-text">Pago</div>
+        </div>
+        <div class="step">
             <div class="step-number">3</div>
-            <div class="step-text">Método de Pago</div>
+            <div class="step-text">Confirmación</div>
         </div>
     </div>
     
     <div class="row">
         <div class="col-lg-8">
-            <div class="express-payment">
-                <h4>PAGO RÁPIDO</h4>
-                <div class="text-muted">Usa un método de pago rápido para completar tu compra sin ingresar datos adicionales</div>
-                <div class="express-buttons">
-                    <button class="express-btn" type="button">
-                        <img src="{{ url_for('static', filename='img/payment/paypal.png') }}" alt="PayPal">
-                    </button>
-                    <button class="express-btn" type="button">
-                        <img src="{{ url_for('static', filename='img/payment/google-pay.png') }}" alt="Google Pay">
-                    </button>
-                </div>
-            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             
-            <div class="separator text-center mb-4">O</div>
-            
-            <form id="payment-form" method="POST" action="{{ url_for('carrito.procesar_pago', pedido_id=pedido_id) }}">
-                <div class="form-section">
-                    <div class="form-section-title">3. SELECCIONE MÉTODO DE PAGO</div>
-                    
+            <form id="payment-form" method="POST" action="{{ url_for('carrito.procesar_pago') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+                
+                <div class="payment-section">
+                    <h3 class="form-section-title">Método de pago</h3>
                     <div class="payment-methods">
-                        <div class="payment-option selected" data-method="tarjeta">
-                            <div class="payment-option-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div class="payment-option-content">
-                                <div class="payment-option-title">Tarjeta de Crédito/Débito</div>
-                                <div class="payment-option-description">Paga con VISA, MasterCard, American Express</div>
-                            </div>
-                            <div>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                        </div>
-                        
                         <div class="payment-option" data-method="pse">
-                            <div class="payment-option-icon">
-                                <i class="fas fa-university"></i>
-                            </div>
+                            <img src="{{ url_for('static', filename='img/payment/pse.png') }}" alt="PSE" class="payment-method-img">
                             <div class="payment-option-content">
-                                <div class="payment-option-title">PSE - Pago Seguro Electrónico</div>
-                                <div class="payment-option-description">Paga directamente desde tu cuenta bancaria</div>
+                                <div class="payment-option-title">PSE - Pago Seguro en Línea</div>
+                                <div class="payment-option-description">Paga directamente desde tu cuenta bancaria o billetera digital (Nequi, Daviplata)</div>
                             </div>
-                            <div>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="payment-option" data-method="efectivo">
-                            <div class="payment-option-icon">
-                                <i class="fas fa-money-bill-wave"></i>
-                            </div>
-                            <div class="payment-option-content">
-                                <div class="payment-option-title">Pago en Efectivo</div>
-                                <div class="payment-option-description">Paga en efectivo al momento de recibir tu pedido</div>
-                            </div>
-                            <div>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
+                            <input type="radio" name="metodo_pago" value="pse" class="payment-radio">
                         </div>
                         
                         <div class="payment-option" data-method="transferencia">
-                            <div class="payment-option-icon">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
+                            <img src="{{ url_for('static', filename='img/payment/tranferencia_bancaria.png') }}" alt="Transferencia" class="payment-method-img">
                             <div class="payment-option-content">
-                                <div class="payment-option-title">Transferencia Bancaria</div>
-                                <div class="payment-option-description">Realiza una transferencia a nuestra cuenta bancaria</div>
+                                <div class="payment-option-title">Transferencia bancaria</div>
+                                <div class="payment-option-description">Realiza una transferencia desde tu banca en línea</div>
                             </div>
-                            <div>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
+                            <input type="radio" name="metodo_pago" value="transferencia" class="payment-radio">
                         </div>
+                        
+                        {% if 'stripe' in pasarelas_disponibles %}
+                        <div class="payment-option" data-method="stripe">
+                            <img src="{{ url_for('static', filename='img/payment/tarjeta_credito.png') }}" alt="Tarjeta" class="payment-method-img">
+                            <div class="payment-option-content">
+                                <div class="payment-option-title">Tarjeta de crédito/débito</div>
+                                <div class="payment-option-description">Paga de forma segura con tu tarjeta vía Stripe</div>
+                                <div class="payment-card-brands">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </div>
+                            </div>
+                            <input type="radio" name="metodo_pago" value="stripe" class="payment-radio">
+                        </div>
+                        {% endif %}
                     </div>
-                    
-                    <input type="hidden" name="metodo_pago" id="metodo_pago" value="tarjeta">
-                    
-                    <!-- Detalles de Tarjeta -->
-                    <div id="tarjeta-details" class="payment-details">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Número de Tarjeta</label>
-                                <input type="text" class="input-field" name="card_number" placeholder="1234 5678 9012 3456">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Nombre en la Tarjeta</label>
-                                <input type="text" class="input-field" name="card_name" placeholder="Como aparece en la tarjeta">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Fecha de Expiración</label>
-                                <input type="text" class="input-field" name="card_expiry" placeholder="MM/AA">
-                            </div>
-                            <div class="form-group">
-                                <label class="input-label">Código de Seguridad (CVV)</label>
-                                <input type="text" class="input-field" name="card_cvv" placeholder="123">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Detalles de PSE -->
-                    <div id="pse-details" class="payment-details" style="display: none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Banco</label>
-                                <select class="input-field" name="pse_bank">
-                                    <option value="">Seleccione su banco</option>
-                                    <option value="bancolombia">Bancolombia</option>
-                                    <option value="davivienda">Davivienda</option>
-                                    <option value="bbva">BBVA Colombia</option>
-                                    <option value="banco_bogota">Banco de Bogotá</option>
-                                    <option value="bancodeoccidente">Banco de Occidente</option>
-                                    <option value="bancopopular">Banco Popular</option>
-                                    <option value="av_villas">AV Villas</option>
-                                    <option value="colpatria">Scotiabank Colpatria</option>
-                                    <option value="nequi">Nequi</option>
-                                    <option value="daviplata">Daviplata</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Tipo de Persona</label>
-                                <select class="input-field" name="pse_person_type">
-                                    <option value="natural">Persona Natural</option>
-                                    <option value="juridica">Persona Jurídica</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="input-label">Tipo de Documento</label>
-                                <select class="input-field" name="pse_document_type">
-                                    <option value="cc">Cédula de Ciudadanía</option>
-                                    <option value="ce">Cédula de Extranjería</option>
-                                    <option value="nit">NIT</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Número de Documento</label>
-                                <input type="text" class="input-field" name="pse_document_number" placeholder="Ingrese su número de documento">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Detalles de Efectivo -->
-                    <div id="efectivo-details" class="payment-details" style="display: none;">
+                </div>
+                
+                <!-- Detalles de pago según el método seleccionado -->
+                <div id="payment-details" style="display: none;">
+                    <div id="pse-details" class="payment-method-details" style="display: none;">
                         <div class="alert alert-info">
-                            <p>Has seleccionado pago en efectivo. Deberás pagar el monto total al momento de recibir tu pedido.</p>
-                            <p class="mb-0">Asegúrate de tener el monto exacto para facilitar la entrega.</p>
+                            <h5><i class="fas fa-info-circle"></i> Pago con PSE</h5>
+                            <p>Serás redirigido a la plataforma oficial de PSE (Pago Seguro en Línea) para completar tu pago de forma segura utilizando la autenticación de tu entidad bancaria o billetera digital.</p>
+                            <p><strong>Nota:</strong> Al completar el pago exitosamente, recibirás automáticamente la factura en tu correo electrónico y el pedido será procesado inmediatamente.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="banco_pse">Selecciona tu banco o billetera digital:</label>
+                            <select class="form-control" id="banco_pse" name="banco_pse" required>
+                                <option value="">-- Selecciona --</option>
+                                <optgroup label="Bancos principales">
+                                    <option value="1">Bancolombia</option>
+                                    <option value="2">Banco de Bogotá</option>
+                                    <option value="3">Davivienda</option>
+                                    <option value="4">BBVA Colombia</option>
+                                    <option value="5">Banco de Occidente</option>
+                                    <option value="6">Banco Popular</option>
+                                    <option value="8">Banco Caja Social</option>
+                                    <option value="9">Scotiabank Colpatria</option>
+                                    <option value="10">Itaú</option>
+                                </optgroup>
+                                <optgroup label="Billeteras digitales">
+                                    <option value="28">Nequi</option>
+                                    <option value="27">Daviplata</option>
+                                </optgroup>
+                                <optgroup label="Otros bancos">
+                                    <option value="7">Banco AV Villas</option>
+                                    <option value="11">Banco Agrario de Colombia</option>
+                                    <option value="12">Banco Falabella</option>
+                                    <option value="13">Banco Pichincha</option>
+                                    <option value="14">Banco Finandina</option>
+                                    <option value="15">Banco Cooperativo Coopcentral</option>
+                                    <option value="16">Banco GNB Sudameris</option>
+                                    <option value="17">Banco Serfinanza</option>
+                                    <option value="18">Bancamía</option>
+                                    <option value="19">Banco W</option>
+                                    <option value="20">Banco ProCredit</option>
+                                    <option value="21">Banco Mundo Mujer</option>
+                                    <option value="22">Banco Multibank</option>
+                                    <option value="23">Bancoldex</option>
+                                </optgroup>
+                                <optgroup label="Cooperativas financieras">
+                                    <option value="24">Confiar Cooperativa Financiera</option>
+                                    <option value="25">Coofinep Cooperativa Financiera</option>
+                                    <option value="26">Cotrafa Cooperativa Financiera</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_persona">Tipo de persona:</label>
+                            <select class="form-control" id="tipo_persona" name="tipo_persona" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="N">Persona Natural</option>
+                                <option value="J">Persona Jurídica</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_documento">Tipo de documento:</label>
+                            <select class="form-control" id="tipo_documento" name="tipo_documento" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="CC">Cédula de Ciudadanía</option>
+                                <option value="CE">Cédula de Extranjería</option>
+                                <option value="NIT">NIT</option>
+                                <option value="PP">Pasaporte</option>
+                                <option value="TI">Tarjeta de Identidad</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="numero_documento">Número de documento:</label>
+                            <input type="text" class="form-control" id="numero_documento" name="numero_documento" placeholder="Ingrese su número de documento">
+                        </div>
+                        <div class="form-group" id="celular_container" style="display: none;">
+                            <label for="celular_pse">Número de celular (solo para Nequi/Daviplata):</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">+57</span>
+                                </div>
+                                <input type="tel" class="form-control" id="celular_pse" name="celular_pse" placeholder="3XX XXX XXXX" pattern="3[0-9]{9}" maxlength="10">
+                            </div>
+                            <small class="form-text text-muted">Ingresa los 10 dígitos de tu número celular asociado a tu cuenta.</small>
                         </div>
                     </div>
                     
-                    <!-- Detalles de Transferencia -->
-                    <div id="transferencia-details" class="payment-details" style="display: none;">
+                    <div id="transferencia-details" class="payment-method-details" style="display: none;">
                         <div class="alert alert-info">
-                            <p>Por favor realiza una transferencia a la siguiente cuenta:</p>
-                            <p><strong>Banco:</strong> Bancolombia</p>
-                            <p><strong>Titular:</strong> Ferretería "La U" S.A.S.</p>
-                            <p><strong>Cuenta:</strong> 0123456789</p>
-                            <p><strong>Monto:</strong> ${{ "{:,.0f}".format(total|float) }} COP</p>
+                            <h5><i class="fas fa-info-circle"></i> Transferencia bancaria</h5>
+                            <p>Realiza una transferencia a nuestra cuenta bancaria:</p>
+                            <p>
+                                <strong>Banco:</strong> Banco de Colombia<br>
+                                <strong>Titular:</strong> Ferretería y Cacharrería la U<br>
+                                <strong>Cuenta:</strong> 123-456789-0<br>
+                                <strong>Tipo:</strong> Cuenta de Ahorros
+                            </p>
+                            <p>Una vez realizada la transferencia, ingresa la referencia de la transacción.</p>
+                            <p><strong>Importante:</strong> La factura será generada y enviada a tu correo electrónico una vez nuestro equipo verifique y confirme tu pago.</p>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="input-label">Referencia de Pago</label>
-                                <input type="text" class="input-field" name="transferencia_referencia" placeholder="Número de transferencia o comprobante">
-                            </div>
+                        <div class="form-group">
+                            <label for="referencia">Referencia de transferencia:</label>
+                            <input type="text" class="form-control" id="referencia" name="referencia" placeholder="Ej: 9876543210">
+                        </div>
+                        <div class="form-group">
+                            <label for="comprobante">Comprobante de pago (opcional):</label>
+                            <input type="file" class="form-control-file" id="comprobante" name="comprobante">
+                            <small class="form-text text-muted">Puedes subir una captura de pantalla o foto del comprobante para agilizar la verificación.</small>
+                        </div>
+                    </div>
+                    
+                    <div id="stripe-details" class="payment-method-details" style="display: none;">
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle"></i> Pago con tarjeta vía Stripe</h5>
+                            <p>Al hacer clic en "Completar pago", serás redirigido a la plataforma segura de Stripe para ingresar los datos de tu tarjeta.</p>
+                            <p><strong>Nota:</strong> Al completar el pago exitosamente, recibirás automáticamente la factura en tu correo electrónico.</p>
                         </div>
                     </div>
                 </div>
                 
-                <button type="submit" class="checkout-btn">COMPLETAR PEDIDO</button>
+                <button type="button" class="checkout-btn" id="submit-payment">Completar pago</button>
             </form>
         </div>
         
         <div class="col-lg-4">
             <div class="order-summary">
-                <div class="summary-title">RESUMEN DEL PEDIDO</div>
+                <h4 class="summary-title">Resumen del pedido</h4>
                 
                 <div class="summary-item">
-                    <div>Subtotal</div>
-                    <div>${{ "{:,.0f}".format(total|float) }} COP</div>
+                    <span>Número de pedido</span>
+                    <span>#{{ pedido.id }}</span>
                 </div>
                 
                 <div class="summary-item">
-                    <div>Envío</div>
-                    <div>GRATIS</div>
+                    <span>Fecha</span>
+                    <span>{{ pedido.fecha_pedido.strftime('%d/%m/%Y') if pedido.fecha_pedido else '-' }}</span>
                 </div>
                 
-                <div class="summary-item summary-total">
-                    <div>TOTAL</div>
-                    <div>${{ "{:,.0f}".format(total|float) }} COP</div>
+                <div class="summary-item">
+                    <span>Subtotal</span>
+                    <span>${{ '{:,.0f}'.format(pedido.subtotal * 1000)|replace(',', '.') }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Envío</span>
+                    {% if pedido.costo_envio > 0 %}
+                    <span>${{ '{:,.0f}'.format(pedido.costo_envio * 1000)|replace(',', '.') }}</span>
+                    {% else %}
+                    <span>Gratis</span>
+                    {% endif %}
                 </div>
                 
-                <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" id="accept_terms" checked>
-                    <label class="form-check-label" for="accept_terms">
-                        Acepto los términos y condiciones
-                    </label>
+                <div class="summary-item">
+                    <span>Total</span>
+                    <span class="summary-total">${{ "{:,.0f}".format(pedido.total|float) }} COP</span>
+                </div>
+                
+                <div class="payment-gateway-logos">
+                    <img src="{{ url_for('static', filename='img/payment/pse.png') }}" alt="PSE" class="payment-gateway-logo">
+                    
+                    {% if 'stripe' in pasarelas_disponibles %}
+                    <img src="{{ url_for('static', filename='img/payment/tarjeta_credito.png') }}" alt="Tarjeta" class="payment-gateway-logo">
+                    {% endif %}
+                    
+                    <img src="{{ url_for('static', filename='img/payment/tranferencia_bancaria.png') }}" alt="Transferencia" class="payment-gateway-logo">
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Modal PSE -->
+<div class="modal fade" id="pse-modal" tabindex="-1" role="dialog" aria-labelledby="pse-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pse-modal-label">Confirmar detalles de pago PSE</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <p><i class="fas fa-info-circle"></i> Por favor revisa los siguientes detalles antes de continuar con el pago:</p>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Datos del pedido:</h6>
+            <p><strong>Número de pedido:</strong> <span id="modal-pedido-id"></span></p>
+            <p><strong>Total a pagar:</strong> <span id="modal-monto"></span></p>
+            <p><strong>Banco seleccionado:</strong> <span id="modal-banco"></span></p>
+          </div>
+          <div class="col-md-6">
+            <h6>Detalles del usuario:</h6>
+            <p><strong>Tipo de persona:</strong> <span id="modal-tipo-persona"></span></p>
+            <p><strong>Documento:</strong> <span id="modal-tipo-documento"></span> <span id="modal-numero-documento"></span></p>
+            <p><strong>Correo electrónico:</strong> <span id="modal-email"></span></p>
+            <p id="modal-celular-container"><strong>Celular:</strong> <span id="modal-celular"></span></p>
+          </div>
+        </div>
+        
+        <div class="form-group mt-4">
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="terms-check" required>
+            <label class="custom-control-label" for="terms-check">Confirmo que los datos son correctos y acepto los términos y condiciones</label>
+          </div>
+        </div>
+        
+        <div class="alert alert-warning mt-3">
+          <p><i class="fas fa-exclamation-triangle"></i> ¿Estás listo para continuar con tu pago?</p>
+          <p>Al hacer clic en <strong>"Continuar al banco"</strong>, serás redirigido a la plataforma de tu banco para autorizar la transacción.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="continuar-pse">Continuar al banco</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Selección de método de pago
-    const paymentOptions = document.querySelectorAll('.payment-option');
-    const methodInput = document.getElementById('metodo_pago');
-    const paymentDetails = {
-        tarjeta: document.getElementById('tarjeta-details'),
-        pse: document.getElementById('pse-details'),
-        efectivo: document.getElementById('efectivo-details'),
-        transferencia: document.getElementById('transferencia-details')
-    };
-    
-    function showPaymentDetails(method) {
-        // Ocultar todos los detalles
-        Object.values(paymentDetails).forEach(detail => {
-            if (detail) detail.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleccionar método de pago
+        const paymentOptions = document.querySelectorAll('.payment-option');
+        const paymentDetails = document.getElementById('payment-details');
+        const methodDetails = document.querySelectorAll('.payment-method-details');
+        const paymentForm = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-payment');
+        
+        // Marcar PSE como seleccionado por defecto y mostrar sus detalles
+        if (paymentOptions.length > 0) {
+            const pseOption = document.querySelector('.payment-option[data-method="pse"]');
+            if (pseOption) {
+                // Desmarcar todas las opciones
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Marcar PSE como seleccionado
+                pseOption.classList.add('selected');
+                const radio = pseOption.querySelector('.payment-radio');
+                radio.checked = true;
+                
+                // Mostrar detalles de PSE
+                paymentDetails.style.display = 'block';
+                methodDetails.forEach(detail => detail.style.display = 'none');
+                const pseDetails = document.getElementById('pse-details');
+                if (pseDetails) {
+                    pseDetails.style.display = 'block';
+                }
+            } else {
+                // Si no hay opción PSE, usar la primera
+                const firstOption = paymentOptions[0];
+                firstOption.classList.add('selected');
+                const radio = firstOption.querySelector('.payment-radio');
+                radio.checked = true;
+                
+                const method = firstOption.dataset.method;
+                paymentDetails.style.display = 'block';
+                
+                const selectedDetails = document.getElementById(`${method}-details`);
+                if (selectedDetails) {
+                    selectedDetails.style.display = 'block';
+                }
+            }
+        }
+        
+        paymentOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Desmarcar todas las opciones
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Marcar la opción seleccionada
+                this.classList.add('selected');
+                
+                // Seleccionar el radio button
+                const radio = this.querySelector('.payment-radio');
+                radio.checked = true;
+                
+                // Mostrar detalles del método seleccionado
+                const method = this.dataset.method;
+                paymentDetails.style.display = 'block';
+                
+                // Ocultar todos los detalles
+                methodDetails.forEach(detail => detail.style.display = 'none');
+                
+                // Mostrar los detalles del método seleccionado
+                const selectedDetails = document.getElementById(`${method}-details`);
+                if (selectedDetails) {
+                    selectedDetails.style.display = 'block';
+                }
+            });
         });
         
-        // Mostrar el detalle seleccionado
-        if (paymentDetails[method]) {
-            paymentDetails[method].style.display = 'block';
+        // Agregar evento para mostrar/ocultar campo de celular según el banco seleccionado
+        const bancoPSE = document.getElementById('banco_pse');
+        const celularContainer = document.getElementById('celular_container');
+        
+        if (bancoPSE && celularContainer) {
+            // Verificar estado inicial (por si ya se seleccionó Nequi o Daviplata)
+            const selectedBank = bancoPSE.value;
+            if (selectedBank === '27' || selectedBank === '28') {
+                celularContainer.style.display = 'block';
+                document.getElementById('celular_pse').required = true;
+            }
+            
+            bancoPSE.addEventListener('change', function() {
+                const selectedBank = this.value;
+                // Si es Nequi (28) o Daviplata (27), mostrar campo de celular
+                if (selectedBank === '27' || selectedBank === '28') {
+                    celularContainer.style.display = 'block';
+                    document.getElementById('celular_pse').required = true;
+                } else {
+                    celularContainer.style.display = 'none';
+                    document.getElementById('celular_pse').required = false;
+                }
+            });
         }
         
-        // Actualizar el valor del input
-        methodInput.value = method;
-    }
-    
-    paymentOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Quitar la clase 'selected' de todas las opciones
-            paymentOptions.forEach(opt => opt.classList.remove('selected'));
+        // Manejar el clic en el botón de completar pago
+        submitButton.addEventListener('click', function() {
+            const selectedMethod = document.querySelector('input[name="metodo_pago"]:checked');
             
-            // Añadir la clase 'selected' a la opción clickeada
-            this.classList.add('selected');
+            if (!selectedMethod) {
+                alert('Por favor, selecciona un método de pago');
+                return;
+            }
             
-            // Mostrar los detalles del método seleccionado
-            const method = this.dataset.method;
-            showPaymentDetails(method);
+            // Para transferencia, verificar que se haya ingresado una referencia
+            if (selectedMethod.value === 'transferencia') {
+                const referencia = document.getElementById('referencia').value.trim();
+                if (!referencia) {
+                    alert('Por favor, ingresa el número de referencia de la transferencia');
+                    return;
+                }
+                
+                // Enviar el formulario para método de transferencia
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                paymentForm.submit();
+                return;
+            }
+            
+            // Para PSE, mostrar el modal de confirmación
+            if (selectedMethod.value === 'pse') {
+                const banco = document.getElementById('banco_pse');
+                const tipoPersona = document.getElementById('tipo_persona');
+                const tipoDocumento = document.getElementById('tipo_documento');
+                const numeroDocumento = document.getElementById('numero_documento').value.trim();
+                
+                if (!banco.value || !tipoPersona.value || !tipoDocumento.value || !numeroDocumento) {
+                    alert('Por favor, completa todos los campos requeridos para el pago con PSE');
+                    return;
+                }
+                
+                // Validar celular para Nequi/Daviplata
+                if (banco.value === '27' || banco.value === '28') {
+                    const celular = document.getElementById('celular_pse').value.trim();
+                    if (!celular || celular.length !== 10 || !celular.startsWith('3')) {
+                        alert('Por favor, ingresa un número de celular válido (debe comenzar con 3 y tener 10 dígitos)');
+                        return;
+                    }
+                    
+                    // Mostrar el campo de celular en el modal
+                    document.getElementById('modal-celular-container').style.display = 'block';
+                    document.getElementById('modal-celular').textContent = '+57 ' + celular;
+                } else {
+                    // Ocultar el campo de celular en el modal
+                    document.getElementById('modal-celular-container').style.display = 'none';
+                }
+                
+                // Llenar datos del modal
+                document.getElementById('modal-pedido-id').textContent = '{{ pedido.id }}';
+                document.getElementById('modal-monto').textContent = '{{ "{:,.0f}".format(pedido.total|float) }} COP';
+                document.getElementById('modal-banco').textContent = banco.options[banco.selectedIndex].text;
+                document.getElementById('modal-tipo-persona').textContent = tipoPersona.options[tipoPersona.selectedIndex].text;
+                document.getElementById('modal-tipo-documento').textContent = tipoDocumento.options[tipoDocumento.selectedIndex].text;
+                document.getElementById('modal-numero-documento').textContent = numeroDocumento;
+                document.getElementById('modal-email').textContent = '{{ current_user.email }}';
+                
+                // Asegurarse de que el checkbox esté desmarcado al abrir el modal
+                document.getElementById('terms-check').checked = false;
+                
+                // Mostrar el modal
+                $('#pse-modal').modal('show');
+                
+                return;
+            }
+            
+            // Para otros métodos, enviar el formulario directamente
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            paymentForm.submit();
         });
-    });
-    
-    // Inicializar con el método seleccionado por defecto
-    showPaymentDetails('tarjeta');
-    
-    // Validación básica del formulario
-    const form = document.getElementById('payment-form');
-    form.addEventListener('submit', function(e) {
-        const method = methodInput.value;
-        let isValid = true;
         
-        // Validar campos según el método seleccionado
-        if (method === 'tarjeta') {
-            const cardNumber = document.querySelector('[name="card_number"]').value;
-            const cardName = document.querySelector('[name="card_name"]').value;
-            const cardExpiry = document.querySelector('[name="card_expiry"]').value;
-            const cardCvv = document.querySelector('[name="card_cvv"]').value;
-            
-            if (!cardNumber || !cardName || !cardExpiry || !cardCvv) {
-                isValid = false;
-                alert('Por favor complete todos los campos de la tarjeta');
-            }
-        } else if (method === 'pse') {
-            const bank = document.querySelector('[name="pse_bank"]').value;
-            const documentNumber = document.querySelector('[name="pse_document_number"]').value;
-            
-            if (!bank || !documentNumber) {
-                isValid = false;
-                alert('Por favor seleccione un banco e ingrese su número de documento');
-            }
-        } else if (method === 'transferencia') {
-            const referencia = document.querySelector('[name="transferencia_referencia"]').value;
-            
-            if (!referencia) {
-                isValid = false;
-                alert('Por favor ingrese la referencia de pago');
-            }
+        // Eliminar el evento submit del formulario, ya que ahora usamos el botón de tipo button
+        if (paymentForm) {
+            paymentForm.addEventListener('submit', function(e) {
+                // No hacemos nada aquí, ya que el botón maneja todo
+            });
         }
         
-        // Verificar aceptación de términos
-        const acceptTerms = document.getElementById('accept_terms');
-        if (!acceptTerms.checked) {
-            isValid = false;
-            alert('Debe aceptar los términos y condiciones para continuar');
-        }
-        
-        if (!isValid) {
-            e.preventDefault();
+        // Manejar clic en botón de continuar con PSE
+        const continuarPseBtn = document.getElementById('continuar-pse');
+        if (continuarPseBtn) {
+            continuarPseBtn.addEventListener('click', function() {
+                // Verificar que se ha aceptado los términos
+                if (!document.getElementById('terms-check').checked) {
+                    alert('Debes aceptar los términos y condiciones para continuar');
+                    return;
+                }
+                
+                // Mostrar mensaje de carga
+                const submitButton = document.getElementById('submit-payment');
+                const banco = document.getElementById('banco_pse');
+                const bancoNombre = banco.options[banco.selectedIndex].text;
+                
+                submitButton.disabled = true;
+                submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Conectando con ${bancoNombre}...`;
+                
+                // Cerrar el modal y enviar el formulario
+                $('#pse-modal').modal('hide');
+                
+                // Dar tiempo para que se cierre el modal antes de enviar el formulario
+                setTimeout(function() {
+                    paymentForm.submit();
+                }, 500);
+            });
         }
     });
-});
 </script>
 {% endblock %} 
