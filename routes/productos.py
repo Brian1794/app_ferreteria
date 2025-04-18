@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from extensions import mysql
+from MySQLdb.cursors import DictCursor
 import os
 from werkzeug.utils import secure_filename
 import uuid
@@ -187,37 +188,27 @@ def agregar():
         finally:
             cursor.close()
     
-    # Obtener categorías para el formulario
-    cursor = mysql.connection.cursor()
+    # Obtener categorías para el formulario usando DictCursor
+    cursor = mysql.connection.cursor(DictCursor)
     try:
-        cursor.execute("SELECT id, nombre FROM categorias WHERE activo = TRUE ORDER BY nombre")
-        categorias_raw = cursor.fetchall()
-        print(f"Categorías obtenidas: {categorias_raw}")  # Imprimir para debugging
+        cursor.execute("""
+            SELECT id, nombre 
+            FROM categorias 
+            WHERE activo = TRUE 
+            ORDER BY nombre
+        """)
+        categorias = cursor.fetchall()
         
-        # Verificar si hay categorías
-        if not categorias_raw:
-            print("¡No se encontraron categorías activas!")
-            # Si no hay categorías activas, buscar todas
-            cursor.execute("SELECT id, nombre FROM categorias ORDER BY nombre")
-            categorias_raw = cursor.fetchall()
-            print(f"Categorías totales: {categorias_raw}")
+        if not categorias:
+            flash('No hay categorías activas disponibles. Por favor, cree una categoría primero.', 'warning')
+            return redirect(url_for('categorias.agregar'))
+            
+        return render_template('productos/agregar.html', categorias=categorias)
     except Exception as e:
-        print(f"Error al consultar categorías: {str(e)}")
-        categorias_raw = []
+        flash(f'Error al cargar las categorías: {str(e)}', 'danger')
+        return render_template('productos/agregar.html', categorias=[])
     finally:
         cursor.close()
-    
-    # Convertir a formato compatible con la plantilla
-    if categorias_raw and isinstance(categorias_raw[0], dict):
-        # Si ya son diccionarios, usarlos directamente
-        categorias = categorias_raw
-    else:
-        # Si son tuplas, convertirlos
-        categorias = []
-        for cat in categorias_raw:
-            categorias.append([cat[0], cat[1]])
-    
-    return render_template('productos/agregar.html', categorias=categorias)
 
 @productos_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required

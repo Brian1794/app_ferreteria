@@ -355,4 +355,23 @@
         }, 5000);
     });
 </script>
-{% endblock %} 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pseForm = document.getElementById('pse-form');
+        const loadingSection = document.getElementById('loading-section');
+        const actionButtons = document.querySelector('.pse-actions');
+
+        pseForm.addEventListener('submit', function(e) {
+            // Mostrar animación de carga
+            loadingSection.style.display = 'flex';
+            actionButtons.style.display = 'none';
+
+            // Simular tiempo de procesamiento (3 segundos)
+            setTimeout(() => {
+                // El formulario se enviará automáticamente
+                return true;
+            }, 3000);
+        });
+    });
+</script>
+{% endblock %}

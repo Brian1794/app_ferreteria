@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, g
 from flask_login import login_required, current_user
 from extensions import mysql
 import datetime
 import MySQLdb
 from models.carousel import Carousel
+from database import get_cursor, ejecutar_consulta, close_connection
 
 main_bp = Blueprint('main', __name__)
 
@@ -128,55 +129,70 @@ def mi_cuenta():
         flash('Acceso no autorizado', 'danger')
         return redirect(url_for('main.dashboard'))
     
+    cursor = None
     try:
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Usar el nuevo sistema de cursores 
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
-        # Obtener datos del cliente
-        cur.execute("""
+        # Obtener datos del cliente y estadísticas
+        cursor.execute("""
             SELECT c.*, 
-                   COALESCE(COUNT(DISTINCT v.id), 0) as total_compras,
-                   COALESCE(COUNT(DISTINCT r.id), 0) as total_reparaciones,
+                   COUNT(DISTINCT v.id) as total_compras,
+                   COUNT(DISTINCT r.id) as total_reparaciones,
                    COALESCE(SUM(v.total), 0) as total_gastado
             FROM clientes c
-            LEFT JOIN ventas v ON c.id = v.cliente_id
+            LEFT JOIN ventas v ON c.id = v.cliente_id AND v.estado = 'Pagada'
             LEFT JOIN reparaciones r ON c.id = r.cliente_id
             WHERE c.id = %s
             GROUP BY c.id
         """, (current_user.id,))
         
-        cliente = cur.fetchone()
+        cliente = cursor.fetchone()
         
         if not cliente:
             flash('No se encontró información del cliente', 'danger')
             return redirect(url_for('main.index'))
         
-        # Obtener las últimas compras del cliente
-        cur.execute("""
-            SELECT id, fecha, total, estado 
-            FROM ventas 
-            WHERE cliente_id = %s 
-            ORDER BY fecha DESC LIMIT 5
+        # Obtener últimas compras
+        cursor.execute("""
+            SELECT v.*, COUNT(d.id) as total_productos
+            FROM ventas v
+            LEFT JOIN detalles_venta d ON v.id = d.venta_id
+            WHERE v.cliente_id = %s
+            GROUP BY v.id
+            ORDER BY v.fecha DESC
+            LIMIT 5
         """, (current_user.id,))
-        compras = cur.fetchall() or []
         
-        # Obtener las últimas reparaciones del cliente
-        cur.execute("""
-            SELECT id, fecha_recepcion, descripcion, estado
-            FROM reparaciones 
-            WHERE cliente_id = %s 
-            ORDER BY fecha_recepcion DESC LIMIT 5
+        ultimas_compras = cursor.fetchall() or []
+        
+        # Obtener últimas reparaciones
+        cursor.execute("""
+            SELECT r.*, e.nombre as tecnico_nombre, r.fecha_recepcion as fecha_solicitud
+            FROM reparaciones r
+            LEFT JOIN empleados e ON r.tecnico_id = e.id
+            WHERE r.cliente_id = %s
+            ORDER BY r.fecha_recepcion DESC
+            LIMIT 5
         """, (current_user.id,))
-        reparaciones = cur.fetchall() or []
         
-        cur.close()
+        ultimas_reparaciones = cursor.fetchall() or []
         
-        # Renderizar la plantilla con los datos obtenidos
+        # Asegurar que todos los valores necesarios estén disponibles
+        cliente['total_compras'] = cliente.get('total_compras', 0)
+        cliente['total_reparaciones'] = cliente.get('total_reparaciones', 0)
+        cliente['total_gastado'] = float(cliente.get('total_gastado', 0))
+        cliente['foto_perfil'] = cliente.get('foto_perfil', None)
+        cliente['apellido'] = cliente.get('apellido', '')
+        
         return render_template(
             'cliente/mi_cuenta.html',
             cliente=cliente,
-            compras=compras,
-            reparaciones=reparaciones,
-            total_gastado=cliente.get('total_gastado', 0)
+            ultimas_compras=ultimas_compras,
+            ultimas_reparaciones=ultimas_reparaciones,
+            total_compras=cliente['total_compras'],
+            total_reparaciones=cliente['total_reparaciones'],
+            total_gastado=cliente['total_gastado']
         )
         
     except Exception as e:
@@ -185,6 +201,10 @@ def mi_cuenta():
         print(traceback.format_exc())
         flash('Ha ocurrido un error al cargar tu cuenta', 'danger')
         return redirect(url_for('main.index'))
+        
+    finally:
+        if cursor:
+            cursor.close()
 
 @main_bp.route('/contacto', methods=['GET', 'POST'])
 def contacto():
@@ -222,4 +242,4 @@ def contacto():
             print(f"Error al guardar mensaje de contacto: {e}")
             flash('Ocurrió un error al enviar tu mensaje. Por favor intenta nuevamente.', 'danger')
     
-    return render_template('contacto.html') 
+    return render_template('contacto.html')

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmación de Pago PSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .confirmation-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .confirmation-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .confirmation-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background-color: #4CAF50;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .confirmation-icon i {
+        font-size: 40px;
+        color: white;
+    }
+
+    .confirmation-title {
+        color: #2C3E50;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .confirmation-subtitle {
+        color: #7F8C8D;
+        font-size: 16px;
+    }
+
+    .confirmation-details {
+        background-color: #F8F9FA;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .detail-label {
+        color: #7F8C8D;
+        font-size: 14px;
+    }
+
+    .detail-value {
+        color: #2C3E50;
+        font-weight: 500;
+    }
+
+    .confirmation-actions {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    .btn-primary {
+        background-color: #004884;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #003666;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirmation-container">
+    <div class="confirmation-header">
+        <div class="confirmation-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <h1 class="confirmation-title">¡Pago Exitoso!</h1>
+        <p class="confirmation-subtitle">Tu pago ha sido procesado correctamente</p>
+    </div>
+
+    <div class="confirmation-details">
+        <div class="detail-row">
+            <span class="detail-label">Referencia de Pago</span>
+            <span class="detail-value">{{ referencia }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Monto</span>
+            <span class="detail-value">${{ "{:,.0f}".format(pago.monto|float) }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Banco</span>
+            <span class="detail-value">{{ pago.banco_nombre }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Fecha</span>
+            <span class="detail-value">{{ pago.fecha_procesado.strftime('%d/%m/%Y %H:%M:%S') }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Estado</span>
+            <span class="detail-value">
+                {% if pago.estado == 'APROBADA' %}
+                    <span class="badge bg-success">Aprobado</span>
+                {% else %}
+                    <span class="badge bg-danger">{{ pago.estado }}</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="confirmation-actions">
+        <a href="{{ url_for('carrito.mis_pedidos') }}" class="btn btn-primary">
+            Ver mis pedidos
+        </a>
+    </div>
+</div>
+{% endblock %}

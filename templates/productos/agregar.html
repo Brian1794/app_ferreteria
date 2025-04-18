@@ -69,12 +69,12 @@
                     <div class="col-md-4">
                         <div class="form-group mb-3">
                             <label for="categoria_id">Categoría</label>
-                            <select class="form-control" id="categoria_id" name="categoria_id" style="background-color: white !important; color: black !important;">
+                            <select class="form-control" id="categoria_id" name="categoria_id" style="background-color: white !important; color: black !important;" required>
                                 <option value="">-- Seleccionar Categoría --</option>
-                                <!-- Información de depuración -->
-                                <!-- Número de categorías: {{ categorias|length }} -->
-                                {% for cat in categorias %}
-                                    <option value="{{ cat[0] }}" style="background-color: white !important; color: black !important; padding: 8px !important;">{{ cat[1] }}</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}" style="background-color: white !important; color: black !important; padding: 8px !important;">
+                                        {{ categoria.nombre }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -125,4 +125,4 @@
         document.getElementById('precio_venta').value = precioVentaSugerido.toFixed(2);
     });
 </script>
-{% endblock %} 
+{% endblock %}

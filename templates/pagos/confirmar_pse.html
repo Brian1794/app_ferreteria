@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Confirmación de Pago PSE</h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">¿Desea continuar con el proceso de pago?</p>
+            <p>Al confirmar, será redirigido a la plataforma de PSE para completar su transacción.</p>
+            
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <button class="btn btn-primary" onclick="confirmarContinuar(true)">
+                    Sí, continuar
+                </button>
+                <button class="btn btn-secondary" onclick="confirmarContinuar(false)">
+                    No, cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarContinuar(continuar) {
+    fetch('/pse/verificar-continuar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+            continuar: continuar
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.exito) {
+            if (data.continuar) {
+                window.location.href = '/pse/procesar-pago';
+            } else {
+                window.location.href = '/carrito';
+            }
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al procesar su solicitud');
+    });
+}
+</script>
+{% endblock %}

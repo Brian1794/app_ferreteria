@@ -29,24 +29,11 @@ def init_extensions(app):
     """Inicializa todas las extensiones de Flask"""
     
     # Configuración del pool de conexiones MySQL
-    app.config['MYSQL_CONNECTION_TIMEOUT'] = app.config.get('MYSQL_CONNECTION_TIMEOUT', 30)
-    app.config['MYSQL_READ_TIMEOUT'] = app.config.get('MYSQL_READ_TIMEOUT', 30)
-    app.config['MYSQL_WRITE_TIMEOUT'] = app.config.get('MYSQL_WRITE_TIMEOUT', 30)
-    
-    # Configurar el pool de conexiones
-    mysql_options = {
-        'pool_name': app.config.get('MYSQL_POOL_NAME', 'ferreteria_pool'),
-        'pool_size': app.config.get('MYSQL_POOL_SIZE', 10),
-        'connect_timeout': app.config['MYSQL_CONNECTION_TIMEOUT'],
-        'read_timeout': app.config['MYSQL_READ_TIMEOUT'],
-        'write_timeout': app.config['MYSQL_WRITE_TIMEOUT'],
-        'charset': 'utf8mb4',
-        'use_unicode': True
-    }
-    
-    # Si estamos en producción, configurar SSL
-    if not app.debug and not app.testing:
-        mysql_options['ssl'] = {'ca': '/etc/ssl/certs/ca-certificates.crt'}
+    app.config['MYSQL_POOL_NAME'] = 'ferreteria_pool'
+    app.config['MYSQL_POOL_SIZE'] = 5
+    app.config['MYSQL_POOL_TIMEOUT'] = 30
+    app.config['MYSQL_POOL_RECYCLE'] = 280  # Reciclar conexiones después de 280 segundos
+    app.config['MYSQL_POOL_PRE_PING'] = True  # Verificar conexión antes de usar
     
     # Inicializar MySQL con la configuración del pool
     mysql.init_app(app)

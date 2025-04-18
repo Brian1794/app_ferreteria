@@ -447,4 +447,85 @@ def historial_pagos(factura_id):
         })
         
     except Exception as e:
-        return jsonify({'exito': False, 'mensaje': str(e)}), 500 
+        return jsonify({'exito': False, 'mensaje': str(e)}), 500
+
+@pagos_pse_bp.route('/confirmar', methods=['POST'])
+@jwt_required()
+def confirmar_pago():
+    """
+    Confirma si el usuario desea continuar con el pago PSE
+    """
+    try:
+        data = request.get_json()
+        if not data or 'pago_id' not in data:
+            return jsonify({'exito': False, 'mensaje': 'Falta el ID del pago'}), 400
+            
+        conn = get_db_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        
+        # Verificar que el pago existe y está pendiente
+        cursor.execute("""
+            SELECT p.id, p.estado, p.monto, f.referencia 
+            FROM pagos_pse p
+            JOIN facturas f ON p.factura_id = f.id
+            WHERE p.id = %s AND p.estado = 'pendiente'
+        """, (data['pago_id'],))
+        
+        pago = cursor.fetchone()
+        
+        if not pago:
+            cursor.close()
+            conn.close()
+            return jsonify({'exito': False, 'mensaje': 'Pago no encontrado o no está pendiente'}), 404
+            
+        return jsonify({
+            'exito': True,
+            'mensaje': '¿Desea continuar con el pago?',
+            'datos_pago': {
+                'id': pago['id'],
+                'monto': float(pago['monto']),
+                'referencia': pago['referencia']
+            }
+        })
+        
+    except Exception as e:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+        return jsonify({'exito': False, 'mensaje': str(e)}), 500
+
+@pagos_pse_bp.route('/verificar-continuar', methods=['POST'])
+@jwt_required()
+def verificar_continuar():
+    """
+    Verifica si el usuario desea continuar con el proceso de pago
+    Retorna:
+    - confirmación del usuario para continuar
+    """
+    try:
+        data = request.json
+        if not data or 'continuar' not in data:
+            return jsonify({
+                'exito': False,
+                'mensaje': 'Se requiere la confirmación para continuar'
+            }), 400
+            
+        if data['continuar']:
+            return jsonify({
+                'exito': True,
+                'mensaje': 'Usuario confirmó continuar con el proceso',
+                'continuar': True
+            })
+        else:
+            return jsonify({
+                'exito': True,
+                'mensaje': 'Usuario decidió no continuar con el proceso',
+                'continuar': False
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error al procesar la verificación: {str(e)}'
+        }), 500

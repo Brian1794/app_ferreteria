@@ -149,7 +149,7 @@
         top: 20px;
     }
     
-    .summary-title {
+    .order-summary-header h4 {
         font-size: 1.3rem;
         font-weight: bold;
         margin-bottom: 20px;
@@ -172,6 +172,27 @@
         padding-top: 15px;
         margin-top: 15px;
         color: var(--primary-color);
+    }
+    
+    .total-label {
+        font-weight: bold;
+        font-size: 1.3rem;
+    }
+    
+    .total-amount {
+        font-size: 1.3rem;
+        color: var(--primary-color);
+    }
+    
+    .shipping-badge {
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        color: var(--primary-color);
+    }
+    
+    .shipping-badge i {
+        margin-right: 5px;
     }
     
     .checkout-btn {
@@ -366,7 +387,7 @@
                 {% endif %}
             {% endwith %}
             
-            <form id="payment-form" method="POST" action="{{ url_for('carrito.procesar_pago') }}" enctype="multipart/form-data">
+            <form id="payment-form" method="POST" action="{{ url_for('carrito.procesar_pago', pedido_id=pedido.id) }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
                 
@@ -532,8 +553,11 @@
         </div>
         
         <div class="col-lg-4">
+            <!-- Resumen del pedido -->
             <div class="order-summary">
-                <h4 class="summary-title">Resumen del pedido</h4>
+                <div class="order-summary-header">
+                    <h4>Resumen del pedido</h4>
+                </div>
                 
                 <div class="summary-item">
                     <span>Número de pedido</span>
@@ -549,28 +573,23 @@
                     <span>Subtotal</span>
                     <span>${{ '{:,.0f}'.format(pedido.subtotal * 1000)|replace(',', '.') }}</span>
                 </div>
+                
                 <div class="summary-item">
                     <span>Envío</span>
                     {% if pedido.costo_envio > 0 %}
                     <span>${{ '{:,.0f}'.format(pedido.costo_envio * 1000)|replace(',', '.') }}</span>
                     {% else %}
-                    <span>Gratis</span>
+                    <span class="shipping-badge">
+                        <i class="fas fa-truck"></i> Envío Gratis
+                    </span>
                     {% endif %}
                 </div>
                 
-                <div class="summary-item">
-                    <span>Total</span>
-                    <span class="summary-total">${{ "{:,.0f}".format(pedido.total|float) }} COP</span>
-                </div>
-                
-                <div class="payment-gateway-logos">
-                    <img src="{{ url_for('static', filename='img/payment/pse.png') }}" alt="PSE" class="payment-gateway-logo">
-                    
-                    {% if 'stripe' in pasarelas_disponibles %}
-                    <img src="{{ url_for('static', filename='img/payment/tarjeta_credito.png') }}" alt="Tarjeta" class="payment-gateway-logo">
-                    {% endif %}
-                    
-                    <img src="{{ url_for('static', filename='img/payment/tranferencia_bancaria.png') }}" alt="Transferencia" class="payment-gateway-logo">
+                <div class="summary-total">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="total-label">Total</span>
+                        <span class="total-amount">${{ "{:,.0f}".format(pedido.total * 1000)|replace(',', '.') }} COP</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -629,104 +648,75 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Seleccionar método de pago
-        const paymentOptions = document.querySelectorAll('.payment-option');
-        const paymentDetails = document.getElementById('payment-details');
-        const methodDetails = document.querySelectorAll('.payment-method-details');
-        const paymentForm = document.getElementById('payment-form');
-        const submitButton = document.getElementById('submit-payment');
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener todos los elementos payment-option
+    const paymentOptions = document.querySelectorAll('.payment-option');
+    const paymentDetails = document.getElementById('payment-details');
+    const pseDetails = document.getElementById('pse-details');
+    const transferenciaDetails = document.getElementById('transferencia-details');
+    const stripeDetails = document.getElementById('stripe-details');
+    const celularContainer = document.getElementById('celular_container');
+
+    // Función para manejar la selección de método de pago
+    function handlePaymentMethodSelection(option) {
+        // Remover la clase 'selected' de todas las opciones
+        paymentOptions.forEach(opt => opt.classList.remove('selected'));
         
-        // Marcar PSE como seleccionado por defecto y mostrar sus detalles
-        if (paymentOptions.length > 0) {
-            const pseOption = document.querySelector('.payment-option[data-method="pse"]');
-            if (pseOption) {
-                // Desmarcar todas las opciones
-                paymentOptions.forEach(opt => opt.classList.remove('selected'));
-                
-                // Marcar PSE como seleccionado
-                pseOption.classList.add('selected');
-                const radio = pseOption.querySelector('.payment-radio');
-                radio.checked = true;
-                
-                // Mostrar detalles de PSE
-                paymentDetails.style.display = 'block';
-                methodDetails.forEach(detail => detail.style.display = 'none');
-                const pseDetails = document.getElementById('pse-details');
-                if (pseDetails) {
-                    pseDetails.style.display = 'block';
-                }
-            } else {
-                // Si no hay opción PSE, usar la primera
-                const firstOption = paymentOptions[0];
-                firstOption.classList.add('selected');
-                const radio = firstOption.querySelector('.payment-radio');
-                radio.checked = true;
-                
-                const method = firstOption.dataset.method;
-                paymentDetails.style.display = 'block';
-                
-                const selectedDetails = document.getElementById(`${method}-details`);
-                if (selectedDetails) {
-                    selectedDetails.style.display = 'block';
-                }
-            }
+        // Agregar la clase 'selected' a la opción seleccionada
+        option.classList.add('selected');
+        
+        // Seleccionar el radio button correspondiente
+        const radio = option.querySelector('input[type="radio"]');
+        radio.checked = true;
+        
+        // Mostrar los detalles correspondientes
+        paymentDetails.style.display = 'block';
+        pseDetails.style.display = 'none';
+        transferenciaDetails.style.display = 'none';
+        stripeDetails.style.display = 'none';
+        
+        switch(radio.value) {
+            case 'pse':
+                pseDetails.style.display = 'block';
+                break;
+            case 'transferencia':
+                transferenciaDetails.style.display = 'block';
+                break;
+            case 'stripe':
+                stripeDetails.style.display = 'block';
+                break;
         }
-        
-        paymentOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                // Desmarcar todas las opciones
-                paymentOptions.forEach(opt => opt.classList.remove('selected'));
-                
-                // Marcar la opción seleccionada
-                this.classList.add('selected');
-                
-                // Seleccionar el radio button
-                const radio = this.querySelector('.payment-radio');
-                radio.checked = true;
-                
-                // Mostrar detalles del método seleccionado
-                const method = this.dataset.method;
-                paymentDetails.style.display = 'block';
-                
-                // Ocultar todos los detalles
-                methodDetails.forEach(detail => detail.style.display = 'none');
-                
-                // Mostrar los detalles del método seleccionado
-                const selectedDetails = document.getElementById(`${method}-details`);
-                if (selectedDetails) {
-                    selectedDetails.style.display = 'block';
-                }
-            });
-        });
-        
-        // Agregar evento para mostrar/ocultar campo de celular según el banco seleccionado
-        const bancoPSE = document.getElementById('banco_pse');
-        const celularContainer = document.getElementById('celular_container');
-        
-        if (bancoPSE && celularContainer) {
-            // Verificar estado inicial (por si ya se seleccionó Nequi o Daviplata)
-            const selectedBank = bancoPSE.value;
-            if (selectedBank === '27' || selectedBank === '28') {
+    }
+
+    // Agregar event listeners a las opciones de pago
+    paymentOptions.forEach(option => {
+        option.addEventListener('click', () => handlePaymentMethodSelection(option));
+    });
+
+    // Manejar cambio de banco para PSE
+    const bancoPse = document.getElementById('banco_pse');
+    if (bancoPse) {
+        bancoPse.addEventListener('change', function() {
+            const selectedBanco = this.value;
+            if (selectedBanco === '27' || selectedBanco === '28') { // Nequi o Daviplata
                 celularContainer.style.display = 'block';
-                document.getElementById('celular_pse').required = true;
+            } else {
+                celularContainer.style.display = 'none';
             }
+        });
+    }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentForm = document.getElementById('payment-form');
+    const submitButton = document.getElementById('submit-payment');
+    
+    if (paymentForm && submitButton) {
+        submitButton.addEventListener('click', function(e) {
+            e.preventDefault();
             
-            bancoPSE.addEventListener('change', function() {
-                const selectedBank = this.value;
-                // Si es Nequi (28) o Daviplata (27), mostrar campo de celular
-                if (selectedBank === '27' || selectedBank === '28') {
-                    celularContainer.style.display = 'block';
-                    document.getElementById('celular_pse').required = true;
-                } else {
-                    celularContainer.style.display = 'none';
-                    document.getElementById('celular_pse').required = false;
-                }
-            });
-        }
-        
-        // Manejar el clic en el botón de completar pago
-        submitButton.addEventListener('click', function() {
             const selectedMethod = document.querySelector('input[name="metodo_pago"]:checked');
             
             if (!selectedMethod) {
@@ -734,107 +724,82 @@
                 return;
             }
             
-            // Para transferencia, verificar que se haya ingresado una referencia
-            if (selectedMethod.value === 'transferencia') {
-                const referencia = document.getElementById('referencia').value.trim();
-                if (!referencia) {
-                    alert('Por favor, ingresa el número de referencia de la transferencia');
-                    return;
-                }
-                
-                // Enviar el formulario para método de transferencia
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-                paymentForm.submit();
-                return;
-            }
-            
-            // Para PSE, mostrar el modal de confirmación
             if (selectedMethod.value === 'pse') {
                 const banco = document.getElementById('banco_pse');
                 const tipoPersona = document.getElementById('tipo_persona');
                 const tipoDocumento = document.getElementById('tipo_documento');
-                const numeroDocumento = document.getElementById('numero_documento').value.trim();
+                const numeroDocumento = document.getElementById('numero_documento');
                 
-                if (!banco.value || !tipoPersona.value || !tipoDocumento.value || !numeroDocumento) {
-                    alert('Por favor, completa todos los campos requeridos para el pago con PSE');
+                if (!banco.value) {
+                    alert('Por favor, selecciona un banco');
+                    return;
+                }
+                
+                if (!tipoPersona.value) {
+                    alert('Por favor, selecciona el tipo de persona');
+                    return;
+                }
+                
+                if (!tipoDocumento.value) {
+                    alert('Por favor, selecciona el tipo de documento');
+                    return;
+                }
+                
+                if (!numeroDocumento.value.trim()) {
+                    alert('Por favor, ingresa tu número de documento');
                     return;
                 }
                 
                 // Validar celular para Nequi/Daviplata
                 if (banco.value === '27' || banco.value === '28') {
-                    const celular = document.getElementById('celular_pse').value.trim();
-                    if (!celular || celular.length !== 10 || !celular.startsWith('3')) {
+                    const celular = document.getElementById('celular_pse');
+                    if (!celular || !celular.value.trim() || celular.value.length !== 10 || !celular.value.startsWith('3')) {
                         alert('Por favor, ingresa un número de celular válido (debe comenzar con 3 y tener 10 dígitos)');
                         return;
                     }
-                    
-                    // Mostrar el campo de celular en el modal
-                    document.getElementById('modal-celular-container').style.display = 'block';
-                    document.getElementById('modal-celular').textContent = '+57 ' + celular;
-                } else {
-                    // Ocultar el campo de celular en el modal
-                    document.getElementById('modal-celular-container').style.display = 'none';
                 }
                 
-                // Llenar datos del modal
-                document.getElementById('modal-pedido-id').textContent = '{{ pedido.id }}';
-                document.getElementById('modal-monto').textContent = '{{ "{:,.0f}".format(pedido.total|float) }} COP';
-                document.getElementById('modal-banco').textContent = banco.options[banco.selectedIndex].text;
-                document.getElementById('modal-tipo-persona').textContent = tipoPersona.options[tipoPersona.selectedIndex].text;
-                document.getElementById('modal-tipo-documento').textContent = tipoDocumento.options[tipoDocumento.selectedIndex].text;
-                document.getElementById('modal-numero-documento').textContent = numeroDocumento;
-                document.getElementById('modal-email').textContent = '{{ current_user.email }}';
-                
-                // Asegurarse de que el checkbox esté desmarcado al abrir el modal
-                document.getElementById('terms-check').checked = false;
-                
-                // Mostrar el modal
+                // Mostrar modal de confirmación
                 $('#pse-modal').modal('show');
-                
+            } else if (selectedMethod.value === 'transferencia') {
+                const referencia = document.getElementById('referencia');
+                if (!referencia.value.trim()) {
+                    alert('Por favor, ingresa la referencia de la transferencia');
+                    return;
+                }
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                paymentForm.submit();
+            } else {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                paymentForm.submit();
+            }
+        });
+    }
+    
+    // Manejar el botón de continuar en el modal PSE
+    const continuarPseBtn = document.getElementById('continuar-pse');
+    if (continuarPseBtn) {
+        continuarPseBtn.addEventListener('click', function() {
+            const termsCheck = document.getElementById('terms-check');
+            if (!termsCheck.checked) {
+                alert('Debes aceptar los términos y condiciones para continuar');
                 return;
             }
             
-            // Para otros métodos, enviar el formulario directamente
             submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-            paymentForm.submit();
+            const banco = document.getElementById('banco_pse');
+            const bancoNombre = banco.options[banco.selectedIndex].text;
+            submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Conectando con ${bancoNombre}...`;
+            
+            $('#pse-modal').modal('hide');
+            
+            setTimeout(function() {
+                paymentForm.submit();
+            }, 500);
         });
-        
-        // Eliminar el evento submit del formulario, ya que ahora usamos el botón de tipo button
-        if (paymentForm) {
-            paymentForm.addEventListener('submit', function(e) {
-                // No hacemos nada aquí, ya que el botón maneja todo
-            });
-        }
-        
-        // Manejar clic en botón de continuar con PSE
-        const continuarPseBtn = document.getElementById('continuar-pse');
-        if (continuarPseBtn) {
-            continuarPseBtn.addEventListener('click', function() {
-                // Verificar que se ha aceptado los términos
-                if (!document.getElementById('terms-check').checked) {
-                    alert('Debes aceptar los términos y condiciones para continuar');
-                    return;
-                }
-                
-                // Mostrar mensaje de carga
-                const submitButton = document.getElementById('submit-payment');
-                const banco = document.getElementById('banco_pse');
-                const bancoNombre = banco.options[banco.selectedIndex].text;
-                
-                submitButton.disabled = true;
-                submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Conectando con ${bancoNombre}...`;
-                
-                // Cerrar el modal y enviar el formulario
-                $('#pse-modal').modal('hide');
-                
-                // Dar tiempo para que se cierre el modal antes de enviar el formulario
-                setTimeout(function() {
-                    paymentForm.submit();
-                }, 500);
-            });
-        }
-    });
+    }
+});
 </script>
-{% endblock %} 
+{% endblock %}

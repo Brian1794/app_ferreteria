@@ -20,128 +20,98 @@ def token_required(f):
 
 pagos_pse_bp = Blueprint('pagos_pse', __name__, url_prefix='/pagos/pse')
 
-@pagos_pse_bp.route('/iniciar')
+@pagos_pse_bp.route('/iniciar', methods=['GET', 'POST'])
 @login_required
 def iniciar():
     """Inicia el proceso de pago con PSE"""
-    # Obtener parámetros
-    factura_id = request.args.get('factura_id')
-    banco_id = request.args.get('banco_id')
-    tipo_persona = request.args.get('tipo_persona')
-    tipo_documento = request.args.get('tipo_documento')
-    numero_documento = request.args.get('numero_documento')
-    email = request.args.get('email')
-    celular = request.args.get('celular_pse', '')
-    
-    # Validar parámetros
-    if not all([factura_id, banco_id, tipo_persona, tipo_documento, numero_documento, email]):
-        flash('Faltan datos necesarios para procesar el pago con PSE', 'danger')
-        return redirect(url_for('carrito.pago', pedido_id=factura_id))
-    
-    # Verificar que el pedido exista y pertenezca al usuario
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        SELECT p.*, c.nombre, c.email 
-        FROM pedidos p
-        JOIN clientes c ON p.cliente_id = c.id
-        WHERE p.id = %s AND p.cliente_id = %s
-    """, (factura_id, current_user.id))
-    pedido = cursor.fetchone()
-    cursor.close()
-    
-    if not pedido:
-        flash('Pedido no encontrado o no autorizado', 'danger')
-        return redirect(url_for('carrito.mis_pedidos'))
-    
-    # Obtener nombre del banco
-    banco_nombre = obtener_nombre_banco(banco_id)
-    
-    # Guardar información del pago en sesión
-    session['pse_payment'] = {
-        'factura_id': factura_id,
-        'banco_id': banco_id,
-        'banco_nombre': banco_nombre,
-        'tipo_persona': tipo_persona,
-        'tipo_documento': tipo_documento,
-        'numero_documento': numero_documento,
-        'email': email,
-        'celular': celular,
-        'monto': pedido['total'] if isinstance(pedido, dict) else pedido[6],
-        'fecha': time.strftime('%Y-%m-%d %H:%M:%S')
-    }
-    
-    # Crear una transacción de pago en la base de datos
-    cursor = mysql.connection.cursor()
-    
-    # Generar referencia única
-    referencia = f"PSE-{factura_id}-{int(time.time())}"
-    
-    # Agregar la referencia al objeto de sesión antes de cualquier operación de base de datos
-    session['pse_payment']['referencia'] = referencia
-    
-    try:
-        # Crear tablas si no existen
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS pagos_pse (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                pedido_id INT NOT NULL,
-                referencia_pago VARCHAR(50) NOT NULL,
-                banco_id VARCHAR(10) NOT NULL,
-                banco_nombre VARCHAR(100) NOT NULL,
-                estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
-                monto DECIMAL(10,2) NOT NULL,
-                fecha_creacion DATETIME NOT NULL,
-                fecha_procesado DATETIME NULL,
-                tipo_persona VARCHAR(10) NOT NULL,
-                tipo_documento VARCHAR(20) NOT NULL,
-                numero_documento VARCHAR(30) NOT NULL,
-                email VARCHAR(100) NOT NULL,
-                celular VARCHAR(20) NULL,
-                UNIQUE(referencia_pago)
-            )
-        """)
+    if request.method == 'POST':
+        # Obtener parámetros del formulario
+        factura_id = request.form.get('pedido_id')
+        banco_id = request.form.get('banco_pse')
+        tipo_persona = request.form.get('tipo_persona')
+        tipo_documento = request.form.get('tipo_documento')
+        numero_documento = request.form.get('numero_documento')
+        email = request.form.get('email', current_user.email)
+        celular = request.form.get('celular_pse', '')
         
-        # Registrar el intento de pago
-        cursor.execute("""
-            INSERT INTO pagos_pse 
-            (pedido_id, referencia_pago, banco_id, banco_nombre, monto, fecha_creacion, 
-             tipo_persona, tipo_documento, numero_documento, email, celular)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            factura_id,
-            referencia,
-            banco_id,
-            banco_nombre,
-            float(session['pse_payment']['monto']),
-            datetime.datetime.now(),
-            tipo_persona,
-            tipo_documento,
-            numero_documento,
-            email,
-            celular
-        ))
-        mysql.connection.commit()
+        # Validar parámetros
+        if not all([factura_id, banco_id, tipo_persona, tipo_documento, numero_documento]):
+            flash('Faltan datos necesarios para procesar el pago con PSE', 'danger')
+            return redirect(url_for('carrito.pago', pedido_id=factura_id))
         
-    except Exception as e:
-        print(f"Error al crear registro de pago PSE: {e}")
-        mysql.connection.rollback()
-    finally:
-        cursor.close()
-    
-    # Redirigir a la página específica según el banco
-    if banco_id == '28':  # Nequi
-        return render_template('pagos/nequi_redireccion.html', 
-                              pedido=pedido,
-                              pago_info=session['pse_payment'])
-    elif banco_id == '27':  # Daviplata
-        return render_template('pagos/daviplata_redireccion.html',
-                              pedido=pedido, 
-                              pago_info=session['pse_payment'])
-    else:  # PSE estándar
-        return render_template('pagos/pse_redireccion.html', 
-                              banco=banco_nombre,
-                              pedido=pedido,
-                              pago_info=session['pse_payment'])
+        cursor = mysql.connection.cursor()
+        
+        try:
+            # Verificar que el pedido exista y pertenezca al usuario
+            cursor.execute("""
+                SELECT p.*, c.nombre, c.email 
+                FROM pedidos p
+                JOIN clientes c ON p.cliente_id = c.id
+                WHERE p.id = %s AND p.cliente_id = %s
+            """, (factura_id, current_user.id))
+            pedido = cursor.fetchone()
+            
+            if not pedido:
+                flash('Pedido no encontrado o no autorizado', 'danger')
+                return redirect(url_for('carrito.mis_pedidos'))
+            
+            # Obtener nombre del banco
+            banco_nombre = obtener_nombre_banco(banco_id)
+            
+            # Crear registro en pagos_pse
+            referencia = f"PSE-{factura_id}-{int(time.time())}"
+            fecha_actual = datetime.datetime.now()
+            
+            cursor.execute("""
+                INSERT INTO pagos_pse (
+                    pedido_id, referencia_pago, banco_id, banco_nombre,
+                    estado, monto, fecha_creacion, tipo_persona,
+                    tipo_documento, numero_documento, email, celular
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                factura_id,
+                referencia,
+                banco_id,
+                banco_nombre,
+                'PENDIENTE',
+                float(pedido[6]),  # total del pedido
+                fecha_actual,
+                tipo_persona,
+                tipo_documento,
+                numero_documento,
+                email,
+                celular
+            ))
+            mysql.connection.commit()
+            
+            # Almacenar información del pago en la sesión
+            session['pse_payment'] = {
+                'factura_id': factura_id,
+                'banco_id': banco_id,
+                'referencia': referencia,
+                'monto': float(pedido[6]),
+                'banco': banco_nombre,
+                'tipo_persona': tipo_persona,
+                'numero_documento': numero_documento,
+                'fecha': fecha_actual.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            # Renderizar la plantilla de redirección
+            return render_template('pagos/pse_redireccion.html',
+                                banco=banco_nombre,
+                                pedido=pedido,
+                                pago_info=session['pse_payment'])
+                                
+        except Exception as e:
+            print(f"Error al crear registro de pago PSE: {e}")
+            mysql.connection.rollback()
+            flash('Error al procesar el pago. Por favor intenta nuevamente.', 'danger')
+            return redirect(url_for('carrito.pago', pedido_id=factura_id))
+        finally:
+            cursor.close()
+            
+    # Si es GET, redirigir a la página de pago
+    return redirect(url_for('carrito.pago'))
 
 @pagos_pse_bp.route('/procesar', methods=['POST'])
 @login_required
@@ -154,64 +124,69 @@ def procesar():
     
     pago_info = session['pse_payment']
     factura_id = pago_info['factura_id']
-    banco_id = pago_info['banco_id']
     referencia = pago_info.get('referencia', f"PSE-{factura_id}-{int(time.time())}")
     
-    # Simular un resultado aleatorio (90% éxito, 10% fallo)
-    exito = random.random() < 0.9
-    
-    if exito:
-        # Actualizar estado del pago en la base de datos
-        Pedido.actualizar_estado_pago(factura_id, 'pse', referencia, 'PAGADO')
+    try:
+        # Simular procesamiento del pago (esto tomaría unos segundos en un entorno real)
+        time.sleep(2)
         
-        # Actualizar registro en la tabla pagos_pse
+        # Simular resultado (90% éxito)
+        exito = random.random() < 0.9
+        
         cursor = mysql.connection.cursor()
-        try:
+        
+        if exito:
+            # Actualizar estado del pago
             cursor.execute("""
                 UPDATE pagos_pse
                 SET estado = 'APROBADA', fecha_procesado = %s
                 WHERE referencia_pago = %s
             """, (datetime.datetime.now(), referencia))
+            
+            # Actualizar estado del pedido
+            cursor.execute("""
+                UPDATE pedidos
+                SET estado = 'PAGADO', fecha_pago = %s
+                WHERE id = %s
+            """, (datetime.datetime.now(), factura_id))
+            
             mysql.connection.commit()
-        except Exception as e:
-            print(f"Error al actualizar estado de pago PSE: {e}")
-        finally:
-            cursor.close()
-        
-        # Generar factura (implementación simulada)
-        generar_factura(factura_id)
-        
-        # Mensaje de éxito
-        flash('¡Pago exitoso! La factura ha sido enviada a tu correo electrónico.', 'success')
-        
-        # Limpiar datos de sesión
-        session.pop('pse_payment', None)
-        
-        # Redirigir a página de confirmación
-        return redirect(url_for('carrito.confirmacion', pedido_id=factura_id))
-    else:
-        # Actualizar registro en la tabla pagos_pse
-        cursor = mysql.connection.cursor()
-        try:
+            
+            # Limpiar sesión y redireccionar a confirmación
+            session.pop('pse_payment', None)
+            flash('¡Pago procesado exitosamente!', 'success')
+            return redirect(url_for('pagos.confirmacion', 
+                                  referencia=referencia,
+                                  estado='aprobado'))
+        else:
+            # Actualizar estado a rechazado
             cursor.execute("""
                 UPDATE pagos_pse
                 SET estado = 'RECHAZADA', fecha_procesado = %s
                 WHERE referencia_pago = %s
             """, (datetime.datetime.now(), referencia))
+            
             mysql.connection.commit()
-        except Exception as e:
-            print(f"Error al actualizar estado de pago PSE: {e}")
-        finally:
+            
+            # Limpiar sesión y redireccionar a página de error
+            session.pop('pse_payment', None)
+            flash('El pago no pudo ser procesado. Por favor, intente nuevamente.', 'warning')
+            return redirect(url_for('pagos.error', 
+                                  referencia=referencia,
+                                  estado='rechazado'))
+            
+    except Exception as e:
+        print(f"Error al procesar pago PSE: {e}")
+        if 'cursor' in locals() and cursor:
+            mysql.connection.rollback()
             cursor.close()
-        
-        # Mensaje de error
-        flash('El pago no pudo ser procesado. Por favor, intenta nuevamente.', 'danger')
-        
-        # Limpiar datos de sesión
         session.pop('pse_payment', None)
+        flash('Error al procesar el pago. Por favor, intente nuevamente.', 'danger')
+        return redirect(url_for('carrito.pago', pedido_id=factura_id))
         
-        # Redirigir a página de pago
-        return redirect(url_for('carrito.pago', pedido_id=factura_id, status='failure'))
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
 
 @pagos_pse_bp.route('/cancelar')
 @login_required
@@ -385,4 +360,92 @@ def consultar_estado_pago(usuario_actual, referencia_pago):
     except Exception as e:
         if 'cursor' in locals() and cursor:
             cursor.close()
-        return jsonify({'error': f'Error al consultar pago PSE: {str(e)}'}), 500 
+        return jsonify({'error': f'Error al consultar pago PSE: {str(e)}'}), 500
+
+@pagos_pse_bp.route('/confirmacion/<referencia>', methods=['GET'])
+@login_required
+def confirmacion(referencia):
+    """Muestra la página de confirmación del pago"""
+    try:
+        cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+        
+        # Obtener información del pago
+        cursor.execute("""
+            SELECT p.*, ped.total as monto
+            FROM pagos_pse p
+            JOIN pedidos ped ON p.pedido_id = ped.id
+            WHERE p.referencia_pago = %s
+        """, (referencia,))
+        
+        pago = cursor.fetchone()
+        
+        if not pago:
+            flash('No se encontró el pago referenciado', 'danger')
+            return redirect(url_for('carrito.mis_pedidos'))
+            
+        return render_template('pagos/confirmacion.html',
+                             pago=pago,
+                             referencia=referencia)
+                             
+    except Exception as e:
+        print(f"Error al mostrar confirmación: {e}")
+        flash('Error al procesar la confirmación', 'danger')
+        return redirect(url_for('carrito.mis_pedidos'))
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@pagos_pse_bp.route('/error/<referencia>', methods=['GET'])
+@login_required
+def error(referencia):
+    """Muestra la página de error del pago"""
+    try:
+        cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+        
+        # Obtener información del pago
+        cursor.execute("""
+            SELECT p.*, ped.total as monto
+            FROM pagos_pse p
+            JOIN pedidos ped ON p.pedido_id = ped.id
+            WHERE p.referencia_pago = %s
+        """, (referencia,))
+        
+        pago = cursor.fetchone()
+        
+        if not pago:
+            flash('No se encontró el pago referenciado', 'danger')
+            return redirect(url_for('carrito.mis_pedidos'))
+            
+        return render_template('pagos/error.html',
+                             pago=pago,
+                             referencia=referencia)
+                             
+    except Exception as e:
+        print(f"Error al mostrar página de error: {e}")
+        flash('Error al procesar la confirmación', 'danger')
+        return redirect(url_for('carrito.mis_pedidos'))
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@pagos_pse_bp.route('/confirmar', methods=['POST'])
+def confirmar_pago():
+    pago_id = request.json.get('pago_id')
+    if not pago_id:
+        return jsonify({'error': 'Se requiere el ID del pago'}), 400
+        
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT * FROM pagos_pse WHERE id = %s AND estado = "PENDIENTE"', (pago_id,))
+    pago = cursor.fetchone()
+    
+    if not pago:
+        return jsonify({'error': 'Pago no encontrado o no está pendiente'}), 404
+        
+    return jsonify({
+        'message': '¿Desea continuar con la transacción?',
+        'pago_id': pago_id,
+        'monto': pago['monto'],
+        'referencia': pago['referencia']
+    })

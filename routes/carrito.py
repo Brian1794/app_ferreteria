@@ -2,9 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models.carrito import Carrito, Pedido
 from extensions import mysql
+from database import get_cursor, ejecutar_consulta, close_connection
 import json
 from flask_wtf.csrf import CSRFProtect
 import time
+from contextlib import contextmanager
 
 carrito_bp = Blueprint('carrito', __name__)
 
@@ -232,41 +234,40 @@ def checkout():
         flash('Debe iniciar sesión para completar la compra', 'warning')
         return redirect(url_for('auth.login'))
     
-    # Obtener los items del carrito
-    items = Carrito.obtener_items(current_user.id)
-    
-    if not items:
-        flash('Su carrito está vacío', 'warning')
+    try:
+        # Obtener los items del carrito
+        items = Carrito.obtener_items(current_user.id)
+        
+        if not items:
+            flash('Su carrito está vacío', 'warning')
+            return redirect(url_for('carrito.ver_carrito'))
+        
+        total = Carrito.obtener_total(current_user.id)
+        
+        # Obtener información del cliente y total de pedidos usando una sola conexión
+        with get_cursor(dictionary=True) as cursor:
+            # Obtener información del cliente
+            cursor.execute("""
+                SELECT c.*, COUNT(p.id) as total_pedidos 
+                FROM clientes c 
+                LEFT JOIN pedidos p ON c.id = p.cliente_id 
+                WHERE c.id = %s 
+                GROUP BY c.id
+            """, (current_user.id,))
+            cliente = cursor.fetchone()
+            
+            if not cliente:
+                flash('No se encontró información del cliente', 'danger')
+                return redirect(url_for('main.index'))
+        
+        return render_template('carrito/checkout.html', 
+                             items=items, 
+                             total=total,
+                             cliente=cliente)
+                             
+    except Exception as e:
+        flash(f'Error al cargar la página de checkout: {str(e)}', 'danger')
         return redirect(url_for('carrito.ver_carrito'))
-    
-    total = Carrito.obtener_total(current_user.id)
-    
-    # Obtener información del cliente
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM clientes WHERE id = %s", (current_user.id,))
-    cliente = cursor.fetchone()
-    
-    # Obtener la cantidad de pedidos anteriores
-    cursor.execute("SELECT COUNT(*) as total_pedidos FROM pedidos WHERE cliente_id = %s", (current_user.id,))
-    total_pedidos = cursor.fetchone()
-    
-    # Agregar total_pedidos al diccionario del cliente
-    if isinstance(cliente, dict):
-        cliente['total_pedidos'] = total_pedidos['total_pedidos'] if isinstance(total_pedidos, dict) else total_pedidos[0]
-    else:
-        # Si cliente no es un diccionario, convertirlo
-        cliente_dict = {}
-        for i, campo in enumerate(cursor.description):
-            cliente_dict[campo[0]] = cliente[i]
-        cliente_dict['total_pedidos'] = total_pedidos['total_pedidos'] if isinstance(total_pedidos, dict) else total_pedidos[0]
-        cliente = cliente_dict
-    
-    cursor.close()
-    
-    return render_template('carrito/checkout.html', 
-                           items=items, 
-                           total=total,
-                           cliente=cliente)
 
 @carrito_bp.route('/procesar-pedido', methods=['POST'])
 @login_required
@@ -605,4 +606,4 @@ def actualizar_datos_cliente():
         
     except Exception as e:
         print(f"Error al actualizar perfil: {e}")
-        return jsonify({'success': False, 'message': f'Error al actualizar datos: {str(e)}'}) 
+        return jsonify({'success': False, 'message': f'Error al actualizar datos: {str(e)}'})

@@ -26,4 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Desactivar el observador que forzaba el tema claro
     // Ya no necesitamos este observador, dejaremos que el tema se gestione por base.html
-}); 
+});
+
+/**
+ * Muestra un diálogo de confirmación en español
+ * @returns {boolean} true si el usuario confirma, false si cancela
+ */
+function confirmarContinuar() {
+    return confirm('¿Desea continuar con la iteración?');
+}

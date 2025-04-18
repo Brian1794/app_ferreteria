@@ -211,7 +211,7 @@ class Pedido:
         cursor = mysql.connection.cursor()
         try:
             cursor.execute("""
-                INSERT INTO pedidos (cliente_id, total, direccion_envio, telefono_contacto, identificacion_cliente, notas) 
+                INSERT INTO pedidos (cliente_id, total, direccion_envio, telefono, identificacion, notas) 
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (
                 cliente_id, 

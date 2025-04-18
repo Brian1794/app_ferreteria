@@ -321,6 +321,22 @@ CREATE TABLE IF NOT EXISTS contabilidad (
     FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE SET NULL
 );
 
+-- Tabla de Pedidos
+CREATE TABLE IF NOT EXISTS pedidos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    fecha_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(50) DEFAULT 'PENDIENTE',
+    total DECIMAL(12,2) NOT NULL,
+    metodo_pago VARCHAR(50),
+    referencia_pago VARCHAR(100),
+    direccion_envio TEXT,
+    telefono VARCHAR(50),
+    identificacion VARCHAR(50),
+    notas TEXT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);
+
 -- Inserta datos iniciales
 
 -- Estados de Producto
@@ -405,4 +421,4 @@ INSERT INTO productos (nombre, descripcion, codigo, precio_compra, precio_venta,
 ('Martillo Carpintero', 'Martillo profesional para carpintería', 'HM-001', 80.00, 120.00, 15, 1, 1, 1),
 ('Destornillador Phillips', 'Destornillador de cruz profesional', 'DP-002', 25.00, 45.00, 20, 1, 1, 1),
 ('Taladro Percutor', 'Taladro con función de martillo', 'TE-001', 700.00, 1200.00, 5, 2, 2, 1),
-('Pintura Vinílica Blanca 1L', 'Pintura para interiores lavable', 'PB-001', 60.00, 95.00, 10, 6, 2, 1); 
+('Pintura Vinílica Blanca 1L', 'Pintura para interiores lavable', 'PB-001', 60.00, 95.00, 10, 6, 2, 1);
