@@ -346,3 +346,10 @@ if __name__ == '__main__':
     # Crear y ejecutar la aplicación
     app = create_app()
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+# Para producción: gunicorn busca esta variable
+app = create_app()
+
+    
+    
+
