@@ -337,6 +337,7 @@ def create_app(config_name=None):
                 flash("Error de conexión a la base de datos. Por favor, inténtelo más tarde.", "error")
                 return redirect(url_for('main.index'))
     
+    
     return app
 
 if __name__ == '__main__':
