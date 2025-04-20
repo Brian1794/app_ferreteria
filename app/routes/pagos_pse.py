@@ -6,7 +6,7 @@ import string
 import uuid
 from datetime import datetime
 import json
-from app.db import get_db_connection
+from database import get_db_connection
 import requests
 from dotenv import load_dotenv
 import secrets

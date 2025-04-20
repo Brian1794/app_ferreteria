@@ -1,4 +1,4 @@
-flask==2.3.3
+Flask==2.3.3
 flask-mysqldb==1.0.1
 flask-login==0.6.2
 flask-bcrypt==1.0.1
@@ -10,3 +10,5 @@ gunicorn==21.2.0
 stripe==7.6.0
 wompi==1.0.0
 pycryptodome==3.19.1
+Flask-SQLAlchemy==2.5.1
+Flask-Migrate==3.1.0

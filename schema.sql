@@ -2,7 +2,7 @@
 -- Esquema de base de datos para Ferretería La U
 
 -- Aumentar el límite de conexiones máximas de usuario
-SET GLOBAL max_user_connections = 20;
+SET GLOBAL max_user_connections = 2000;
 
 -- Crear la base de datos si no existe
 CREATE DATABASE IF NOT EXISTS ferreteria_la_u;
