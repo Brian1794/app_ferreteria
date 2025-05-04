@@ -14,27 +14,9 @@
     </div>
     
     <div class="card-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-            <div class="stat-text">
-                <h3>Ventas</h3>
-                <div class="stat-value">{{ stats_ventas.total }}</div>
-                <p>{{ stats_ventas.hoy }} hoy</p>
-            </div>
-        </div>
+       
         
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="stat-text">
-                <h3>Stock Bajo</h3>
-                <div class="stat-value">{{ productos_bajo_stock.total }}</div>
-                <p>Productos para reabastecer</p>
-            </div>
-        </div>
+       
         
         <div class="stat-card">
             <div class="stat-icon">
@@ -42,6 +24,17 @@
             </div>
             <div class="stat-text">
                 <h3>Reparaciones Pendientes</h3>
+                <div class="stat-value">{{ reparaciones_pendientes.total }}</div>
+                <p>{{ reparaciones_pendientes.recibidas }} recibidas, {{ reparaciones_pendientes.en_progreso }} en progreso</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="stat-text">
+                <h3>Reparaciones Exitosas</h3>
                 <div class="stat-value">{{ reparaciones_pendientes.total }}</div>
                 <p>{{ reparaciones_pendientes.recibidas }} recibidas, {{ reparaciones_pendientes.en_progreso }} en progreso</p>
             </div>
