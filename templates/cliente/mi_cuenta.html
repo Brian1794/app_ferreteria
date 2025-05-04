@@ -2,35 +2,45 @@
 
 {% block title %}Mi Cuenta - Ferretería "La U"{% endblock %}
 
-{% block custom_css %}
+{% block extra_css %}
 <style>
     :root {
-        --color-primary: #1A2B47;
-        --color-secondary: #2C4169;
-        --color-tertiary: #3A5280;
-        --color-accent: #FFD100;
+        --color-primary: #0b1728;
+        --color-secondary: #112240;
+        --color-tertiary: #1d3557;
+        --color-accent: #3a86ff;
+        --color-accent-2: #4dabf7;
         --color-success: #4ADE80;
         --color-warning: #FFD100;
         --color-danger: #F87171;
         --color-info: #60A5FA;
-        --color-light: #F8F9FA;
-        --color-dark: #1A2B47;
-        --color-text-muted: #B0C0E4;
-        --color-border: rgba(58, 82, 128, 0.2);
+        --color-light: #e9ecef;
+        --color-dark: #0b1728;
+        --color-text-muted: #8d99ae;
+        --color-border: rgba(61, 90, 128, 0.2);
         --border-radius: 10px;
-        --box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        --box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         --transition: all 0.3s ease;
     }
 
-    .perfil-container {
+    body {
+        background-color: var(--color-dark);
+    }
+
+    .container {
         max-width: 1200px;
-        margin: 2rem auto;
+        padding: 2rem 15px;
+    }
+
+    .perfil-container {
+        margin: 0 auto;
         padding: 0;
         border-radius: var(--border-radius);
-        background-color: var(--color-dark);
+        background-color: #0c1e36;
         box-shadow: var(--box-shadow);
         overflow: hidden;
         border: 1px solid var(--color-border);
+        color: var(--color-light);
     }
 
     .perfil-header {
@@ -38,7 +48,7 @@
         align-items: flex-start;
         gap: 2.5rem;
         padding: 3rem;
-        background: linear-gradient(145deg, var(--color-primary), var(--color-secondary));
+        background: linear-gradient(145deg, #112240, #0c1e36);
         color: white;
         position: relative;
         overflow: hidden;
@@ -51,26 +61,26 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 70%);
+        background: radial-gradient(circle at top right, rgba(58, 134, 255, 0.05) 0%, transparent 70%);
         z-index: 1;
     }
 
     .perfil-foto {
-        width: 180px;
-        height: 180px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         background-color: var(--color-dark);
-        border: 8px solid rgba(255, 255, 255, 0.2);
+        border: 4px solid rgba(58, 134, 255, 0.3);
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 5rem;
+        font-size: 3rem;
         color: var(--color-accent);
         overflow: hidden;
         position: relative;
         transition: var(--transition);
         flex-shrink: 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         z-index: 2;
     }
 
@@ -80,6 +90,28 @@
         object-fit: cover;
     }
 
+    .cambiar-foto-btn {
+        position: absolute;
+        right: 5px;
+        bottom: 5px;
+        background-color: var(--color-accent);
+        color: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .cambiar-foto-btn:hover {
+        background-color: var(--color-accent-2);
+        transform: scale(1.1);
+    }
+
     .perfil-info {
         flex: 1;
         padding-top: 0.5rem;
@@ -87,99 +119,72 @@
     }
 
     .perfil-nombre {
-        font-size: 3rem;
+        font-size: 2.25rem;
         margin: 0 0 0.5rem;
         color: white;
-        font-weight: 700;
+        font-weight: 600;
         text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        letter-spacing: -0.5px;
     }
 
     .perfil-cargo {
         display: inline-block;
-        background-color: rgba(255, 255, 255, 0.15);
-        padding: 0.5rem 1.25rem;
+        background-color: rgba(58, 134, 255, 0.15);
+        padding: 0.375rem 1rem;
         border-radius: 30px;
-        font-size: 1rem;
-        margin-bottom: 2rem;
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+        color: var(--color-accent);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(58, 134, 255, 0.3);
     }
 
     .perfil-detalle {
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 1rem 3rem;
-        margin-top: 2rem;
-        font-size: 1.1rem;
+        gap: 0.75rem 2rem;
+        font-size: 1rem;
     }
 
     .perfil-label {
         font-weight: 600;
         opacity: 0.9;
-        color: var(--color-accent);
+        color: var(--color-text-muted);
     }
 
     .perfil-value {
         color: var(--color-light);
     }
 
-    .acciones-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        padding: 2rem;
-        background-color: var(--color-secondary);
-        border-bottom: 1px solid var(--color-border);
-        justify-content: center;
-    }
+   
 
-    .accion-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: 1rem 2rem;
-        border-radius: 30px;
-        background-color: var(--color-accent);
-        color: var(--color-dark);
-        text-decoration: none;
+
+
+    /* Estadísticas de Desempeño */
+    .stats-section-title {
+        color: var(--color-light);
+        font-size: 1.25rem;
+        margin: 2rem 0 1.5rem;
+        padding-left: 1rem;
+        border-left: 4px solid var(--color-accent);
         font-weight: 600;
-        transition: var(--transition);
-        box-shadow: 0 4px 12px rgba(255, 209, 0, 0.2);
+        display: flex;
+        align-items: center;
     }
 
-    .accion-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(255, 209, 0, 0.3);
-        background-color: var(--color-accent);
-        color: var(--color-dark);
-    }
-
-    .accion-btn i {
-        margin-right: 0.75rem;
-        font-size: 1.2rem;
-    }
-
-    .accion-btn-outline {
-        background-color: transparent;
-        border: 2px solid var(--color-accent);
+    .stats-section-title i {
+        margin-right: 0.5rem;
         color: var(--color-accent);
-    }
-
-    .accion-btn-outline:hover {
-        background-color: var(--color-accent);
-        color: var(--color-dark);
     }
 
     .stats-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-        padding: 2rem;
-        background-color: var(--color-primary);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
 
     .stat-card {
-        background: linear-gradient(145deg, var(--color-secondary), var(--color-tertiary));
+        background: linear-gradient(145deg, #112240, #0c1e36);
         padding: 2rem;
         border-radius: var(--border-radius);
         text-align: center;
@@ -207,131 +212,210 @@
     }
 
     .stat-icon {
-        width: 70px;
-        height: 70px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        background-color: rgba(255, 209, 0, 0.1);
+        background-color: rgba(58, 134, 255, 0.1);
         color: var(--color-accent);
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1.5rem;
-        font-size: 1.75rem;
+        margin: 0 auto 1.25rem;
+        font-size: 1.5rem;
     }
 
     .stat-card h2 {
-        font-size: 2.5rem;
+        font-size: 2.25rem;
         color: white;
-        margin: 0 0 0.75rem;
+        margin: 0 0 0.5rem;
         font-weight: 700;
     }
 
     .stat-card p {
         color: var(--color-text-muted);
         margin: 0;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 500;
     }
 
+    .stat-card .stat-footer {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        margin-top: 1rem;
+    }
+
     .historial-container {
-        padding: 2rem;
-        background-color: var(--color-primary);
+        padding: 1.5rem;
+        background-color: #0c1e36;
+        margin-top: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
     }
 
     .historial-titulo {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         color: var(--color-accent);
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid var(--color-border);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--color-border);
         display: flex;
         align-items: center;
         font-weight: 600;
     }
 
     .historial-titulo i {
-        margin-right: 1rem;
+        margin-right: 0.75rem;
         color: var(--color-accent);
-        font-size: 1.3em;
+        font-size: 1.2rem;
     }
 
     .table {
         margin-bottom: 0;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         color: var(--color-light);
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
     }
 
     .table th {
-        background-color: var(--color-secondary);
+        background-color: #0a1930;
         color: var(--color-accent);
         font-weight: 600;
-        padding: 1rem;
+        padding: 0.85rem 1rem;
         border: none;
+        text-align: left;
     }
 
     .table td {
         vertical-align: middle;
-        padding: 1rem;
+        padding: 0.85rem 1rem;
         border-color: var(--color-border);
         color: var(--color-light);
+        border-top: 1px solid var(--color-border);
+    }
+
+    .table tr:hover td {
+        background-color: rgba(58, 134, 255, 0.05);
     }
 
     .badge {
-        padding: 0.5rem 1rem;
+        padding: 0.4rem 0.85rem;
         font-weight: 500;
         text-transform: uppercase;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         border-radius: 20px;
+        display: inline-block;
     }
 
-    .badge-success {
+    .badge-success, .bg-completado {
         background-color: rgba(74, 222, 128, 0.2);
         color: var(--color-success);
     }
 
-    .badge-warning {
+    .badge-warning, .bg-pendiente {
         background-color: rgba(255, 209, 0, 0.2);
         color: var(--color-warning);
     }
 
-    .badge-danger {
+    .badge-danger, .bg-cancelado {
         background-color: rgba(248, 113, 113, 0.2);
         color: var(--color-danger);
     }
 
+    .bg-progreso {
+        background-color: rgba(96, 165, 250, 0.2);
+        color: var(--color-info);
+    }
+
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 3rem 2rem;
         color: var(--color-text-muted);
     }
 
     .empty-state i {
-        font-size: 4rem;
+        font-size: 3rem;
         color: var(--color-accent);
         opacity: 0.5;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
 
     .empty-state p {
-        margin-bottom: 2rem;
-        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
     }
 
-    .empty-state .btn-primary {
+    .empty-state .btn {
         background-color: var(--color-accent);
-        color: var(--color-dark);
+        color: white;
         border: none;
-        padding: 0.75rem 2rem;
-        font-size: 1.1rem;
-        border-radius: 30px;
-        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
     }
 
-    .empty-state .btn-primary:hover {
-        background-color: var(--color-warning);
+    .empty-state .btn:hover {
+        background-color: var(--color-accent-2);
         transform: translateY(-2px);
     }
 
+    /* Modal personalizado */
+    .modal-content {
+        background-color: #112240;
+        color: var(--color-light);
+        border: 1px solid var(--color-border);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--color-border);
+        background-color: #0a1930;
+    }
+
+    .modal-footer {
+        border-top: 1px solid var(--color-border);
+    }
+
+    .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    .form-control {
+        background-color: #0c1e36;
+        border: 1px solid var(--color-border);
+        color: var(--color-light);
+    }
+
+    .form-control:focus {
+        background-color: #0c1e36;
+        border-color: var(--color-accent);
+        color: var(--color-light);
+        box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+    }
+
+    .form-label {
+        color: var(--color-light);
+    }
+
+    .btn-secondary {
+        background-color: #2d3748;
+        border-color: #2d3748;
+    }
+
+    .btn-primary {
+        background-color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color-accent-2);
+        border-color: var(--color-accent-2);
+    }
+
+    /* Responsivo */
     @media (max-width: 768px) {
         .perfil-header {
             flex-direction: column;
@@ -341,49 +425,73 @@
         }
         
         .perfil-foto {
-            width: 150px;
-            height: 150px;
-            margin-bottom: 2rem;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 1.5rem;
         }
         
         .perfil-nombre {
-            font-size: 2.5rem;
+            font-size: 1.75rem;
         }
         
         .perfil-detalle {
             grid-template-columns: 1fr;
             text-align: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
+        
+        
         
         .acciones-container {
-            padding: 1.5rem;
-        }
-        
-        .accion-btn {
-            width: 100%;
-            justify-content: center;
-            padding: 0.875rem 1.5rem;
-        }
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.accion-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #1a73e8; /* Azul base */
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.accion-btn i {
+    font-size: 16px;
+}
+
+.accion-btn:hover {
+    background-color: #1669c1;
+}
+
         
         .stats-container {
             grid-template-columns: 1fr;
             gap: 1rem;
-            padding: 1.5rem;
         }
         
         .historial-container {
-            padding: 1.5rem;
+            padding: 1rem;
         }
         
         .table {
-            font-size: 1rem;
+            font-size: 0.85rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+
 <div class="container">
     <div class="perfil-container">
         <div class="perfil-header">
@@ -414,16 +522,20 @@
         </div>
         
         <div class="acciones-container">
-            <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="accion-btn accion-btn-outline">
+            <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn">
                 <i class="fas fa-user-edit"></i> Editar Perfil
             </a>
-            <a href="{{ url_for('auth.cambiar_password') }}" class="accion-btn">
+            <a href="{{ url_for('auth.cambiar_password') }}" class="btn">
                 <i class="fas fa-key"></i> Cambiar Contraseña
             </a>
-            <a href="{{ url_for('tienda.index') }}" class="accion-btn">
+            <a href="{{ url_for('tienda.index') }}" class="btn">
                 <i class="fas fa-shopping-cart"></i> Ir a Comprar
             </a>
         </div>
+        
+        <h2 class="stats-section-title">
+            <i class="fas fa-chart-line"></i> Estadísticas de Desempeño
+        </h2>
         
         <div class="stats-container">
             <div class="stat-card">
@@ -432,6 +544,7 @@
                 </div>
                 <h2>{{ total_compras|default(0) }}</h2>
                 <p>Compras Realizadas</p>
+                <div class="stat-footer">Total: ${{ (total_gastado|default(0))|round(2) }}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">
@@ -439,25 +552,19 @@
                 </div>
                 <h2>{{ total_reparaciones|default(0) }}</h2>
                 <p>Servicios Solicitados</p>
+                <div class="stat-footer">Último: {{ ultima_reparacion.fecha_solicitud.strftime('%d/%m/%Y') if ultima_reparacion else 'N/A' }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-dollar-sign"></i>
-                </div>
-                <h2>${{ (total_gastado|default(0))|round(2) }}</h2>
-                <p>Total Gastado</p>
         </div>
-    </div>
     
-    <!-- Historial de Compras -->
+        <!-- Historial de Compras -->
         <div class="historial-container">
             <h2 class="historial-titulo">
-                <i class="fas fa-shopping-bag me-2"></i>
+                <i class="fas fa-shopping-bag"></i>
                 Últimas Compras
             </h2>
             {% if ultimas_compras %}
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
@@ -486,7 +593,7 @@
             <div class="empty-state">
                 <i class="fas fa-shopping-bag"></i>
                 <p>Aún no has realizado ninguna compra</p>
-                <a href="{{ url_for('tienda.index') }}" class="btn btn-primary">
+                <a href="{{ url_for('tienda.index') }}" class="btn">
                     Ir a la Tienda
                 </a>
             </div>
@@ -496,12 +603,12 @@
         <!-- Historial de Reparaciones -->
         <div class="historial-container">
             <h2 class="historial-titulo">
-                <i class="fas fa-tools me-2"></i>
+                <i class="fas fa-tools"></i>
                 Últimas Reparaciones
             </h2>
             {% if ultimas_reparaciones %}
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
@@ -530,7 +637,7 @@
             <div class="empty-state">
                 <i class="fas fa-tools"></i>
                 <p>Aún no has solicitado ninguna reparación</p>
-                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn btn-primary">
+                <a href="{{ url_for('reparaciones.solicitud') }}" class="btn">
                     Solicitar Reparación
                 </a>
             </div>
@@ -582,7 +689,7 @@
                 const modalElement = document.getElementById('modalCambiarFoto');
                 if (modalElement) {
                     const modalCambiarFoto = new bootstrap.Modal(modalElement);
-                modalCambiarFoto.show();
+                    modalCambiarFoto.show();
                 } else {
                     console.error('El modal #modalCambiarFoto no existe en el DOM');
                 }
