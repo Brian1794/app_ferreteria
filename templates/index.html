@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Ferretería "La U" - Tu Solución en Herramientas y Materiales{% endblock %}
+{% block title %}Ferretería "La U"{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -49,44 +49,7 @@
     .feature-card h3, .service-card h3, .contact-card h3 {
         color: var(--secondary-color);
     }
-    
-    [data-theme="dark"] .feature-card h3, 
-    [data-theme="dark"] .service-card h3, 
-    [data-theme="dark"] .contact-card h3 {
-        color: #60a5fa;
-    }
-
-    /* Estilos específicos para el tema daltónico */
-    [data-theme="daltonismo"] .feature-card,
-    [data-theme="daltonismo"] .service-card,
-    [data-theme="daltonismo"] .contact-card {
-        border: 2px solid #000;
-    }
-    
-    [data-theme="daltonismo"] .feature-card h3,
-    [data-theme="daltonismo"] .service-card h3,
-    [data-theme="daltonismo"] .contact-card h3 {
-        color: #0074D9;
-        font-weight: 800;
-    }
-    
-    [data-theme="daltonismo"] .feature-icon,
-    [data-theme="daltonismo"] .contact-icon {
-        color: #0074D9;
-        background: rgba(0, 116, 217, 0.1);
-        padding: 1rem;
-        border-radius: 50%;
-        border: 2px solid currentColor;
-    }
-    
-    [data-theme="daltonismo"] .cta-buttons .btn {
-        border: 2px solid #000;
-        font-weight: 700;
-    }
-    
-    [data-theme="daltonismo"] .services::before {
-        height: 8px;
-    }
+   
     
     /* Resto de estilos */
     .cta-buttons {
@@ -594,17 +557,17 @@
     <div class="service-cards">
         <div class="service-card">
             <div class="service-image">
-                <img src="{{ url_for('static', filename='img/servicio-ventas.jpg') }}" alt="Venta de Productos">
+                <img src="{{ url_for('static', filename='img/servicio/ventas.jpg') }}" alt="Venta de Productos">
             </div>
             <div class="service-content">
                 <h3>Venta de Productos</h3>
-                <p>Ofrecemos una amplia variedad de productos para construcción, reparación y mantenimiento.</p>
+                <p>Ofrecemos una amplia variedad de productos de ferreteria.</p>
             </div>
         </div>
         
         <div class="service-card">
             <div class="service-image">
-                <img src="{{ url_for('static', filename='img/servicio-reparaciones.jpg') }}" alt="Reparación de Electrodomésticos">
+                <img src="{{ url_for('static', filename='img/servicio/reparaciones.jpg') }}" alt="Reparación de Electrodomésticos">
             </div>
             <div class="service-content">
                 <h3>Reparación de Electrodomésticos</h3>
@@ -614,7 +577,7 @@
         
         <div class="service-card">
             <div class="service-image">
-                <img src="{{ url_for('static', filename='img/servicio-asesorias.jpg') }}" alt="Asesoría en Proyectos">
+                <img src="{{ url_for('static', filename='img/servicio/asesorias.jpg') }}" alt="Asesoría en Proyectos">
             </div>
             <div class="service-content">
                 <h3>Asesoría en Proyectos</h3>
