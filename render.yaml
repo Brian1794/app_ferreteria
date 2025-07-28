@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ferreteria-la-u
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"  # <-- cambia 'main:app' por 'app:app' ya que tu archivo se llama app.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MYSQL_HOST
+        value: tu_host_mysql_externo  # Ejemplo: db4free.net o tu instancia remota
+      - key: MYSQL_USER
+        value: tu_usuario_mysql
+      - key: MYSQL_PASSWORD
+        value: tu_contraseña_mysql
+      - key: MYSQL_DB
+        value: nombre_de_tu_base_de_datos
+      - key: MAIL_SERVER
+        value: smtp.gmail.com  # Ajusta si usas otro servidor
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USE_TLS
+        value: true
+      - key: MAIL_USERNAME
+        value: tu_correo@gmail.com
+      - key: MAIL_PASSWORD
+        value: tu_contraseña_o_token
+      - key: WTF_CSRF_ENABLED
+        value: true
