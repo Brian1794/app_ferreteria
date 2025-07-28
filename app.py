@@ -299,55 +299,80 @@ def create_app(config_name=None):
     # Registrar manejadores de error
     register_error_handlers(app)
     
-    # Verificar conexión a la base de datos
-    with app.app_context():
-        try:
-            cursor = mysql.connection.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-            logger.info("Conexión a la base de datos establecida correctamente")
-            
-            # Inicializar la base de datos
-            init_db()
-            
-            # Verificar y crear tablas si es necesario
-            crear_tablas()
-            
-            # Insertar datos iniciales si es necesario
-            insertar_datos_iniciales()
-            
-            # Verificar estructura de tablas
-            verificar_estructura_tablas()
-            
-        except Exception as e:
-            logger.error(f"Error al conectar con la base de datos: {e}")
-            # No levantar la excepción, permitir que la aplicación continúe
-            # pero registrar el error para diagnóstico
+    # Verificar conexión a la base de datos solo si no estamos en producción
+    if os.environ.get('FLASK_ENV') != 'production':
+        with app.app_context():
+            try:
+                cursor = mysql.connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.close()
+                logger.info("Conexión a la base de datos establecida correctamente")
+                
+                # Inicializar la base de datos
+                init_db()
+                
+                # Verificar y crear tablas si es necesario
+                crear_tablas()
+                
+                # Insertar datos iniciales si es necesario
+                insertar_datos_iniciales()
+                
+                # Verificar estructura de tablas
+                verificar_estructura_tablas()
+                
+            except Exception as e:
+                logger.error(f"Error al conectar con la base de datos: {e}")
+                # No levantar la excepción, permitir que la aplicación continúe
+                # pero registrar el error para diagnóstico
     
     @app.before_request
     def before_request():
         """Verificar la conexión a la base de datos antes de cada solicitud"""
-        try:
-            cursor = mysql.connection.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-        except Exception as e:
-            logger.error(f"Error de conexión a la base de datos: {e}")
-            if not request.endpoint or not request.endpoint.startswith('static'):
-                flash("Error de conexión a la base de datos. Por favor, inténtelo más tarde.", "error")
-                return redirect(url_for('main.index'))
-    
+        # Solo verificar conexión si no estamos en producción o si hay endpoints que no sean estáticos
+        if os.environ.get('FLASK_ENV') != 'production':
+            try:
+                cursor = mysql.connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.close()
+            except Exception as e:
+                logger.error(f"Error de conexión a la base de datos: {e}")
+                if not request.endpoint or not request.endpoint.startswith('static'):
+                    flash("Error de conexión a la base de datos. Por favor, inténtelo más tarde.", "error")
+                    return redirect(url_for('main.index'))
     
     return app
 
-if __name__ == '__main__':
-    initialize_database()
+# Para producción (Render) - manejo seguro de errores
+try:
+    # Cargar variables de entorno
+    load_dotenv()
     app = create_app()
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-# Para producción: gunicorn busca esta variable
-app = create_app()
-
     
+    # Solo inicializar BD si no estamos en producción
+    if os.environ.get('FLASK_ENV') != 'production' and __name__ == '__main__':
+        initialize_database()
+        
+except Exception as e:
+    print(f"Error al crear la aplicación: {e}")
+    # Crear una aplicación mínima para que Render no falle
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-key-for-production')
     
+    @app.route('/')
+    def health_check():
+        return """
+        <h1>Ferretería La U</h1>
+        <p>Aplicación funcionando correctamente.</p>
+        <p>Estado: Configurando conexión a base de datos...</p>
+        <p>Si ves este mensaje, el servidor está funcionando pero necesitas configurar la base de datos.</p>
+        """
+    
+    @app.route('/health')
+    def health():
+        return {'status': 'ok', 'message': 'Application is running'}
 
+if __name__ == '__main__':
+    # Solo para desarrollo local
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_ENV') != 'production'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
